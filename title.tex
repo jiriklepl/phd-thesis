@@ -48,12 +48,20 @@ Prague \YearSubmitted
 %%% A page with a solemn declaration to the thesis
 
 \openright
+% start roman numbering for preliminary pages
+\pagestyle{plain}
+\pagenumbering{roman}
+
 \hypersetup{pageanchor=true}
 \vglue 0pt plus 1fill
 
 \noindent
-I declare that I carried out this \ThesisTypeName{} thesis on my own, and only with the cited
+I declare that I carried out this \ThesisTypeName{} thesis independently, and only with the cited
 sources, literature and other professional sources.
+It has not been used to obtain another or the same degree.
+
+\vspace{.5em}
+\noindent
 I understand that my work relates to the rights and obligations under the Act No.~121/2000 Sb.,
 the Copyright Act, as amended, in particular the fact that the Charles
 University has the right to conclude a license agreement on the use of this
@@ -146,3 +154,4 @@ Klíčová slova:
 
 %%% Further pages will be numbered
 \pagestyle{plain}
+\pagenumbering{arabic}

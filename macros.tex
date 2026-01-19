@@ -8,33 +8,9 @@
 \def\TypePhD{phd}
 \def\TypeRig{rig}
 
-\ifx\ThesisType\TypeBc
-\def\ThesisTypeName{bachelor}
-\def\ThesisTypeTitle{BACHELOR THESIS}
-\def\ThesisTypeCSGenitive{bakalářské}
-\fi
-
-\ifx\ThesisType\TypeMgr
-\def\ThesisTypeName{master}
-\def\ThesisTypeTitle{MASTER THESIS}
-\def\ThesisTypeCSGenitive{diplomové}
-\fi
-
-\ifx\ThesisType\TypePhD
 \def\ThesisTypeName{doctoral}
 \def\ThesisTypeTitle{DOCTORAL THESIS}
 \def\ThesisTypeCSGenitive{disertační}
-\fi
-
-\ifx\ThesisType\TypeRig
-\def\ThesisTypeName{rigorosum}
-\def\ThesisTypeTitle{RIGOROSUM THESIS}
-\def\ThesisTypeCSGenitive{rigorozní}
-\fi
-
-\ifx\ThesisTypeName\undefined
-\PackageError{thesis}{Unknown thesis type.}{Please check the definition of ThesisType in metadata.tex.}
-\fi
 
 %%% Switches based on study program language
 
@@ -73,8 +49,19 @@
 \addcontentsline{toc}{chapter}{#1}
 }
 
+\def\secwithtoc#1{
+\section*{#1}
+\addcontentsline{toc}{section}{#1}
+}
+
 % Draw black "slugs" whenever a line overflows, so that we can spot it easily.
-\overfullrule=1mm
+\overfullrule=5mm
+\emergencystretch=1cm
+
+\AtBeginDocument{
+\hyphenation{SOM-Hun-ter}
+\hyphenation{Wi-de-spread}
+}
 
 %%% Macros for definitions, theorems, claims, examples, ... (requires amsthm package)
 
@@ -82,7 +69,10 @@
 \newtheorem{thm}{Theorem}
 \newtheorem{lemma}[thm]{Lemma}
 \newtheorem{claim}[thm]{Claim}
+
+\theoremstyle{plain}
 \newtheorem{defn}{Definition}
+\newtheorem{problem}{Problem}
 
 \theoremstyle{remark}
 \newtheorem*{cor}{Corollary}
@@ -115,40 +105,53 @@
   keywordstyle=\color{blue!75!black}}
 \fi
 
-% Floating listings, used in the same way as the figure environment
-\ifcsname DeclareNewFloatType\endcsname
-\DeclareNewFloatType{listing}{}
-\floatsetup[listing]{style=ruled}
-\floatname{listing}{Program}
-\fi
-
 %%% The field of all real and natural numbers
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\N}{\mathbb{N}}
+\newcommand{\Asymp}[1]{\ensuremath{\mathcal{O}\left(#1\right)}}
 
 %%% Useful operators for statistics and probability
 \DeclareMathOperator{\pr}{\textsf{P}}
-\DeclareMathOperator{\E}{\textsf{E}}
+\DeclareMathOperator{\E}{\textsf{E}\,}
 \DeclareMathOperator{\var}{\textrm{var}}
 \DeclareMathOperator{\sd}{\textrm{sd}}
+\DeclareMathOperator{\subs}{\textsc{Sub}}
 
-%%% Transposition of a vector/matrix
-\newcommand{\T}[1]{#1^\top}
+% contributions
+\newcounter{contribution}
+\def\contribution#1{
+\refstepcounter{contribution}
+\chapter*{Contribution \arabic{contribution}\\#1}
+\addcontentsline{toc}{chapter}{Contribution \arabic{contribution}\\#1}
+}
 
-%%% Asymptotic "O"
-\def\O{\mathcal{O}}
-
-%%% Various math goodies
-\newcommand{\goto}{\rightarrow}
-\newcommand{\gotop}{\stackrel{P}{\longrightarrow}}
-\newcommand{\maon}[1]{o(n^{#1})}
-\newcommand{\abs}[1]{\left|{#1}\right|}
-\newcommand{\dint}{\int_0^\tau\!\!\int_0^\tau}
-\newcommand{\isqr}[1]{\frac{1}{\sqrt{#1}}}
+\crefname{contribution}{contribution}{contributions}
+\Crefname{contribution}{Contribution}{Contributions}
 
 %%% TODO items: remove before submitting :)
 \newcommand{\xxx}[1]{\textcolor{red!}{#1}}
 
+\setlength{\marginparpush}{0pt}
+\setlength{\marginparsep}{2em}
+
+\newcommand{\contribmark}[1]{%
+\hyperref[#1]{\begin{tikzpicture}[ultra thick, font=\sf\bfseries]
+\node[regular polygon, regular polygon sides=3, rounded corners=0.3ex, inner sep=.3ex,draw] (ll) {\ref*{#1}};
+\end{tikzpicture}}}
+\newcommand{\margincontrib}[1]{\marginnote{\contribmark{#1}}}
+
+\newcommand{\publishedas}[1]{\begin{description}\item[Published as]\begin{refsection}\fullcite{#1}\end{refsection}\end{description}}
+
+% ONLINE VERSION without the manuscripts
+\newif\ifonlineversion
+\onlineversiontrue
+%\onlineversionfalse
+\newcommand\onlineomit[1]{\ifonlineversion\vfill\begin{center}\fbox{\parbox{16.5em}{\footnotesize A re-printed manuscript that would appear here is omitted in the electronic version of the thesis.}}\end{center}\vfill\else#1\fi}
+
+% publication contributions
+\def\contF{\begin{tikzpicture}\fill circle(0.666ex);\end{tikzpicture}}
+\def\contP{\begin{tikzpicture}\begin{scope}[rotate=90]\clip circle(0.666ex);\fill (-0.666ex,-0.666ex) rectangle(-0.1ex,0.666ex);\end{scope}\draw circle(0.666ex);\end{tikzpicture}}
+\def\contN{\begin{tikzpicture}\draw[densely dotted] circle(0.666ex);\end{tikzpicture}}
 %%% Detailed settings of bibliography
 
 \ifx\citet\undefined\else
@@ -180,3 +183,25 @@
 \DeclareDelimFormat[textcite]{finalnamedelim}{\space and~}
 
 \fi
+
+% latexdiff preamble commands:
+%DIF UNDERLINE PREAMBLE %DIF PREAMBLE
+\RequirePackage[normalem]{ulem} %DIF PREAMBLE
+\RequirePackage{color}\definecolor{RED}{rgb}{1,0,0}\definecolor{BLUE}{rgb}{0,0,1} %DIF PREAMBLE
+\providecommand{\DIFadd}[1]{{\protect\color{green!50!black}\uwave{#1}}} %DIF PREAMBLE
+\providecommand{\DIFdel}[1]{{\protect\color{red}\sout{#1}}}                      %DIF PREAMBLE
+%DIF SAFE PREAMBLE %DIF PREAMBLE
+\providecommand{\DIFaddbegin}{} %DIF PREAMBLE
+\providecommand{\DIFaddend}{} %DIF PREAMBLE
+\providecommand{\DIFdelbegin}{} %DIF PREAMBLE
+\providecommand{\DIFdelend}{} %DIF PREAMBLE
+\providecommand{\DIFmodbegin}{} %DIF PREAMBLE
+\providecommand{\DIFmodend}{} %DIF PREAMBLE
+%DIF FLOATSAFE PREAMBLE %DIF PREAMBLE
+\providecommand{\DIFaddFL}[1]{\DIFadd{#1}} %DIF PREAMBLE
+\providecommand{\DIFdelFL}[1]{\DIFdel{#1}} %DIF PREAMBLE
+\providecommand{\DIFaddbeginFL}{} %DIF PREAMBLE
+\providecommand{\DIFaddendFL}{} %DIF PREAMBLE
+\providecommand{\DIFdelbeginFL}{} %DIF PREAMBLE
+\providecommand{\DIFdelendFL}{} %DIF PREAMBLE
+

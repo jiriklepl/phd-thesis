@@ -1,10 +1,32 @@
-all: thesis.pdf abstract-cs.pdf abstract-en.pdf
 
-%.pdf: force
-	latexmk $*.tex
+all: thesis.pdf abstract-en.pdf abstract-cs.pdf
+
+# LaTeX must be run multiple times to get references right
+thesis.pdf: thesis.tex $(wildcard *.tex) refs.bib myrefs.bib thesis.xmpdata
+	lualatex $<
+	biber thesis
+	lualatex $<
+	lualatex $<
+
+abstract-%.pdf: abstract-%.tex
+	lualatex $<
 
 clean:
-	rm -rf tmp
-	rm -f thesis.pdf abstract.pdf abstract-cs.pdf abstract-en.pdf
+	rm -f \
+		*.aux \
+		*.bbl \
+		*.blg \
+		*.dvi \
+		*.fls \
+		*.fdb_latexmk \
+		*.synctex.gz \
+		*.lof \
+		*.log \
+		*.lot \
+		*.out \
+		*.toc \
+		*.xmpi \
+		;
+	rm -f thesis.pdf
 
-.PHONY: force all clean
+.PHONY: all clean

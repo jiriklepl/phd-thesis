@@ -16,6 +16,7 @@
 *.nls
 *.out
 /*.pdf
+!thesis-instructions-cs.pdf
 *.run.xml
 pdfa.xmpi
 *.snm

@@ -56,7 +56,7 @@
 
 % Draw black "slugs" whenever a line overflows, so that we can spot it easily.
 \overfullrule=5mm
-\emergencystretch=1cm
+\emergencystretch=1em
 
 \AtBeginDocument{
 \hyphenation{SOM-Hun-ter}
@@ -130,6 +130,11 @@
 
 %%% TODO items: remove before submitting :)
 \newcommand{\xxx}[1]{\textcolor{red!}{#1}}
+
+\newenvironment{XXX}
+  {\par\color{red}}
+  {\par}
+
 
 \setlength{\marginparpush}{0pt}
 \setlength{\marginparsep}{2em}

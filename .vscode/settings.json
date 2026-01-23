@@ -10,6 +10,18 @@
     ],
 
     "[latex]" : {
-        "editor.wordWrap": "on"
+        "editor.wordWrap": "on",
+        "files.encoding": "utf8",
+        "files.trimTrailingWhitespace": true,
+        "files.trimFinalNewlines": true,
+        "files.insertFinalNewline": true,
+    },
+
+    "[bibtex]": {
+        "editor.wordWrap": "on",
+        "files.encoding": "utf8",
+        "files.trimTrailingWhitespace": true,
+        "files.trimFinalNewlines": true,
+        "files.insertFinalNewline": true,
     }
 }

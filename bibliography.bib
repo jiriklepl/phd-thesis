@@ -22,20 +22,20 @@
 
 % TODO: change to the actual reference when available
 @inproceedings{klepl2026shifting,
-  title = {Shifting Automated Code Optimization Paradigms with Large Language Models},
-  author = {Klepl, Ji{\v{r}}{\'\i} and Brabec, Maty{\'a}{\v{s}} and Kruli{\v{s}}, Martin},
-  booktitle = {International Conference on High Performance Computing},
-  year={2026},
-  organization={Springer}
+  title        = {Shifting Automated Code Optimization Paradigms with Large Language Models},
+  author       = {Klepl, Ji{\v{r}}{\'\i} and Brabec, Maty{\'a}{\v{s}} and Kruli{\v{s}}, Martin},
+  booktitle    = {International Conference on High Performance Computing},
+  year         = {2026},
+  organization = {Springer}
 }
 
 @inproceedings{brabec2025tutoring,
-  title={Tutoring {LLM} into a Better {CUDA} Optimizer},
-  author={Brabec, Maty{\'a}{\v{s}} and Klepl, Ji{\v{r}}{\'\i} and T{\"o}pfer, Michal and Kruli{\v{s}}, Martin},
-  booktitle={European Conference on Parallel Processing},
-  pages={250--263},
-  year={2025},
-  organization={Springer}
+  title        = {Tutoring {LLM} into a Better {CUDA} Optimizer},
+  author       = {Brabec, Maty{\'a}{\v{s}} and Klepl, Ji{\v{r}}{\'\i} and T{\"o}pfer, Michal and Kruli{\v{s}}, Martin},
+  booktitle    = {European Conference on Parallel Processing},
+  pages        = {250--263},
+  year         = {2025},
+  organization = {Springer}
 }
 
 @article{brabec2025cellato,
@@ -81,5 +81,106 @@
 }
 
 % ----------------------------------------------------------------------------
-% SOME OTHER REFERENCES
+% General Code Optimization References
 % ----------------------------------------------------------------------------
+
+@article{grosser2012polly,
+  title     = {{P}olly---Performing Polyhedral Optimizations on a Low-Level Intermediate Representation},
+  author    = {Grosser, Tobias and Groesslinger, Armin and Lengauer, Christian},
+  journal   = {Parallel Processing Letters},
+  volume    = {22},
+  number    = {04},
+  pages     = {1250010},
+  year      = {2012},
+  publisher = {World Scientific}
+}
+
+@inproceedings{pop2006graphite,
+  title     = {{GRAPHITE}: Polyhedral Analyses and Optimizations for {GCC}},
+  author    = {Pop, Sebastian and Cohen, Albert and Bastoul, C{\'e}dric and Girbal, Sylvain and Silber, Georges-Andr{\'e} and Vasilache, Nicolas},
+  booktitle = {Proceedings of the 2006 GCC Developers Summit},
+  volume    = {6},
+  pages     = {90--91},
+  year      = {2006}
+}
+
+@inproceedings{trifunovic2010graphite,
+  title     = {{GRAPHITE} Two Years After: First Lessons Learned from Real-World Polyhedral Compilation},
+  author    = {Trifunovic, Konrad and Cohen, Albert and Edelsohn, David and Li, Feng and Grosser, Tobias and Jagasia, Harsha and Ladelsky, Razya and Pop, Sebastian and Sj{\"o}din, Jan and Upadrasta, Ramakrishna},
+  booktitle = {GCC Research Opportunities Workshop (GROW'10)},
+  year      = {2010}
+}
+
+@article{mullapudi2015polymage,
+  title     = {{P}oly{M}age: Automatic Optimization for Image Processing Pipelines},
+  author    = {Mullapudi, Ravi Teja and Vasista, Vinay and Bondhugula, Uday},
+  journal   = {ACM SIGARCH Computer Architecture News},
+  volume    = {43},
+  number    = {1},
+  pages     = {429--443},
+  year      = {2015},
+  publisher = {ACM New York, NY, USA}
+}
+
+@inproceedings{bondhugula2008pluto,
+  title     = {{PLuTo}: A Practical and Fully Automatic Polyhedral Program Optimization System},
+  author    = {Bondhugula, Uday and Hartono, Albert and Ramanujam, J and Sadayappan, P},
+  booktitle = {Proceedings of the ACM SIGPLAN 2008 Conference on Programming Language Design and Implementation (PLDI 08), Tucson, AZ (June 2008). Citeseer},
+  volume    = {146},
+  year      = {2008}
+}
+
+% ----------------------------------------------------------------------------
+% Abstractions References
+% ----------------------------------------------------------------------------
+
+@article{ragan2013halide,
+  title     = {{H}alide: A Language and Compiler for Optimizing Parallelism, Locality, and Recomputation in Image Processing Pipelines},
+  author    = {Ragan-Kelley, Jonathan and Barnes, Connelly and Adams, Andrew and Paris, Sylvain and Durand, Fr{\'e}do and Amarasinghe, Saman},
+  journal   = {Acm Sigplan Notices},
+  volume    = {48},
+  number    = {6},
+  pages     = {519--530},
+  year      = {2013},
+  publisher = {ACM New York, NY, USA}
+}
+
+@inproceedings{baghdadi2019tiramisu,
+  title        = {{T}iramisu: A Polyhedral Compiler for Expressing Fast and Portable Code},
+  author       = {Baghdadi, Riyadh and Ray, Jessica and Romdhane, Malek Ben and Del Sozzo, Emanuele and Akkas, Abdurrahman and Zhang, Yunming and Suriana, Patricia and Kamil, Shoaib and Amarasinghe, Saman},
+  booktitle    = {2019 IEEE/ACM International Symposium on Code Generation and Optimization (CGO)},
+  pages        = {193--205},
+  year         = {2019},
+  organization = {IEEE}
+}
+
+@inproceedings{ikarashi2022exocompilation,
+  title     = {Exocompilation for Productive Programming of Hardware Accelerators},
+  author    = {Ikarashi, Yuka and Bernstein, Gilbert Louis and Reinking, Alex and Genc, Hasan and Ragan-Kelley, Jonathan},
+  booktitle = {Proceedings of the 43rd ACM SIGPLAN International Conference on Programming Language Design and Implementation},
+  pages     = {703--718},
+  year      = {2022}
+}
+
+% ----------------------------------------------------------------------------
+% AutoTuning References
+% ----------------------------------------------------------------------------
+
+@inproceedings{ansel2014opentuner,
+  title     = {{O}pen{T}uner: An Extensible Framework for Program Autotuning},
+  author    = {Ansel, Jason and Kamil, Shoaib and Veeramachaneni, Kalyan and Ragan-Kelley, Jonathan and Bosboom, Jeffrey and O'Reilly, Una-May and Amarasinghe, Saman},
+  booktitle = {Proceedings of the 23rd International Conference on Parallel Architectures and Compilation},
+  pages     = {303--316},
+  year      = {2014}
+}
+
+% ----------------------------------------------------------------------------
+% LLM and Code Optimization References
+% ----------------------------------------------------------------------------
+
+@article{merouani2025agentic,
+  title   = {Agentic Auto-Scheduling: An Experimental Study of {LLM}-Guided Loop Optimization},
+  author  = {Merouani, Massinissa and Bernou, Islem Kara and Baghdadi, Riyadh},
+  journal = {arXiv preprint arXiv:2511.00592},
+  year    = {2025}
+}

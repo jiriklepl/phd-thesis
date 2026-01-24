@@ -154,12 +154,80 @@
   organization = {IEEE}
 }
 
+@inproceedings{chen2018tvm,
+  title     = {{TVM}: An Automated End-to-End Optimizing Compiler for Deep Learning},
+  author    = {Chen, Tianqi and Moreau, Thierry and Jiang, Ziheng and Zheng, Lianmin and Yan, Eddie and Shen, Haichen and Cowan, Meghan and Wang, Leyuan and Hu, Yuwei and Ceze, Luis and others},
+  booktitle = {13th USENIX Symposium on Operating Systems Design and Implementation (OSDI 18)},
+  pages     = {578--594},
+  year      = {2018}
+}
+
+@inproceedings{henriksen2017futhark,
+  title     = {{F}uthark: purely functional {GPU}-programming with nested parallelism and in-place array updates},
+  author    = {Henriksen, Troels and Serup, Niels GW and Elsman, Martin and Henglein, Fritz and Oancea, Cosmin E},
+  booktitle = {Proceedings of the 38th ACM SIGPLAN Conference on Programming Language Design and Implementation},
+  pages     = {556--571},
+  year      = {2017}
+}
+
+@article{pheatt2008intel,
+  title     = {Intel{\textregistered} Threading Building Blocks},
+  author    = {Pheatt, Chuck},
+  journal   = {Journal of Computing Sciences in Colleges},
+  volume    = {23},
+  number    = {4},
+  pages     = {298--298},
+  year      = {2008},
+  publisher = {Consortium for Computing Sciences in Colleges}
+}
+
+@article{dagum1998openmp,
+  title     = {{OpenMP}: An Industry Standard {API} for Shared-Memory Programming},
+  author    = {Dagum, Leonardo and Menon, Ramesh},
+  journal   = {IEEE computational science and engineering},
+  volume    = {5},
+  number    = {1},
+  pages     = {46--55},
+  year      = {1998},
+  publisher = {IEEE}
+}
+
 @inproceedings{ikarashi2022exocompilation,
   title     = {Exocompilation for Productive Programming of Hardware Accelerators},
   author    = {Ikarashi, Yuka and Bernstein, Gilbert Louis and Reinking, Alex and Genc, Hasan and Ragan-Kelley, Jonathan},
   booktitle = {Proceedings of the 43rd ACM SIGPLAN International Conference on Programming Language Design and Implementation},
   pages     = {703--718},
   year      = {2022}
+}
+
+@article{trott2021kokkos,
+  title     = {{K}okkos 3: Programming Model Extensions for the Exascale Era},
+  author    = {Trott, Christian R and Lebrun-Grandi{\'e}, Damien and Arndt, Daniel and Ciesko, Jan and Dang, Vinh and Ellingwood, Nathan and Gayatri, Rahulkumar and Harvey, Evan and Hollman, Daisy S and Ibanez, Dan and others},
+  journal   = {IEEE Transactions on Parallel and Distributed Systems},
+  volume    = {33},
+  number    = {4},
+  pages     = {805--817},
+  year      = {2021},
+  publisher = {IEEE}
+}
+
+@inproceedings{beckingsale2019raja,
+  title        = {{RAJA}: Portable Performance for Large-Scale Scientific Applications},
+  author       = {Beckingsale, David A and Burmark, Jason and Hornung, Rich and Jones, Holger and Killian, William and Kunen, Adam J and Pearce, Olga and Robinson, Peter and Ryujin, Brian S and Scogland, Thomas RW},
+  booktitle    = {2019 ieee/acm international workshop on performance, portability and productivity in hpc (p3hpc)},
+  pages        = {71--81},
+  year         = {2019},
+  organization = {IEEE}
+}
+
+@software{thakkar2023cutlass,
+  title   = {{CUTLASS}},
+  author  = {Thakkar, Vijay and Ramani, Pradeep and Cecka, Cris and Shivam, Aniket and Lu, Honghao and Yan, Ethan and Kosaian, Jack and Hoemmen, Mark and Wu, Haicheng and Kerr, Andrew and Nicely, Matt and Merrill, Duane and Blasig, Dustyn and Atluri, Aditya and Qiao, Fengqi and Majcher, Piotr and Springer, Paul and Hohnerbach, Markus and Wang, Jin and Gupta, Manish},
+  license = {BSD-3-Clause},
+  month   = jan,
+  url     = {https://github.com/NVIDIA/cutlass},
+  version = {3.0.0},
+  year    = {2023}
 }
 
 % ----------------------------------------------------------------------------
@@ -172,6 +240,53 @@
   booktitle = {Proceedings of the 23rd International Conference on Parallel Architectures and Compilation},
   pages     = {303--316},
   year      = {2014}
+}
+
+@inproceedings{akiba2019optuna,
+  title     = {{O}ptuna: A Next-Generation Hyperparameter Optimization Framework},
+  author    = {Akiba, Takuya and Sano, Shotaro and Yanase, Toshihiko and Ohta, Takeru and Koyama, Masanori},
+  booktitle = {Proceedings of the 25th ACM SIGKDD international conference on knowledge discovery \& data mining},
+  pages     = {2623--2631},
+  year      = {2019}
+}
+
+@inproceedings{rasch2018atf,
+  title     = {{ATF}: A Generic Auto-Tuning Framework},
+  author    = {Rasch, Ari and Gorlatch, Sergei},
+  booktitle = {Proceedings of the 27th International Symposium on High-Performance Parallel and Distributed Computing},
+  pages     = {3--4},
+  year      = {2018}
+}
+
+@article{wu2025ytopt,
+  title     = {{ytopt}: Autotuning Scientific Applications for Energy Efficiency at Large Scales},
+  author    = {Wu, Xingfu and Balaprakash, Prasanna and Kruse, Michael and Koo, Jaehoon and Videau, Brice and Hovland, Paul and Taylor, Valerie and Geltz, Brad and Jana, Siddhartha and Hall, Mary},
+  journal   = {Concurrency and Computation: Practice and Experience},
+  volume    = {37},
+  number    = {1},
+  pages     = {e8322},
+  year      = {2025},
+  publisher = {Wiley Online Library}
+}
+
+@article{van2019kernel,
+  title     = {{K}ernel {T}uner: A search-optimizing {GPU} code auto-tuner},
+  author    = {van Werkhoven, Ben},
+  journal   = {Future Generation Computer Systems},
+  volume    = {90},
+  pages     = {347--358},
+  year      = {2019},
+  publisher = {Elsevier}
+}
+
+@online{trott2022mdspan,
+  title     = {{MDSPAN}},
+  author    = {Trott, Christian and Hollman, Daisy S. and Lebrun-Grandie, Damien and Hoemmen, Mark and Sunderland, Daniel and Edwards, H. Carter and Adelstein Lelbach, Bryce and Bianco, Mauro and Sander, Ben and Iliopoulos, Athanasios and Michopoulos, John and Liber, Nevin},
+  month     = jul,
+  year      = {2022},
+  url       = {https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p0009r18.html},
+  howpublished = {ISO/IEC JTC1/SC22/WG21 paper},
+  number    = {P0009R18}
 }
 
 % ----------------------------------------------------------------------------

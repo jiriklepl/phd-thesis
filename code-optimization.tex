@@ -1,6 +1,8 @@
 \chapter{Code optimization}\label{chap:code-optimization}
 
 \begin{XXX}
+TODO: Delame prehled do sirky
+
 \textbf{We need to better highlight memory layouts and memory access patterns here}
 
 This is a background chapter that overviews common code optimization techniques used in high-performance computing.
@@ -10,16 +12,35 @@ It starts with outlining general hardware considerations, including CPU and GPU 
 Next, we discuss the most common code optimization techniques used in high-performance computing.
 \end{XXX}
 
+% TODO: this is just a braindump
+In high-performance computing, code optimization is crucial for achieving efficient execution of programs on modern hardware architectures. The difference between a well-optimized code and a na\"{\i}ve implementation can be (TODO some actual number). In our work, we primarily focus on improving memory access patterns and parallelizing numerical computations on multidimensional arrays, performed in nested loops, and computed on clusters with modern multicore CPUs and GPU accelerators.
+
+The impact of memory access patterns on performance is caused by memory hierarchies present in modern hardware architectures, which include multiple levels of caches and different types of memory (e.g., global, shared, local memory on GPUs), and, on distributed systems, communication overheads between nodes (e.g., via MPI). (TODO cite some sources) Different systems often require different optimization strategies or parameter tuning to achieve optimal performance. Complexity is further increased by features such as cache coherence protocols, prefetching mechanisms, coalesced memory accesses on GPUs, and non-uniform memory access (NUMA) effects on multicore CPUs and clusters. (TODO cite some sources, rewrite the dump)
+
+% \xxx{Our work operates on the C++ programming language, using template metaprogramming techniques to abstract the actual memory access patterns in a zero-overhead manner.}
+
+% TODO: maybe move to later?
+The optimization techniques targeted by our work comprise data locality optimizations and parallelization strategies, which mainly involves data layout and loop transformations such as tiling (blocking) or interchange directly in the C++ source code via abstractions that leverage template metaprogramming.
+
 
 \section{General hardware considerations}\label{sec:general-hardware-considerations}
 
+As we focus on optimizing code for modern multicore CPUs and GPU accelerators (possibly in clusters), we first outline harware features relevant to code optimization in the context of our work. % TODO rewrite
+
 \subsection{CPU architecture}\label{subsec:cpu-architecture}
 
+CPU architectures are typically optimized for serial processing, possibly in multi-threaded scenarios. The architectures contain multiple levels of cache (L1, L2, L3) to reduce the latency of memory accesses, with nontrivial cache coherence protocols and costly synchronization mechanisms. % TODO find sources to rewrite this better
+Modern CPUs also support SIMD (Single Instruction, Multiple Data) instructions to perform vectorized operations on multiple data elements concurrently that can significantly speed up numerical computations when the data is properly aligned and the data can be organized so contiguous blocks of data have no inner dependencies. This is typically achieved via data layout transformations and loop unrolling techniques following loop transformations such as loop interchange, tiling (blocking), or skewing. % TODO this is quite messy, rewrite
 
 \subsection{GPU architecture}\label{subsec:gpu-architecture}
 
+\xxx{We discuss this quite a lot in the JPDC paper, read it for inspiration}
 
 \section{Optimization techniques}\label{sec:optimization-techniques}
+
+\begin{XXX}
+TODO tiling/blocking, loop unrolling, etc.
+\end{XXX}
 
 \subsection{Data locality optimizations}\label{sec:data-locality-optimizations}
 

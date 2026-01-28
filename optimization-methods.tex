@@ -21,6 +21,11 @@ Discuss polyhedral optimization frameworks:
 \end{itemize}
 \end{XXX}
 
+Polyhedral optimization is application of integer linear algebra to optimize loop nests with affine bounds and affine memory accesses. The main idea is to represent the iteration space of loops, as well as memory accesses and dependencies, using polyhedra. This representation allows, for example, to find hyperplanes orthogonal to data dependencies, that can represent parallelizable loops; or to find transformations of the iteration space that improve data locality or enable vectorization.
+
+Many works iterate on the basic polyhedral model to extend its applicability or improve the optimization results by combining it with cost models, heuristics, or machine learning techniques (TODO: find some references). Some works show benefits of combining polyhedral optimization with autotuning (TODO: find some references) or human insights (TODO: find some references). \xxx{Find works doing domain-specific optimizations using polyhedral model (e.g., PolyMage) and discuss here.}
+
+
 \section{Autotuning}\label{sec:autotuning}
 
 \begin{XXX}
@@ -36,6 +41,10 @@ Discuss autotuning techniques and frameworks:
 \end{itemize}
 \end{XXX}
 
+Autotuning techniques are powerful methods for optimizing performance of applications based on empirical performance measurements or cost models. They involve data-driven methods for exploring large parameter spaces to find optimal configurations. They can control various parameters, such as algorithmic choices, data layouts, tiling sizes, unrolling factors, and parallelization strategies; or even tune build configurations and compiler flags.
+
+\xxx{Add more text here. Discuss some different approaches (e.g., the annealing/swarm/genetic algorithms vs Bayesian optimization vs reinforcement learning vs whatnot; do not forget grid-search, hill-climbing, random search, \ldots). References to papers that use autotuning and show its benefits. Find the Halide paper with autotuning.}
+
 \section{Abstractions}\label{sec:abstractions}
 
 \begin{XXX}
@@ -49,8 +58,26 @@ Need to mention the following abstractions:
   \item Futhark~\cite{henriksen2017futhark}
   \item Exo~\cite{ikarashi2022exocompilation}
   \item Cutlass/Cute~\cite{thakkar2023cutlass}
-  \item Kokkos, RAJA~\cite{trott2021kokkos,beckingsale2019raja}
+  \item Kokkos, RAJA~\cite{trott2021kokkos,beckingsale2019raja}, SYCL/DPC++ (TODO: add to the bib file), oneAPI (tbb, \ldots; TODO: add to the bib file), Thrust (TODO: add to the bib file)
   \item mdspan (Kokkos, C++23)~\cite{trott2022mdspan}
   \item others (TODO: literature review)
 \end{itemize}
 \end{XXX}
+
+Flexible abstractions allowing manipulation of data layouts and iteration orders have been the subject of extensive development. They provide a means to optimize performance to different hardware architectures without needing to change the core algorithmic logic. These abstractions can also represent flexible API layers for libraries (such as linear algebra libraries; TODO cite).
+
+We can broadly categorize these abstractions into the following groups:
+
+\begin{description}
+  \item[Domain-specific languages (DSLs):]\label{des:dsl} These are specialized programming languages designed to express computations in specific domains, such as image processing (Halide~\cite{ragan2013halide}), tensor computations (Tiramisu~\cite{baghdadi2019tiramisu}), or array programming (Futhark~\cite{henriksen2017futhark}). They rely on sophisticated compilers or runtime systems to generate optimized code for the target hardware. These DSLs often sacrifice some generality for better analysis and optimization opportunities --- for example, Halide has a fixed computation model based on pipelines of processing stages that has limited expressivity for nested control flow or data-dependent computations.
+  \item[Annotation-based tools:]\label{des:annotation-based-tools} These tools, relying on compiler extensions or external preprocessors, allow developers to annotate their code with optimization directives. Examples include OpenMP for parallelization and pragmas for loop transformations. Compared to DSLs, these tools operate on top of the target language (e.g., C/C++) and maintain higher generality, or at least compatibility with the host language. However, they may be also limited by specific semantics of the host language. % TODO: remove contradictions etc
+  % TODO: the following name is not final (was named "Native tools" in the abstractions paper; I am thinking about breaking it into two categories: parallelization frameworks and libraries vs _something_ abstractions)
+  \item[Parallelization frameworks and libraries:]\label{des:parallelization-frameworks} These frameworks provide abstractions enabling developers to run computations in parallel using high-level constructs. Examples include Kokkos~\cite{trott2021kokkos}, RAJA~\cite{beckingsale2019raja}, and SYCL/DPC++.% TODO: maybe more yapping to balance the other items
+\end{description}
+
+These abstractions play a crucial role in optimizing applications for modern high-performance computing, as the scale and complexity of diverse hardware architectures continue to grow and traditional low-level optimization techniques are not sufficient to achieve optimal performance. The abstractions enable developers to apply optimizations based on domain knowledge, empirical performance data, or autotuning techniques. Compared to hand-tuned low-level code, maintainability and portability of high-level abstractions is significantly better and the development time is reduced. Many of these abstractions also support advanced validation of correctness of the code transformations.
+
+
+\section{Hybrid approaches}\label{sec:hybrid-approaches}
+
+\xxx{This section makes no sense.}

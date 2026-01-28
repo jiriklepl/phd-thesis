@@ -4,6 +4,14 @@
 Need to add motivation, maybe formal definitions, abstract principles, etc.\ before introducing the actual Noarr library.
 \end{XXX}
 
+The Noarr library, first introduced in~\cite{vsmelko2022astute}, is a C++ library that provides layout-agnostic abstractions for representing and manipulating multidimensional data structures and their traversals.
+
+Formally, the abstractions are based on partial functions on the index space and memory space of multidimensional arrays. Each such partial function is represented by a primitive building block called a \emph{proto-structure} --- examples of proto-structures include \texttt{scalar} that represents a single value, \texttt{array} that represents a contiguous array of elements represented by another structure, or \texttt{into\_blocks} that represents a view of another structure that divides one of its dimensions into blocks of a given size.
+
+The composable design of Noarr bears resemblance to views in the ranges library in C++20 (TODO cite); however, while being composable in a hierarchical manner, Noarr structures allow better flexibility and type-safety for multidimensional data structures by representing the index space using named dimensions that are resolved at compile time.
+
+Since the index space is represented using named dimensions, all queries on the structure, such as obtaining the size of a dimension, or the memory offset of an element at a given index, are type-safe and checked at compile time. In contrast to traditional positional indexing of multidimensional arrays (e.g., \lstinline{data[i][j]}) that is prone to errors due wrong pairing of indices to dimensions, type-safe indexing using named dimensions (e.g., \lstinline{data[idx<'x'>(i) + idx<'y'>(j)]}) ensures that the indices are paired with the correct dimensions. This also ensures that the API of memory accesses is self-documenting and independent of the actual layout of the data in memory.
+
 \subsection{Noarr Structures}\label{sec:noarr-structures}
 
 \xxx{This will probably cite astute approach~\cite{vsmelko2022astute}.}
@@ -11,6 +19,31 @@ Need to add motivation, maybe formal definitions, abstract principles, etc.\ bef
 \begin{XXX}
 Very nice pictures of assembling Noarr structures from primitive proto-structure building blocks.
 \end{XXX}
+
+Noarr structures are built by composing primitive proto-structures in a hierarchical manner. Each proto-structure represents a transformation of the index space and memory space of the nested \emph{sub-structure}.
+
+Querying a specific feature of a Noarr structure, such as obtaining the memory offset of an element at a given index, is expressed as a function that takes the formal arguments of the query and a \emph{state} argument representing the index space, i.e., the lengths of the dimensions and the input indices (thus, an offset query takes no formal arguments, only the state). The proto-structure defines how the state is propagated to the sub-structure (\emph{sub-state}) and the result of the query is dependent on the formal arguments and the contents of the state, and further queries on the sub-structure using the sub-state (if needed). Some proto-structures generalize this idea by having multiple sub-structures (e.g., the \texttt{tuple} proto-structure), choosing the appropriate sub-structure based on the state.
+
+% TODO: do a picture
+For example, querying the offset of an element in an \texttt{array} proto-structure with size~$N$, dimension~\lstinline{'x'}, and a sub-structure~$S$, given an index state $s$, proceeds as follows:
+
+\begin{enumerate}
+  \item Extract the index~$i$ for dimension~\lstinline{'x'}
+  \item Compute the sub-state~$s'$ by removing dimension~\lstinline{'x'} from~$s$
+  \item Query the size~$sz$ of the sub-structure~$S$ using the sub-state~$s'$
+  \item Compute the offset as $i \cdot sz + \text{offset}_S(s')$, where $\text{offset}_S(s')$ is a query of the offset on the sub-structure~$S$ using the sub-state~$s'$
+\end{enumerate}
+
+\xxx{Since sub-structure queries always use sub-states, we can conceptually define each query on a Noarr structure as a composition of the features of the sub-structure (the propagation of the sub-state is implicit), formal arguments, and the contents of the state. The sub-state is defined as a transformation of the state.}
+
+The notion of sub-structure and (sub-)state provides a clean framework for defining all queries on Noarr structures. In the Noarr library, most of the queries are implemented as templated member functions of the structure classes.
+
+\xxx{Many proto-structures define only the sub-state, and just pass the queries to their sub-structure(s) without any additional logic. Examples include \texttt{set\_length} that defines the length of a dimension, \texttt{rename} that renames a dimension of the sub-structure, \texttt{span} that restricts the iteration space of a dimension to a given range. Some proto-structures, like \texttt{into\_blocks} that divides a dimension into blocks of a given size, define only some queries, and pass the rest to the sub-structure (\texttt{into\_blocks} defines custom logic only for length queries).}
+
+% TODO: we need some pretty pictures here
+The second main feature of Noarr structures is their \emph{signature}. A signature is a representation of the hierarchy of the dimensions of the structure. It is a necessary component for specifying intended traversals of the structures and they also allow for improved type-safety of the structures.
+A signature can be interpreted as a tree where each node represents a dimension and its children represent nested dimensions.
+The signature of a given Noarr structure results from a transformation of the signature of its sub-structure(s) based on the semantics of the proto-structure. For example, the signature of an \texttt{array} structure is represented by a root node representing the array dimension, with a single child representing the signature of the sub-structure.
 
 
 \subsection{Noarr Traversers}\label{sec:noarr-traversals}

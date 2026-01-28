@@ -1,12 +1,15 @@
 {
     "cSpell.words": [
+        "autotuning",
         "Brabec",
         "Cellato",
-
         "Klepl",
+        "Kokkos",
         "Noarr",
+        "parallelizable",
+        "SYCL",
         "Traverser",
-        "Traversers",
+        "Traversers"
     ],
 
     "[latex]" : {
@@ -23,5 +26,7 @@
         "files.trimTrailingWhitespace": true,
         "files.trimFinalNewlines": true,
         "files.insertFinalNewline": true,
-    }
+    },
+
+    "todo-tree.regex.regex": "(//|%|#|<!--|;|/\\*|^|^[ \\t]*(-|\\d+.))\\s*($TAGS)"
 }

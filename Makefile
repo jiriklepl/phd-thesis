@@ -1,3 +1,4 @@
+#!/usr/bin/make -f
 
 all: thesis.pdf abstract-en.pdf abstract-cs.pdf
 
@@ -30,6 +31,6 @@ clean:
         *.xmpdata \
 		*.xmpi \
 		;
-	rm -f thesis.pdf
+	rm -f thesis.pdf abstract-en.pdf abstract-cs.pdf
 
 .PHONY: all clean

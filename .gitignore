@@ -25,6 +25,8 @@ pdfa.xmpi
 *.synctex(busy)
 thesis-blx.bib
 thesis-run.xml
+thesis-archive.zip
+thesis-archive.tar.gz
 *.toc
 *.vrb
 *.xmpdata

@@ -8,6 +8,7 @@ declare -A files_to_archive=(
     ["*.tex"]=f
     ["*.bib"]=f
     ["img"]=d
+    ["papers"]=d
 )
 
 src_dir="."

@@ -55,6 +55,16 @@ The signature of a given Noarr structure results from a transformation of the si
 I'd like to have some nice pictures here as well. We have never visually presented a Noarr traverser over multiple structures.
 \end{XXX}
 
+% TODO: ref/picture + snippet
+Noarr traversers are wrapper abstractions over one or multiple Noarr structures that provide an interface for performing actions over their index spaces. In the simplest case, creating a Noarr traverser over a single Noarr structure and invoking its \texttt{for\_each} method with a callable object results in invoking the callable for each point in the index space of the structure. The single argument passed to the callable is a state object (TODO ref) containing the named indices for all dimensions of the structure. The traverser follows the signature of the structure to determine the order of iteration over the dimensions; thus, for signatures that form non-linear hierarchies (there are at least two child sub-signatures for some parent dimension), the callable is invoked in a depth-first manner for all points corresponding to the leaf nodes of the signature tree. % TODO: break this paragraph into two
+
+Noarr traversers have a similar relationship to Noarr structures as iterators and range algorithms in the C++20 ranges library (TODO cite) have to ranges. The main difference is that Noarr traversers operate on multidimensional index spaces inferred from the Noarr structures, while range algorithms operate on one-dimensional sequences of elements.
+
+% TODO: ref/picture/snippet
+Similarly to iterators in C++ algorithms, Noarr traversers can be used to run the given callable objects in parallel using the given backend. Noarr currently supports parallel execution using OpenMP, Intel TBB, C++ standard threads, and CUDA\@.
+
+In (TODO ref) our work, we have shown that careful use of Noarr structures and traversers can be used to express the code logic in PolyBench/C kernels in a layout-agnostic and traversal-agnostic manner, without sacrificing performance compared to the original implementations. We have shown similar results for parallel implementations of the kernels using \xxx{OpenMP, TBB, and CUDA backends}. The main advantage of using Noarr in this context is the ability to easily change the data layouts and traversal orders without having to modify the computation logic or memory access expressions. A secondary advantage is that all memory accesses are type-safe and checked at compile time, preventing many common programming errors related to multidimensional array indexing.
+
 
 \subsection{Noarr autotuning extension}\label{sec:noarr-autotuning}
 

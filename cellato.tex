@@ -4,10 +4,32 @@
 This will probably cite the Cellato paper~\cite{brabec2025cellato}. We also need to add a motivation etc.
 \end{XXX}
 
+% TODO: apparently, discrete iterative stencil computations is not a known term, so we should change it to something else
+% TODO: re-think "bit-level SIMD"
+
+In our ongoing research in the area of \xxx{discrete iterative stencil computations} (namely, cellular automata), we have observed that many well-optimized implementations share common design patterns such as bit-packing of cell states, temporal blocking of updates, and bit-level SIMD parallelism of cell update computations. Inspired by these observations and layout-agnostic paradigms explored in the Noarr library, we have developed the Cellato library, which enables the separation of concerns between the high-level definition of cellular automata and low-level details such as data layouts, parallelization strategies, and computation optimizations.
+
+
 \subsection{Cellato traversers and evaluators}\label{sec:cellato-evaluators}
 
-\subsection{Bit encoding support}\label{sec:bit-encoding}
+% Cellato overview
+The Cellato framework is built around the following core abstractions:
+\begin{description}
+  \item[Algorithm:]\label{des:algorithm} an abstract definition of the cellular automaton update rules pertaining to a single cell, depending on its neighborhood.
+  \item[Layout:]\label{des:layout} a grid data structure managing the storage of cell states.
+  \item[Evaluator:]\label{des:evaluator} a visitor-style abstraction that applies the algorithm to a single cell, given access to its neighborhood via the layout interface.
+  \item[Traverser:]\label{des:traverser} a wrapper around the layout that applies the given evaluator to each cell in the grid
+\end{description}
 
-\begin{XXX}
-This is technically still future work as it is not yet published.
-\end{XXX}
+Traversers define the high-level execution strategy, such as parallelization and temporal blocking, while evaluators encapsulate the low-level cell update logic (for example, interpreting summations of neighboring cells in the algorithm as networks of bitwise operations). The framework leverages C++ template metaprogramming by encoding the algorithm as a static type consisting of nested nodes representing operations, data accesses, and constants; and the evaluator comprises a set of specializations for each node type that evaluates, given access to the layout, to the result of the operation. All these components are further described in detail in \xxx{the Cellato paper}~\cite{brabec2025cellato}.
+
+The design consisting of primitive composable building blocks follows the same general principles as the Noarr library, specialized to the domain of \xxx{discrete iterative stencil computations}, and we have shown that Cellato can achieve performance comparable to hand-written implementations with less effort. Most importantly, writing the automaton logic in Cellato is agnostic in terms of data layout, traversal strategy, and computation pertaining to each cell, enabling rapid experimentation with different optimizations and parallelization strategies.
+
+
+\subsection{Bit-level optimizations}\label{sec:cellato-bit-optimizations}
+
+One of the key results of our research with Cellato is the ability to encode the cell states in a compact bit-packed format, allowing for significant memory bandwidth savings as well as enabling bit-level SIMD parallelism, which performs better compared to byte-level SIMD for automata with a small number of states per cell and simple update rules. Since the cell states or the intermediate results of the update computations (such as neighborhood sums) often occupy more than one bit, Cellato provides abstractions for bit-level operations on representations in the AoS layout (called \emph{bit arrays} in Cellato terminology), where each cell's bits are stored contiguously, as well as the SoA layout (called \emph{bit planes} in Cellato terminology)\footnote{AoS and SoA layouts are described in \xxx{TODO}.}, where each bit plane contains bits of the same significance for all cells.
+
+Both representations can store up to $n$ $k$-bit cells in $n k / w$ machine words, where $w$ is the machine word size in bits (typically 32 or 64). Each layout comes with its own challenges and advantages. The bit arrays layout (AoS) is more intuitive to work with and allows operations such as addition and multiplication, given that the result fits within the available number of bits per cell. However, it can be quite inefficient for storing values that are not powers of two, as each word then can contain only $\lfloor w / k \rfloor$ cells with $k$ bits each and then has $w \bmod k$ padding bits that are wasted. In contrast, the bit planes layout (SoA) can store arbitrary bit-width values without any padding, as each plane contains one bit per cell, and the total number of planes corresponds to the number of bits per cell. However, operations are limited to bitwise logical operations (AND, OR, XOR, NOT) and bit shifts.
+
+In our ongoing research, we explore the \xxx{TODO: continue from here}

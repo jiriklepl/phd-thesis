@@ -16,16 +16,28 @@ Since the index space is represented using named dimensions, all queries on the 
 
 \xxx{This will probably cite astute approach~\cite{vsmelko2022astute}.}
 
-\begin{XXX}
-Very nice pictures of assembling Noarr structures from primitive proto-structure building blocks.
-\end{XXX}
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{img/noarr-structure-composition.eps}
+  \caption{\xxx{todo}}%
+  \label{fig:noarr-structure-composition}
+\end{figure}
 
-Noarr structures are built by composing primitive proto-structures in a hierarchical manner. Each proto-structure represents a transformation of the index space and memory space of the nested \emph{sub-structure}.
+Noarr structures are immutable abstractions representing multidimensional data structures built by composing primitive proto-structures in a hierarchical manner as depicted in \cref{fig:noarr-structure-composition}. Each proto-structure represents a transformation of the index space and memory space of the nested \emph{sub-structure}; thus, if the sub-structure represents a multidimensional array with dimensions \lstinline{'y'} and \lstinline{'z'}, then wrapping it in an \texttt{array} proto-structure with dimension \lstinline{'x'} results in a three-dimensional array with dimensions \lstinline{'x'}, \lstinline{'y'}, and \lstinline{'z'}. The composition in this example simply adds a new dimension to the index space, extending it from two to three dimensions accordingly; however, other proto-structures may perform more complex transformations of the index space, such as splitting a dimension into multiple dimensions (e.g., \texttt{into\_blocks}, which consumes one dimension and produces two new dimensions) or reordering the logical hierarchy of dimensions (e.g., \texttt{hoist}).
+
+The composition of proto-structures is done using C++ template meta-programming and, in the Noarr library, it is represented by the \lstinline{^} operator. Since each proto-structure represents a partial function on the index space and memory space of the sub-structure, the composition of proto-structures is naturally associative. This is a powerful property that allows defining more complex transformations from simpler ones, and applying them simultaneously, and possibly to multiple data structures.
 
 Querying a specific feature of a Noarr structure, such as obtaining the memory offset of an element at a given index, is expressed as a function that takes the formal arguments of the query and a \emph{state} argument representing the index space, i.e., the lengths of the dimensions and the input indices (thus, an offset query takes no formal arguments, only the state). The proto-structure defines how the state is propagated to the sub-structure (\emph{sub-state}) and the result of the query is dependent on the formal arguments and the contents of the state, and further queries on the sub-structure using the sub-state (if needed). Some proto-structures generalize this idea by having multiple sub-structures (e.g., the \texttt{tuple} proto-structure), choosing the appropriate sub-structure based on the state.
 
-% TODO: do a picture
-For example, querying the offset of an element in an \texttt{array} proto-structure with size~$N$, dimension~\lstinline{'x'}, and a sub-structure~$S$, given an index state $s$, proceeds as follows:
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{img/noarr-structure-offset.eps}
+  \caption{\xxx{todo}}%
+  \label{fig:noarr-structure-offset}
+\end{figure}
+
+For example, querying the offset of an element in an \texttt{array} proto-structure with size~$N$, dimension~\lstinline{'x'}, and a sub-structure~$S$, given an index state $s$, depicted in \cref{fig:noarr-structure-offset} proceeds as follows:
 
 \begin{enumerate}
   \item Extract the index~$i$ for dimension~\lstinline{'x'}

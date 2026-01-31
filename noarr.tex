@@ -69,9 +69,36 @@ I'd like to have some nice pictures here as well. We have never visually present
 \end{XXX}
 
 % TODO: ref/picture + snippet
-Noarr traversers are wrapper abstractions over one or multiple Noarr structures that provide an interface for performing actions over their index spaces. In the simplest case, creating a Noarr traverser over a single Noarr structure and invoking its \texttt{for\_each} method with a callable object results in invoking the callable for each point in the index space of the structure. The single argument passed to the callable is a state object (TODO ref) containing the named indices for all dimensions of the structure. The traverser follows the signature of the structure to determine the order of iteration over the dimensions; thus, for signatures that form non-linear hierarchies (there are at least two child sub-signatures for some parent dimension), the callable is invoked in a depth-first manner for all points corresponding to the leaf nodes of the signature tree. % TODO: break this paragraph into two
+Noarr traversers are wrapper abstractions over one or multiple Noarr structures that provide an interface for performing actions over their index spaces. In the simplest case, creating a Noarr traverser over a single Noarr structure and invoking its \texttt{for\_each} method with a callable object results in invoking the callable for each point in the index space of the structure.
 
-Similarly to Noarr structures, traversers have an index space and a signature that specifies the linear order of traversal over the dimensions (TODO: refactor signatures in the structures section).
+\begin{lstlisting}[language=C++, caption={Creating and using a Noarr traverser over a single structure.}, label=lst:noarr-traverser-single-structure]
+auto matrix = bag(scalar<int>() ^ array<'x'>(N) ^ array<'y'>(M));
+traverser(matrix).for_each([&](auto state) {
+  auto [i, j] = get_indices<'x', 'y'>(state);
+  matrix[state] = i + j;
+});
+\end{lstlisting}
+
+The single argument passed to the callable is a state object (TODO ref) containing the named indices for all dimensions of the structure. The traverser follows the signature of the structure to determine the order of iteration over the dimensions; thus, for signatures that form non-linear hierarchies (there are at least two child sub-signatures for some parent dimension), the callable is invoked in a depth-first manner for all points corresponding to the leaf nodes of the signature tree.
+
+Similarly to Noarr structures, Noarr traversers can be further transformed using proto-structures that modify the index space and the signature. For example, the following snippet creates a traverser over the same matrix structure as before, but divides both dimensions into blocks of given sizes.
+
+\begin{lstlisting}[language=C++, caption={Creating a Noarr traverser with blocked traversal.}, label=lst:noarr-traverser-blocked]
+auto trav = traverser(matrix)
+  ^ into_blocks<'x', 'X'>(block_size_x)
+  ^ into_blocks<'y', 'Y'>(block_size_y)
+  ^ hoist<'X', 'Y'>();
+trav.for_each([&](auto state) { /* ... */ });
+\end{lstlisting}
+
+When the traverser is created over multiple Noarr structures, the resulting index space is the cover of the index spaces of all structures constructed using the leftmost structure as the base and extending its index space by adding the uncovered dimensions of the second structure, and so on. This construction is represented by the traverser signature that is formed by taking the signature of the leftmost structure and iteratively prepending the uncovered dimensions of the other structures in the order they appear. If it is created over two two-dimensional structures with dimensions \lstinline{'x'}, \lstinline{'y'} and \lstinline{'y'}, \lstinline{'z'}, respectively, the resulting index space is three-dimensional with dimensions \lstinline{'x'}, \lstinline{'y'}, and \lstinline{'z'} as depicted in \cref{fig:noarr-traverser-multiple-structures}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=.8\linewidth]{img/noarr-traverser-multiple-structures.eps}
+  \caption{\xxx{todo}}%
+  \label{fig:noarr-traverser-multiple-structures}
+\end{figure}
 
 Noarr traversers have a similar relationship to Noarr structures as iterators and range algorithms in the C++20 ranges library (TODO cite) have to ranges. The main difference is that Noarr traversers operate on multidimensional index spaces inferred from the Noarr structures, while range algorithms operate on one-dimensional sequences of elements.
 

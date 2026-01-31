@@ -56,7 +56,27 @@ The notion of sub-structure and (sub-)state provides a clean framework for defin
 % TODO: we need some pretty pictures here
 The second main feature of Noarr structures is their \emph{signature}. A signature is a representation of the hierarchy of the dimensions of the structure. It is a necessary component for specifying intended traversals of the structures and they also allow for improved type-safety of the structures.
 A signature can be interpreted as a tree where each node represents a dimension and its children represent nested dimensions.
-The signature of a given Noarr structure results from a transformation of the signature of its sub-structure(s) based on the semantics of the proto-structure. For example, the signature of an \texttt{array} structure is represented by a root node representing the array dimension, with a single child representing the signature of the sub-structure.
+The signature of a given Noarr structure results from a transformation of the signature of its sub-structure(s) based on the semantics of the proto-structure. For example, the signature of an \texttt{array} structure is represented by a root node representing the array dimension, with a single child representing the signature of the sub-structure as shown in \cref{fig:noarr-structure-signature}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=.8\linewidth]{img/noarr-structure-signature.eps}
+  \caption{Signature of \lstinline{scalar<int>() ^ array<'x'>(N) ^ array<'y'>(M)} structure.}%
+  \label{fig:noarr-structure-signature}
+\end{figure}
+
+Since layouts are most often used as mappings to memory, Noarr provides \emph{bag} wrapper that represents a pointer to a memory buffer containing the data represented by the nested given structure. The \lstinline{bag} wrapper provides methods for obtaining references to elements at given indices as well as other utility methods. An example of creating a Noarr structure representing a two-dimensional matrix of size $N \times M$ is shown in \cref{lst:noarr-matrix-structure}.
+
+\begin{lstlisting}[language=C++, caption={Creating a matrix structure using Noarr.}, label=lst:noarr-matrix-structure]
+auto matrix = bag(scalar<int>() ^ array<'x'>(N) ^ array<'y'>(M));
+
+// Accessing element at (i, j)
+matrix[idx<'x'>(i) + idx<'y'>(j)] = i + j;
+
+// Getting size of dimension 'x'
+auto size_x = matrix | get_length<'x'>();
+auto size_y = matrix | get_length<'y'>();
+\end{lstlisting}
 
 
 \subsection{Noarr Traversers}\label{sec:noarr-traversals}

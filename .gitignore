@@ -28,5 +28,6 @@ thesis-run.xml
 thesis-archive.zip
 thesis-archive.tar.gz
 *.toc
+*-eps-converted-to.pdf
 *.vrb
 *.xmpdata

@@ -12,13 +12,14 @@ The composable design of Noarr bears resemblance to views in the ranges library 
 
 Since the index space is represented using named dimensions, all queries on the structure, such as obtaining the size of a dimension, or the memory offset of an element at a given index, are type-safe and checked at compile time. In contrast to traditional positional indexing of multidimensional arrays (e.g., \lstinline{data[i][j]}) that is prone to errors due wrong pairing of indices to dimensions, type-safe indexing using named dimensions (e.g., \lstinline{data[idx<'x'>(i) + idx<'y'>(j)]}) ensures that the indices are paired with the correct dimensions. This also ensures that the API of memory accesses is self-documenting and independent of the actual layout of the data in memory.
 
+
 \subsection{Noarr Structures}\label{sec:noarr-structures}
 
 \xxx{This will probably cite astute approach~\cite{vsmelko2022astute}.}
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\linewidth]{img/noarr-structure-composition.eps}
+  \includegraphics[width=.8\linewidth]{img/noarr-structure-composition.eps}
   \caption{\xxx{todo}}%
   \label{fig:noarr-structure-composition}
 \end{figure}
@@ -32,7 +33,7 @@ Querying a specific feature of a Noarr structure, such as obtaining the memory o
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\linewidth]{img/noarr-structure-offset.eps}
+  \includegraphics[width=.8\linewidth]{img/noarr-structure-offset.eps}
   \caption{\xxx{todo}}%
   \label{fig:noarr-structure-offset}
 \end{figure}
@@ -87,6 +88,7 @@ In (TODO ref) our work, we have shown that careful use of Noarr structures and t
 \begin{XXX}
 This maybe does not deserve its own section even, we will see.
 \end{XXX}
+
 
 \subsection{Noarr MPI extension}\label{sec:noarr-mpi}
 

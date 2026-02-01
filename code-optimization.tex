@@ -6,13 +6,9 @@ TODO: Delame prehled do sirky
 \textbf{We need to better highlight memory layouts and memory access patterns here}
 
 This is a background chapter that overviews common code optimization techniques used in high-performance computing.
-
-It starts with outlining general hardware considerations, including CPU and GPU architectures, their memory hierarchies, and parallelism capabilities.
-
-Next, we discuss the most common code optimization techniques used in high-performance computing.
 \end{XXX}
 
-Since our work focuses on optimizing data structures and memory access patterns in high-performance computing applications, we first outline common optimization techniques used in this domain, as well as relevant hardware features that motivate these optimizations. In our work, we primarily focus on improving memory access patterns and parallelizing numerical computations on multidimensional arrays, performed in nested loops, and computed on clusters with modern multi-core CPUs and GPU accelerators, so we limit the scope of this chapter accordingly. \xxx{TODO: continue from here.}
+Since our work focuses on optimizing data structures and memory access patterns in high-performance computing applications, primarily by adjusting data layouts and loop structures; we first outline common optimization techniques used in this domain, as well as relevant hardware features that motivate these optimizations. In our work, we primarily focus on improving memory access patterns and parallelizing numerical computations on multidimensional arrays, performed in nested loops, and computed on clusters with modern multi-core CPUs and GPU accelerators, so we limit the scope of this chapter accordingly.
 
 % TODO: this is just a braindump
 In high-performance computing, code optimization is crucial for achieving efficient execution of programs on modern hardware architectures. The difference between a well-optimized code and a na\"{\i}ve implementation can be (TODO some actual number).
@@ -25,7 +21,53 @@ The impact of memory access patterns on performance is caused by memory hierarch
 The optimization techniques targeted by our work comprise data locality optimizations and parallelization strategies, which mainly involves data layout and loop transformations such as tiling (blocking) or interchange directly in the C++ source code via abstractions that leverage template meta-programming.
 
 
-As we focus on optimizing code for modern multi-core CPUs and GPU accelerators (possibly in clusters), we first outline hardware features relevant to code optimization in the context of our work. % TODO rewrite
+\section{General hardware considerations}\label{sec:general-hardware-considerations}
+
+Most of our work focuses on optimizing code for modern multi-core CPUs and GPU accelerators, possibly in clusters. These systems have various hardware features that significantly impact the performance of numerical computations depending on memory access patterns and parallelization strategies. Most notably, these systems feature complex memory hierarchies (multiple levels of caches, different types of memory on GPUs, communication overheads in clusters), SIMD capabilities, and multiple processing units (CPU cores, GPU threads). Outlining these hardware features is crucial for understanding the motivation behind various code optimization techniques.
+
+
+\subsection{CPU architecture}\label{subsec:cpu-architecture}
+
+CPU architectures are typically optimized for serial processing, possibly in multi-threaded scenarios. The architectures contain multiple levels of cache (L1, L2, L3) to reduce the latency of memory accesses, with nontrivial cache coherence protocols and costly synchronization mechanisms. % TODO find sources to rewrite this better
+Modern CPUs also support SIMD (Single Instruction, Multiple Data) instructions to perform vectorized operations on multiple data elements concurrently that can significantly speed up numerical computations when the data is properly aligned and the data can be organized so contiguous blocks of data have no inner dependencies. This is typically achieved via data layout transformations and loop unrolling techniques following loop transformations such as loop interchange, tiling (blocking), or skewing. % TODO this is quite messy, rewrite
+
+Modern CPUs excel at task parallelism using multiple cores, each capable of executing multiple threads. However, since synchronization between threads is relatively costly due, care must be taken to minimize synchronization points and avoid false sharing of cache lines between threads\footnote{False sharing occurs when threads on different cores modify variables that reside on the same cache line, leading to unnecessary cache coherence traffic and performance degradation (TODO cite).}.
+
+The following list summarizes the most important hardware considerations for code optimization on modern multi-core CPUs:
+\begin{itemize}
+  \item Enhancing data locality to minimize cache misses by restructuring data layouts and loop structures.
+  \item Enabling vectorization by ensuring proper data alignment and access patterns.
+  \item Minimizing synchronization overheads and avoiding false sharing in multi-threaded scenarios.
+\end{itemize}
+
+
+\subsection{GPU architecture}\label{subsec:gpu-architecture}
+
+Since GPU architectures by NVIDIA currently dominate the high-performance computing landscape (TODO: cite top500), we will use their nomenclature to describe the relevant hardware features and use them as a reference point. Modern NVIDIA GPUs consist of multiple streaming multiprocessors (SMs), each comprising many CUDA cores that execute threads in a massively parallel manner. An SM is equipped with a register file, and a cache space split between user-controlled \emph{shared memory} and \emph{L1 cache}; all shared among the threads running on that SM\@. Additionally, all SMs share a larger \emph{L2 cache}. The GPU then has a separate \emph{global memory} (device memory) that is accessible by all SMs but has significantly higher latency compared to the other memories.
+
+Each core executes threads organized into \emph{warps} (groups of 32 threads) in a SIMT (Single Instruction, Multiple Threads) fashion. The threads within a warp execute the same instruction simultaneously in lockstep, which means that divergent control flow within a warp (i.e., different threads taking different branches) can lead to high performance penalties due to serialization of the divergent paths and masking of inactive threads.
+
+Shared memory of an SM is organized into 32 memory banks, each offering 32-bit bandwidth per clock cycle. This allows a thread warp to load a single 32-bit word from each bank to each thread in the warp simultaneously every clock cycle. However, if multiple threads in a warp access different addresses within the same memory bank, a \emph{bank conflict} occurs, and the accesses have to be serialized, leading to performance degradation.
+
+Just like the L1 cache has a part configured as shared memory, the device DRAM memory is split into multiple memory spaces with different access characteristics: \emph{global}, \emph{local}, and \emph{constant} memory spaces. Older GPU architectures also featured \emph{texture} memory space that offered better caching for certain access patterns. Local memory is used by the compiler to store spilled registers, arrays indexed by non-constant expressions, and large structures that the compiler heuristically decides to place in local memory.
+
+Global and local memory accesses have high latency, so register spilling should be minimized. The latencies are mitigated by L2 and L1 caches, but the caches are relatively small compared to the size of global memory (and the L1 cache is shared with the user-controlled shared memory). Furthermore, global memory accesses should be \emph{coalesced} to achieve optimal performance, meaning that threads within a warp should ideally access contiguous memory locations (however, some strided access patterns and broadcasts are also supported with minimal performance penalties). The local memory is automatically organized in such a way that coalesced accesses are achieved whenever possible (may not be possible for arrays indexed by non-constant expressions).
+
+\xxx{Since the compute capability 9.0, NVIDIA GPUs also support \emph{distributed shared memory}, which allows sharing data between multiple SMs, effectively increasing the size of the shared memory pool available to each SM\@.}
+
+\emph{Synchronization} between threads running on the same SM is relatively cheap using \texttt{\_\_syncthreads()} primitive thanks to the lockstep execution model. Synchronization of a warp (\texttt{\_\_syncwarp()}) is even cheaper, and performance-wise is practically equivalent to inserting a memory fence. This cheap synchronization is accompanied by allowing intra-warp communication using \emph{warp-wide} primitives such as \texttt{\_\_shfl\_sync()} that allow threads within a warp to exchange data without using shared memory. This is particularly useful for implementing parallel reduction algorithms or prefix sums efficiently. For inter-thread communication across different warps, shared memory is typically used as an intermediary storage with block-wide synchronization.
+
+\xxx{TODO: occupancy, more synchronization details.}
+
+The following list summarizes the most important hardware considerations for code optimization on NVIDIA GPUs:
+\begin{itemize}
+  \item Avoiding register spilling to local memory by using an appropriate number of registers per thread and using constant expressions to index local arrays.
+  \item Ensuring coalesced global memory accesses by organizing data layouts and access patterns appropriately.
+  \item Minimizing shared memory bank conflicts by carefully designing shared memory access patterns.
+  \item Maximizing occupancy by balancing the number of threads per block, register usage, and shared memory usage.
+  \item Leveraging warp-wide primitives for efficient intra-warp communication and synchronization
+  \item Utilizing shared memory for inter-thread communication within a block.
+\end{itemize}
 
 
 \section{Optimization techniques}\label{sec:optimization-techniques}
@@ -39,29 +81,25 @@ The most common code optimization techniques used in high-performance computing 
 
 \subsection{Data locality optimizations}\label{sec:data-locality-optimizations}
 
+Data locality optimizations aim to improve the efficiency of memory accesses by enhancing spatial and temporal locality. These optimizations are crucial for reducing cache misses and other communication overheads. These optimizations typically involve restructuring data layouts and loop structures to ensure that data accesses to the same or nearby memory locations occur closely in time and space.% TODO: quite repetitive, rewrite
+In the context of GPU computing, coalesced memory accesses and bank conflicts are also important considerations for optimizing data locality, whereas in distributed systems, minimizing communication overheads between nodes is a key aspect.
+
 
 \subsubsection{Loop transformations}\label{sec:loop-transformations}
 
+Loop transformations are the most powerful techniques for improving data locality, as well as enabling vectorization and parallelization. Common loop transformations include loop interchange, loop fusion, loop fission, loop unrolling, loop tiling (blocking), and loop skewing. These transformations can significantly enhance the performance of nested loops by changing the order of memory accesses and the direction of data dependencies.
 
 
 \subsubsection{Memory layout optimizations}\label{sec:memory-layout-optimizations}
 
+Memory layout optimizations involve changing the organization of data structures in memory to improve access patterns. Common techniques include array of structures (AoS) to structure of arrays (SoA) transformations (or more generally, permuting the dimensions of multidimensional arrays), inserting padding to avoid cache line or bank conflicts, and aligning data to cache line boundaries. More advanced techniques include data blocking and tiling or bit-packing for compact data representations.
+
 
 \subsection{Vectorization}\label{sec:vectorization}
+
+Vectorization techniques aim to exploit SIMD (Single Instruction, Multiple Data) capabilities of modern processors. These techniques usually involve restructuring loops and data layouts to enable either implicit vectorization by the compiler or explicit vectorization using intrinsic functions or assembly code. Commonly, vectorization requires ensuring that data is properly aligned and accessed in a contiguous manner so that, in an unrolled loop, multiple data elements can be processed simultaneously using vector registers and instructions.
 
 
 \subsection{Parallelization}\label{sec:parallelization}
 
-
-\section{General hardware considerations}\label{sec:general-hardware-considerations}
-
-
-\subsection{CPU architecture}\label{subsec:cpu-architecture}
-
-CPU architectures are typically optimized for serial processing, possibly in multi-threaded scenarios. The architectures contain multiple levels of cache (L1, L2, L3) to reduce the latency of memory accesses, with nontrivial cache coherence protocols and costly synchronization mechanisms. % TODO find sources to rewrite this better
-Modern CPUs also support SIMD (Single Instruction, Multiple Data) instructions to perform vectorized operations on multiple data elements concurrently that can significantly speed up numerical computations when the data is properly aligned and the data can be organized so contiguous blocks of data have no inner dependencies. This is typically achieved via data layout transformations and loop unrolling techniques following loop transformations such as loop interchange, tiling (blocking), or skewing. % TODO this is quite messy, rewrite
-
-
-\subsection{GPU architecture}\label{subsec:gpu-architecture}
-
-\xxx{We discuss this quite a lot in the JPDC paper, read it for inspiration}
+Parallelization techniques are complementary to data locality optimizations and vectorization. They usually involve decomposing computations into independent tasks that can be executed concurrently on multiple processing units, such as CPU cores, GPU threads, or distributed nodes. \xxx{Common parallelization strategies include data parallelism, task parallelism, and pipeline parallelism.} These strategies require careful consideration of data dependencies and synchronization mechanisms to ensure correct and efficient execution.

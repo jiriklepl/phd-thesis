@@ -4,10 +4,14 @@
         "Brabec",
         "Cellato",
         "CUDA",
+        "inkscape",
         "Klepl",
         "Kokkos",
+        "lualatex",
+        "mdspan",
         "Noarr",
         "parallelizable",
+        "SIMT",
         "SYCL",
         "Traverser",
         "Traversers"
@@ -29,5 +33,6 @@
         "files.insertFinalNewline": true,
     },
 
-    "todo-tree.regex.regex": "(//|%|#|<!--|;|/\\*|^|^[ \\t]*(-|\\d+.))\\s*($TAGS)"
+    "todo-tree.regex.regex": "(//|%|#|<!--|;|/\\*|^|^[ \\t]*(-|\\d+.))\\s*($TAGS)",
+    "makefile.configureOnOpen": false
 }

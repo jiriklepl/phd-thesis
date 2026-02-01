@@ -12,8 +12,10 @@ It starts with outlining general hardware considerations, including CPU and GPU 
 Next, we discuss the most common code optimization techniques used in high-performance computing.
 \end{XXX}
 
+Since our work focuses on optimizing data structures and memory access patterns in high-performance computing applications, we first outline common optimization techniques used in this domain, as well as relevant hardware features that motivate these optimizations. In our work, we primarily focus on improving memory access patterns and parallelizing numerical computations on multidimensional arrays, performed in nested loops, and computed on clusters with modern multi-core CPUs and GPU accelerators, so we limit the scope of this chapter accordingly. \xxx{TODO: continue from here.}
+
 % TODO: this is just a braindump
-In high-performance computing, code optimization is crucial for achieving efficient execution of programs on modern hardware architectures. The difference between a well-optimized code and a na\"{\i}ve implementation can be (TODO some actual number). In our work, we primarily focus on improving memory access patterns and parallelizing numerical computations on multidimensional arrays, performed in nested loops, and computed on clusters with modern multi-core CPUs and GPU accelerators.
+In high-performance computing, code optimization is crucial for achieving efficient execution of programs on modern hardware architectures. The difference between a well-optimized code and a na\"{\i}ve implementation can be (TODO some actual number).
 
 The impact of memory access patterns on performance is caused by memory hierarchies present in modern hardware architectures, which include multiple levels of caches and different types of memory (e.g., global, shared, local memory on GPUs), and, on distributed systems, communication overheads between nodes (e.g., via MPI). (TODO cite some sources) Different systems often require different optimization strategies or parameter tuning to achieve optimal performance. Complexity is further increased by features such as cache coherence protocols, prefetching mechanisms, coalesced memory accesses on GPUs, and non-uniform memory access (NUMA) effects on multi-core CPUs and clusters. (TODO cite some sources, rewrite the dump)
 

@@ -63,6 +63,8 @@ Global and local memory accesses have high latency, so register spilling should 
 
 \xxx{TODO: occupancy, more synchronization details.}
 
+Since the device disposes its own DRAM memory, data has to be transferred between the host (CPU) memory and the device (GPU) memory via relatively slow PCIe or NVLink buses (compared to the GPU internal memory speeds; \xxx{TODO: find numbers}). This transfer overhead can be mitigated by overlapping data transfers with kernel execution using asynchronous memory copy operations and CUDA streams. To some extent, this concern is alleviated by unified memory, which allows the system to automatically manage data transfers between host and device memory.
+
 The following list summarizes the most important hardware considerations for code optimization on NVIDIA GPUs:
 \begin{itemize}
   \item Avoiding register spilling to local memory by using an appropriate number of registers per thread and using constant expressions to index local arrays.

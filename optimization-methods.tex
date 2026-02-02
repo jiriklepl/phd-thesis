@@ -4,7 +4,24 @@
 TODO: Delame prehled do sirky
 \end{XXX}
 
-As discussed in \cref{chap:code-optimization}, code optimization is crucial for achieving efficient execution of programs on modern hardware architectures. In this chapter, we outline several prominent optimization methods and frameworks that have been developed to facilitate code optimization in high-performance computing applications. \xxx{TODO: continue from here.}
+As discussed in \cref{chap:code-optimization}, code optimization is crucial for achieving efficient execution of programs on modern hardware architectures such as multi-core CPUs and GPUs. In this chapter, we outline several prominent optimization methods and frameworks that have been developed to facilitate (automated) code optimization in high-performance computing applications.
+
+Code optimization methods can target different points in the compilation and execution pipeline. Some methods operate above the source code level, providing abstractions or domain-specific languages (DSLs) that allow developers to express computations in a way that is amenable to optimization. Other methods perform optimizations at the source code level, possibly using annotations or pragmas to guide the optimization process. More low-level methods operate on intermediate representations (IRs) or directly on machine code, applying transformations to improve performance based on static analysis or empirical measurements. Some methods may also involve runtime systems that adaptively optimize code during execution based on observed performance characteristics; in such cases, just-in-time (JIT) compilation techniques may be employed to generate optimized code on-the-fly.
+
+\xxx{We primarily focus on abstractions and frameworks that operate above the source code level, as these are most relevant to our work. However, we also briefly discuss the wider landscape of optimization methods to provide context for our contributions.}
+
+
+\section{Compiler optimizations}\label{sec:compiler-optimizations}
+
+\begin{XXX}
+Discuss compiler optimizations and frameworks:
+\begin{itemize}
+  \item LLVM~\cite{lattner2004llvm}
+  \item GCC~\cite{stallman2011gnu}
+  \item MLIR~\cite{lattner2021mlir}
+  \item others (TODO: literature review)
+\end{itemize}
+\end{XXX}
 
 
 \section{Polyhedral optimization}\label{sec:polyhedral-optimization}
@@ -48,6 +65,10 @@ Autotuning techniques are powerful methods for optimizing performance of applica
 
 \section{Abstractions}\label{sec:abstractions}
 
+
+
+
+
 \begin{XXX}
 Need to mention the following abstractions:
 \begin{itemize}
@@ -59,6 +80,7 @@ Need to mention the following abstractions:
   \item Futhark~\cite{henriksen2017futhark}
   \item Exo~\cite{ikarashi2022exocompilation}
   \item Cutlass/Cute~\cite{thakkar2023cutlass}
+  \item GridTools~\cite{afanasyev2021gridtools}
   \item Kokkos, RAJA~\cite{trott2021kokkos,beckingsale2019raja}, SYCL/DPC++ (TODO: add to the bib file), oneAPI (tbb, \ldots; TODO: add to the bib file), Thrust (TODO: add to the bib file)
   \item mdspan (Kokkos, C++23)~\cite{trott2022mdspan}
   \item others (TODO: literature review)
@@ -66,6 +88,8 @@ Need to mention the following abstractions:
 \end{XXX}
 
 Flexible abstractions allowing manipulation of data layouts and iteration orders have been the subject of extensive development. They provide a means to optimize performance to different hardware architectures without needing to change the core algorithmic logic. These abstractions can also represent flexible API layers for libraries (such as linear algebra libraries; TODO cite).
+
+
 
 We can broadly categorize these abstractions into the following groups:
 

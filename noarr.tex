@@ -159,3 +159,8 @@ In our work (TODO ref), we have introduced the Noarr MPI extension that leverage
 Since two corresponding Noarr structures at the sender and receiver side (with same dimensions, but possibly different layouts) correspond to many different MPI datatypes depending on the linearization of the dimensions, some possibly performing better than others, using Noarr traversers to express the semantic order of the communicated data brings the opportunity to explore different MPI datatype linearizations by adjusting the traverser signatures --- Noarr offers proto-structures, such as \texttt{hoist} (TODO ref), that can be used to safely reorder the dimensions of the traverser signature without affecting the correctness of the communication.
 
 In our work, we have also applied the layout-agnostic MPI datatype construction approach to Kokkos views (TODO ref) and mdspan (TODO ref), that offer efficient multidimensional array abstractions. However, as these abstractions do not provide named dimensions or otherwise encode the semantic order of elements in their type system, such application relies on careful pairing of positional indices to appropriate dimensions. The tuning capability available in the approach leveraging Noarr traversers may be used in this context by providing a permutation of the positional dimensions that controls the layout linearization; however, such approach, without named dimensions, generalizes poorly to more intricate data structures and communication patterns.
+
+
+\subsection{\xxx{How noarr saves the world}}\label{sec:noarr-saves-world}
+
+\xxx{We need to add some concluding remarks here: why is Noarr important? What does it enable? Who cares?}

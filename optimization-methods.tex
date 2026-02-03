@@ -16,18 +16,18 @@ Code optimization methods can target different points in the compilation and exe
 \begin{XXX}
 Discuss compiler optimizations and frameworks:
 \begin{itemize}
-  \item LLVM~\cite{lattner2004llvm}
-  \item GCC~\cite{stallman2011gnu}
-  \item MLIR~\cite{lattner2021mlir}
+  \item LLVM (TODO: find and add)
+  \item GCC (TODO: find and add)
+  \item MLIR (TODO: find and add)
   \item others (TODO: literature review)
 \end{itemize}
 \end{XXX}
 
-Compiler optimizations are a fundamental aspect of modern compilers. In high-performance computing, compilers such as LLVM~\cite{lattner2004llvm} and GCC~\cite{stallman2011gnu} implement a wide range of optimization techniques to improve the performance of source code, starting from basic optimizations that remove abstractions and redundant computations, inline functions, perform subexpression elimination, etc. More advanced optimizations include loop transformations (e.g., loop unrolling, loop fusion, invariant code motion), vectorization, and inter-procedural optimizations that analyze and optimize across function boundaries.
+Compiler optimizations are a fundamental aspect of modern compilers. In high-performance computing, compilers such as LLVM (TODO: cite) and GCC (TODO: cite) implement a wide range of optimization techniques to improve the performance of source code, starting from basic optimizations that remove abstractions and redundant computations, inline functions, perform subexpression elimination, etc. More advanced optimizations include loop transformations (e.g., loop unrolling, loop fusion, invariant code motion), vectorization, and inter-procedural optimizations that analyze and optimize across function boundaries.
 
 In the context of typical high-performance (scientific computing) applications with quite simple control flow and heavy numerical computations, these optimizations mainly allow using higher-level abstractions (e.g., C++ templates, mdspan, \ldots) without significant performance penalties (most notably, when using so-called zero-cost abstractions)\xxx{ TODO: cite}. However, these optimizations by themselves are often insufficient to achieve optimal performance on modern hardware architectures, especially for complex loop nests and data access patterns.
 
-Some compilers and frameworks, such as MLIR~\cite{lattner2021mlir}, provide extensible intermediate representations that allow for custom optimization passes to be implemented --- some of them targeting specific domains or hardware architectures. \xxx{TODO: there used to be many works in this area, find some references and include relevant developments.}
+Some compilers and frameworks, such as MLIR (TODO: find and add), provide extensible intermediate representations that allow for custom optimization passes to be implemented --- some of them targeting specific domains or hardware architectures. \xxx{TODO: there used to be many works in this area, find some references and include relevant developments.}
 
 
 \subsection{Polyhedral optimization}\label{sec:polyhedral-optimization}

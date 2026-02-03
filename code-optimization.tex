@@ -61,7 +61,7 @@ Global and local memory accesses have high latency, so register spilling should 
 
 \emph{Synchronization} between threads running on the same SM is relatively cheap using \texttt{\_\_syncthreads()} primitive thanks to the lockstep execution model. Synchronization of a warp (\texttt{\_\_syncwarp()}) is even cheaper, and performance-wise is practically equivalent to inserting a memory fence. This cheap synchronization is accompanied by allowing intra-warp communication using \emph{warp-wide} primitives such as \texttt{\_\_shfl\_sync()} that allow threads within a warp to exchange data without using shared memory. This is particularly useful for implementing parallel reduction algorithms or prefix sums efficiently. For inter-thread communication across different warps, shared memory is typically used as an intermediary storage with block-wide synchronization.
 
-\xxx{TODO: occupancy, more synchronization details.}
+\xxx{TODO: \textbf{occupancy}, more synchronization details.}
 
 Since the device disposes its own DRAM memory, data has to be transferred between the host (CPU) memory and the device (GPU) memory via relatively slow PCIe or NVLink buses (compared to the GPU internal memory speeds; \xxx{TODO: find numbers}). This transfer overhead can be mitigated by overlapping data transfers with kernel execution using asynchronous memory copy operations and CUDA streams. To some extent, this concern is alleviated by unified memory, which allows the system to automatically manage data transfers between host and device memory.
 

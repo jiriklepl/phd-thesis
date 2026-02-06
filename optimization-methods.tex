@@ -22,7 +22,7 @@ Discuss compiler optimizations and frameworks:
   \item GCC~\cite{gcc}
   \item MLIR~\cite{lattner2021mlir}
   \item Intel Compiler (TODO: add to bibliography.bib)
-  \item NVCC (TODO: add to bibliography.bib)
+  \item NVCC~\cite{nvidia_nvcc}
   \item others (TODO: literature review)
 \end{itemize}
 \end{XXX}
@@ -31,7 +31,7 @@ Compiler optimizations are a fundamental aspect of modern compilers. In high-per
 
 In the context of typical high-performance (scientific computing) applications with quite simple control flow and heavy numerical computations, these optimizations mainly allow using higher-level abstractions (e.g., C++ templates, mdspan, \ldots) without significant performance penalties (most notably, when using so-called zero-cost abstractions)\xxx{ TODO: cite}. They can also optimize arithmetic expressions, eliminate redundant computations, and perform some basic loop transformations. However, these optimizations by themselves are often insufficient to achieve optimal performance on modern hardware architectures, especially for complex loop nests and data access patterns.
 
-Some compilers and frameworks, such as MLIR~\cite{lattner2021mlir}, provide extensible intermediate representations that allow for custom optimization passes to be implemented --- some of them targeting specific domains or hardware architectures. \xxx{TODO: there used to be many works in this area, find some references and include relevant developments.}
+Some compilers and frameworks, such as MLIR~\cite{lattner2021mlir}, provide extensible intermediate representations that allow for custom representation and optimization passes to be implemented --- some of them targeting specific domains or hardware architectures. This is particularly useful for domain-specific languages (DSLs) that can leverage MLIR to implement their own optimization pipelines, including polyhedral optimizations, autotuning, and other transformations that are not typically part of general-purpose compilers. While it is built on top of traditional SSA-based IRs, it allows for defining custom dialects, and facilitates all boilerplate such as parsing, code generation, and so on. It is used by many DSLs, such as (\xxx{TODO find out whether Halide, Tiramisu, \ldots use it}), for example, to optimize AI computation graphs.
 
 
 \subsection{Polyhedral optimization}\label{sec:polyhedral-optimization}
@@ -40,7 +40,7 @@ Some compilers and frameworks, such as MLIR~\cite{lattner2021mlir}, provide exte
 Discuss polyhedral optimization frameworks:
 \begin{itemize}
   \item Polly (LLVM)~\cite{grosser2012polly}
-  \item GRAPHITE (GCC)~\cite{pop2006graphite}
+  \item GRAPHITE (GCC)~\cite{trifunovic2010graphite}
   \item PLuTo~\cite{bondhugula2008pluto}
   \item ISL (maybe), dependency of many polyhedral tools (TODO: add to bibliography.bib)
   \item PolyMage~\cite{mullapudi2015polymage}
@@ -48,7 +48,7 @@ Discuss polyhedral optimization frameworks:
 \end{itemize}
 \end{XXX}
 
-Workloads comprising nested loops with affine bounds and affine memory accesses are common in high-performance computing applications (TODO: cite some good surveys). To target such applications, \xxx{someone proposed using some polynomial something to represent and optimize computations in loop nests.} Polyhedral optimization frameworks, such as Polly~\cite{grosser2012polly}, GRAPHITE~\cite{pop2006graphite}, and PLuTo~\cite{bondhugula2008pluto}, use the powerful mathematical framework of polyhedral model to represent the computations in loops in a more compact and analyzable form compared to traditional compiler IRs such as static single assignment (SSA) forms. Polyhedra offer a way to represent data layouts, loop iteration spaces, and dependencies between computations in a unified manner.
+Workloads comprising nested loops with affine bounds and affine memory accesses (Static Control Parts, or SCoPs) are common in high-performance computing applications (TODO: cite some good surveys). To target such applications, \xxx{someone proposed using some polynomial something to represent and optimize computations in loop nests.} Polyhedral optimization frameworks, such as Polly~\cite{grosser2012polly}, GRAPHITE~\cite{trifunovic2010graphite}, and PLuTo~\cite{bondhugula2008pluto}, use the powerful mathematical framework of polyhedral model (provided by libraries such as ISL~\cite{verdoolaege2010isl}) to represent the computations in loops in a more compact and analyzable form compared to traditional compiler IRs such as Static Single Assignment (SSA) forms. Polyhedra offer a way to represent data layouts, loop iteration spaces, and dependencies between computations in a unified manner.
 
 Polyhedral optimization is application of integer linear algebra to optimize loop nests with affine bounds and affine memory accesses. The main idea is to represent the iteration space of loops, as well as memory accesses and dependencies, using polyhedra. This representation allows, for example, to find hyperplanes orthogonal to data dependencies, that can represent parallelizable loops; or to find transformations of the iteration space that improve data locality or enable vectorization. \xxx{TODO: connect this somehow to \cref{sec:formalizing-data-layouts-and-access-patterns} and also mention ISL\@. Do a brief comparison of the three mentioned frameworks.}
 

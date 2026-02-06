@@ -115,12 +115,58 @@ Parallelization techniques are complementary to data locality optimizations and 
 
 \xxx{Most of this is written from memory, find sources to cite and fix any inaccuracies. However, we want to keep this section relatively high-level and general --- not specific to polyhedral model or any other particular framework.}
 
-To formalize the discussion of data layout and access pattern optimizations, we define a \emph{data layout} as the mapping of multi-dimensional indices to offsets in linear memory space ($\mathbb{N}^n \to \mathbb{N}$). Usually, the domain of the mapping corresponds to the shape of a multi-dimensional array (e.g., for a 2D array of shape $M \times N$, the domain is $\{0, \ldots, M-1\} \times \{0, \ldots, N-1\}$) --- exception to this are, for example, ragged arrays or other irregular data structures\xxx{ (may be as simple as tuples of differently-sized arrays)}. The result of the mapping for any given multi-dimensional index in the domain is the linear offset (in number of elements, or in bytes) from the start of the memory space (e.g., a pointer to the start of an array). A \emph{layout transformation} is a change of the data layout, which can be represented as a function $\mathbb{N}^m \to \mathbb{N}^n$ that maps indices in the new layout to indices in the old layout (composition of the two functions gives the new layout)\xxx{ accompanied by a corresponding change in the domain}. Some transformations may restrict the range of available indices (e.g., slicing) or expand them (e.g., cyclic mapping using the modulo operation).\xxx{A vast majority of commonly used layouts and transformations are bijections as well as affine functions (i.e., linear functions with an added constant term).}
+To formalize the discussion of data layout and access pattern optimizations, we define a \emph{data layout} as the mapping of multi-dimensional indices to offsets in linear memory space ($\mathbb{N}^n \to \mathbb{N}$). \Cref{fig:row-major,fig:column-major} show two common examples of data layouts for a 2D array: row-major and column-major layouts, given by the mappings $(i, j) \mapsto i \cdot N + j$ and $(i, j) \mapsto j \cdot M + i$, respectively, where $M$ and $N$ are the dimensions of the array.
+
+\begin{figure}[ht]
+  \centering
+  \begin{subfigure}{.3\linewidth}
+    \centering
+    \includegraphics[width=.9\linewidth]{img/row-major.eps}
+    \caption{Row-major layout}%
+    \label{fig:row-major}
+  \end{subfigure}%
+  \hfill%
+  \begin{subfigure}{.3\linewidth}
+    \centering
+    \includegraphics[width=.9\linewidth]{img/column-major.eps}
+    \caption{Column-major layout}%
+    \label{fig:column-major}
+  \end{subfigure}%
+  \hfill%
+  \begin{subfigure}{.3\linewidth}
+    \centering
+    \includegraphics[width=.9\linewidth]{img/tiled.eps}
+    \caption{Tiled layout}%
+    \label{fig:tiled}
+  \end{subfigure}%
+  \caption{Examples of different data layouts for a 2D array.}%
+  \label{fig:data-layouts}
+\end{figure}
+
+Usually, the domain of the mapping corresponds to the shape of a multi-dimensional array (e.g., for a 2D array of shape $M \times N$, the domain is $\{0, \ldots, M-1\} \times \{0, \ldots, N-1\}$) --- exception to this are, for example, ragged arrays or other irregular data structures \xxx{(may be as simple as tuples of differently-sized arrays)}. The result of the mapping for any given multi-dimensional index in the domain is the linear offset (in number of elements, or in bytes) from the start of the memory space (e.g., a pointer to the start of an array).
+
+A \emph{layout transformation} is a change of the data layout, which can be represented as a function $\mathbb{N}^m \to \mathbb{N}^n$ that maps indices in the new layout to indices in the old layout (composition of the two functions gives the new layout) \xxx{accompanied by a corresponding change in the domain}. Some transformations may restrict the range of available indices (e.g., slicing) or expand them (e.g., cyclic mapping using the modulo operation). \xxx{A vast majority of commonly used layouts and transformations are bijections as well as affine functions (i.e., linear functions with an added constant term).} \Cref{fig:tiled} shows an example of a tiled (blocked) layout, which can be represented as a composition of a column-major layout and a transformation that splits each dimension into two new dimensions (outer and inner tile): $(I, J, i, j) \mapsto (I \cdot T + i, J \cdot T + j)$, where $T$ is the tile size.
 
 An \emph{iteration order} (more generally, a \emph{schedule} of computations) is the order in which the elements of a multi-dimensional data structures are accessed during computation and can be represented as $\mathbb{N}^n \to \mathbb{N}$, mapping the iteration space to a linear order of execution. An alternative, commonly used representation of a schedule is as a mapping $\mathbb{N}^n \to \mathbb{N}^m$ to a multi-dimensional time space, where the lexicographical order of the time space defines the execution order of computations.
 
 \xxx{TODO: pretty sure that "default schedule" is not a standard term, doesnt matter rn.}
-A simple default schedule of computations can be defined according to the loop nest structure as it appears in the source code --- for example, by defining the first dimension of the schedule to correspond to the code location of the computation and the remaining dimensions to correspond to iteration variables of loops surrounding the given computation. Generally, unless the optimization agent (compiler, autotuner, or programmer) can infer further invariants or identities, the semantics of any optimized schedule must be equivalent to this default schedule. Typically, the schedule (of a serial execution) is required to be totally ordered, meaning that any two computations must have a defined order of execution --- this might be not necessary, but cost models, for example, might determine different performance characteristics for different total orders of computations even if they are semantically equivalent (e.g., due to caching effects).
+A simple default schedule of computations can be defined systematically by introducing a new dimension whenever there are multiple loops or statements running in sequence in the given nesting level and another dimension for each nested loop level. Any such mapping can be zero-padded so the dimensionality of all \xxx{schedule points} is the same. For \cref{lst:example}, such a schedule $\sigma$ for each statement can be defined as $\sigma_S : (i, j) \mapsto (i, 0, j, 0)$, $\sigma_T : (i, j) \mapsto (i, 0, j, 1)$, and $\sigma_U : (i) \mapsto (i, 1, 0, 0)$. Note that this schedule construction is just one of many possible ways to define a schedule that represents the sequential computation order of the given code.
+
+\begin{lstlisting}[language=C++, caption={Example of a simple nested loop accessing three 2D arrays.}, label={lst:example}]
+for (int i = 0; i < M; ++i) {
+  // 0th statement/loop in i loop
+  for (int j = 0; j < N; ++j) {
+    // 0th statement/loop in j loop
+    S: A[i][j] = i * N + j;
+    // 1st statement/loop in j loop
+    T: B[i][j] = A[i][j] * 2;
+  }
+  // 1st statement/loop in i loop
+  U: C[i] = A[i][0] + B[i][0];
+}
+\end{lstlisting}
+
+Generally, unless the optimization agent (compiler, autotuner, or programmer) can infer further invariants or identities, the semantics of any optimized schedule must be equivalent to this default schedule. Typically, the schedule (of a serial execution) is required to be totally ordered, meaning that any two computations must have a defined order of execution --- this might be not necessary, but cost models, for example, might determine different performance characteristics for different total orders of computations even if they are semantically equivalent (e.g., due to caching effects).
 
 \begin{XXX}
 On thusly defined schedules, a loop interchange can be represented as a permutation of the schedule dimensions, and loop tiling (blocking) as a mapping that splits a dimension into two dimensions (outer and inner tile). Our work performs such transformations on both data layouts and iteration orders by encoding them as partial functions over spaces of named dimensions resolved at compile time using C++ template meta-programming techniques. Many other optimization frameworks and abstractions commonly represent these mappings as affine functions (TODO: figure out how to reduce repetition with the next paragraphs).
@@ -128,6 +174,6 @@ On thusly defined schedules, a loop interchange can be represented as a permutat
 
 Parallelization can be, for example, represented by adding new dimensions to the schedule that correspond to parallel execution units (e.g., thread blocks and threads on GPUs, or CPU threads) or, more na\"{\i}vely, by allowing multiple computations to share the same time coordinate in the schedule (i.e., executing them simultaneously).
 
-To put formal constraints on valid schedule transformations, methods such as the polyhedral model (TODO: cite) determine data dependencies from the default schedule (can be represented as a relation over iterations and array accesses) that form a directed acyclic graph (DAG) between computations accessing the same memory locations at different times (same memory space and index, typically represented by array name and index expression) --- the topological order of this DAG must be preserved by any valid schedule transformation.
+To put formal constraints on valid schedule transformations, methods such as the polyhedral model (TODO: cite) determine \emph{data dependencies} from the default schedule (can be represented as a relation over iterations and array accesses) that form a directed acyclic graph (DAG) between computations (or, equivalently, inequalities on their \xxx{schedule points}) accessing the same memory locations at different times (same memory space and index, typically represented by array name and index expression) --- the topological order of this DAG must be preserved by any valid schedule transformation. For \cref{lst:example}, the data dependencies can be summarized as follows: $\sigma_S(i, j) < \sigma_T(i, j)$ for all $i, j$ (since $T$ reads from $A$ written by $S$), and $\sigma_S(i, 0) < \sigma_U(i)$ and $\sigma_T(i, 0) < \sigma_U(i)$ for all $i$ (since $U$ reads from $A$ and $B$ written by $S$ and $T$, respectively).
 
 Most frameworks and optimization methods based on the polyhedral model and abstractions define these mappings as affine functions (i.e., linear functions with an added constant term). For the data layouts, the mapping can be efficiently represented using strides and an origin offset (e.g., a pointer to the first element) and the transformations can be represented as a simple matrix multiplication plus an offset addition. Affine transformations of schedules offer a powerful way to apply loop transformations such as interchange, skewing, tiling, and fusion in a mathematically rigorous manner, as many programs in high-performance computing exhibit affine access patterns in their loops --- which is why it is commonly used in various optimization frameworks and abstractions (TODO: cite).

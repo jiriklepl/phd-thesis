@@ -19,10 +19,10 @@ In high-performance computing, code optimization is crucial for achieving effici
 
 The impact of memory access patterns on performance is caused by memory hierarchies present in modern hardware architectures, which include multiple levels of caches and different types of memory (e.g., global, shared, local memory on GPUs), and, on distributed systems, communication overheads between nodes (e.g., via MPI). (TODO cite some sources) Different systems often require different optimization strategies or parameter tuning to achieve optimal performance. Complexity is further increased by features such as cache coherence protocols, prefetching mechanisms, coalesced memory accesses on GPUs, and non-uniform memory access (NUMA) effects on multi-core CPUs and clusters. (TODO cite some sources, rewrite the dump)
 
-% \xxx{Our work operates on the C++ programming language, using template meta-programming techniques to abstract the actual memory access patterns in a zero-overhead manner.}
+% \xxx{Our work operates on the \cpp programming language, using template meta-programming techniques to abstract the actual memory access patterns in a zero-overhead manner.}
 
 % TODO: maybe move to later?
-The optimization techniques targeted by our work comprise data locality optimizations and parallelization strategies, which mainly involves data layout and loop transformations such as tiling (blocking) or interchange directly in the C++ source code via abstractions that leverage template meta-programming.
+The optimization techniques targeted by our work comprise data locality optimizations and parallelization strategies, which mainly involves data layout and loop transformations such as tiling (blocking) or interchange directly in the \cpp source code via abstractions that leverage template meta-programming.
 
 
 \section{General hardware considerations}\label{sec:general-hardware-considerations}
@@ -169,7 +169,7 @@ for (int i = 0; i < M; ++i) {
 Generally, unless the optimization agent (compiler, autotuner, or programmer) can infer further invariants or identities, the semantics of any optimized schedule must be equivalent to this default schedule. Typically, the schedule (of a serial execution) is required to be totally ordered, meaning that any two computations must have a defined order of execution --- this might be not necessary, but cost models, for example, might determine different performance characteristics for different total orders of computations even if they are semantically equivalent (e.g., due to caching effects).
 
 \begin{XXX}
-On thusly defined schedules, a loop interchange can be represented as a permutation of the schedule dimensions, and loop tiling (blocking) as a mapping that splits a dimension into two dimensions (outer and inner tile). Our work performs such transformations on both data layouts and iteration orders by encoding them as partial functions over spaces of named dimensions resolved at compile time using C++ template meta-programming techniques. Many other optimization frameworks and abstractions commonly represent these mappings as affine functions (TODO: figure out how to reduce repetition with the next paragraphs).
+On thusly defined schedules, a loop interchange can be represented as a permutation of the schedule dimensions, and loop tiling (blocking) as a mapping that splits a dimension into two dimensions (outer and inner tile). Our work performs such transformations on both data layouts and iteration orders by encoding them as partial functions over spaces of named dimensions resolved at compile time using \cpp template meta-programming techniques. Many other optimization frameworks and abstractions commonly represent these mappings as affine functions (TODO: figure out how to reduce repetition with the next paragraphs).
 \end{XXX}
 
 Parallelization can be, for example, represented by adding new dimensions to the schedule that correspond to parallel execution units (e.g., thread blocks and threads on GPUs, or CPU threads) or, more na\"{\i}vely, by allowing multiple computations to share the same time coordinate in the schedule (i.e., executing them simultaneously).

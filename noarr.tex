@@ -4,11 +4,11 @@
 Need to add motivation, maybe formal definitions, abstract principles, etc.\ before introducing the actual Noarr library.
 \end{XXX}
 
-The Noarr library, first introduced in~\cite{vsmelko2022astute}, is a C++ library that provides layout-agnostic abstractions for representing and manipulating multidimensional data structures and their traversals.
+The Noarr library, first introduced in~\cite{vsmelko2022astute}, is a \cpp library that provides layout-agnostic abstractions for representing and manipulating multidimensional data structures and their traversals.
 
 Formally, the abstractions are based on partial functions on the index space and memory space of multidimensional arrays. Each such partial function is represented by a primitive building block called a \emph{proto-structure} --- examples of proto-structures include \texttt{scalar} that represents a single value, \texttt{array} that represents a contiguous array of elements represented by another structure, or \texttt{into\_blocks} that represents a view of another structure that divides one of its dimensions into blocks of a given size.
 
-The composable design of Noarr bears resemblance to views in the ranges library in C++20 (TODO cite); however, while being composable in a hierarchical manner, Noarr structures allow better flexibility and type-safety for multidimensional data structures by representing the index space using named dimensions that are resolved at compile time.
+The composable design of Noarr bears resemblance to views in the ranges library in \cpp20 (TODO cite); however, while being composable in a hierarchical manner, Noarr structures allow better flexibility and type-safety for multidimensional data structures by representing the index space using named dimensions that are resolved at compile time.
 
 Since the index space is represented using named dimensions, all queries on the structure, such as obtaining the size of a dimension, or the memory offset of an element at a given index, are type-safe and checked at compile time. In contrast to traditional positional indexing of multidimensional arrays (e.g., \lstinline{data[i][j]}) that is prone to errors due wrong pairing of indices to dimensions, type-safe indexing using named dimensions (e.g., \lstinline{data[idx<'x'>(i) + idx<'y'>(j)]}) ensures that the indices are paired with the correct dimensions. This also ensures that the API of memory accesses is self-documenting and independent of the actual layout of the data in memory.
 
@@ -26,7 +26,7 @@ Since the index space is represented using named dimensions, all queries on the 
 
 Noarr structures are immutable abstractions representing multidimensional data structures built by composing primitive proto-structures in a hierarchical manner as depicted in \cref{fig:noarr-structure-composition}. Each proto-structure represents a transformation of the index space and memory space of the nested \emph{sub-structure}; thus, if the sub-structure represents a multidimensional array with dimensions \lstinline{'y'} and \lstinline{'z'}, then wrapping it in an \texttt{array} proto-structure with dimension \lstinline{'x'} results in a three-dimensional array with dimensions \lstinline{'x'}, \lstinline{'y'}, and \lstinline{'z'}. The composition in this example simply adds a new dimension to the index space, extending it from two to three dimensions accordingly; however, other proto-structures may perform more complex transformations of the index space, such as splitting a dimension into multiple dimensions (e.g., \texttt{into\_blocks}, which consumes one dimension and produces two new dimensions) or reordering the logical hierarchy of dimensions (e.g., \texttt{hoist}).
 
-The composition of proto-structures is done using C++ template meta-programming and, in the Noarr library, it is represented by the \lstinline{^} operator. Since each proto-structure represents a partial function on the index space and memory space of the sub-structure, the composition of proto-structures is naturally associative. This is a powerful property that allows defining more complex transformations from simpler ones, and applying them simultaneously, and possibly to multiple data structures.
+The composition of proto-structures is done using \cpp template meta-programming and, in the Noarr library, it is represented by the \lstinline{^} operator. Since each proto-structure represents a partial function on the index space and memory space of the sub-structure, the composition of proto-structures is naturally associative. This is a powerful property that allows defining more complex transformations from simpler ones, and applying them simultaneously, and possibly to multiple data structures.
 
 Proto-structures can have multiple input dimensions and multiple output dimensions. If a dimension is not mentioned in the proto-structure, it is passed through unchanged from the sub-structure to the resulting structure. If a dimension appears as an input dimension but not as an output dimension, it is \emph{consumed} by the proto-structure; similarly, if a dimension appears as an output dimension but not as an input dimension, it is \emph{produced} by the proto-structure. Any produced dimensions are removed in the sub-state passed to the sub-structure and all consumed dimensions are added. This principle strengthens the type-safety of Noarr structures by ensuring that a dimension is not propagated unexpectedly.
 
@@ -120,10 +120,10 @@ When the traverser is created over multiple Noarr structures, the resulting inde
   \label{fig:noarr-traverser-multiple-structures}
 \end{figure}
 
-Noarr traversers have a similar relationship to Noarr structures as iterators and range algorithms in the C++20 ranges library (TODO cite) have to ranges. The main difference is that Noarr traversers operate on multidimensional index spaces inferred from the Noarr structures, while range algorithms operate on one-dimensional sequences of elements.
+Noarr traversers have a similar relationship to Noarr structures as iterators and range algorithms in the \cpp20 ranges library (TODO cite) have to ranges. The main difference is that Noarr traversers operate on multidimensional index spaces inferred from the Noarr structures, while range algorithms operate on one-dimensional sequences of elements.
 
 % TODO: ref/picture/snippet
-Similarly to iterators in C++ algorithms, Noarr traversers can be used to run the given callable objects in parallel using the given backend. Noarr currently supports parallel execution using OpenMP, Intel TBB, C++ standard threads, and CUDA\@. The following snippet shows binding four dimensions of the traverser to CUDA thread blocks.
+Similarly to iterators in \cpp algorithms, Noarr traversers can be used to run the given callable objects in parallel using the given backend. Noarr currently supports parallel execution using OpenMP, Intel TBB, \cpp standard threads, and CUDA\@. The following snippet shows binding four dimensions of the traverser to CUDA thread blocks.
 
 % TODO: fix the syntax
 \begin{lstlisting}[language=C++, caption={Using a Noarr traverser to run a computation on CUDA-enabled GPU.}, label=lst:noarr-traverser-cuda]
@@ -138,7 +138,7 @@ In (TODO ref) our work, we have shown that careful use of Noarr structures and t
 
 \xxx{This will probably cite the abstractions paper~\cite{klepl2025layout}.}
 
-In (TODO ref), we have introduced an autotuning extension to the Noarr library that allows expressing tunable parameters controlling data layouts and traversal orders using Noarr structures and traversers directly in C++ code. \xxx{TODO: continue from here.}
+In (TODO ref), we have introduced an autotuning extension to the Noarr library that allows expressing tunable parameters controlling data layouts and traversal orders using Noarr structures and traversers directly in \cpp code. \xxx{TODO: continue from here.}
 
 
 \subsection{Noarr MPI extension}\label{sec:noarr-mpi}

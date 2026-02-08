@@ -162,9 +162,9 @@
 \newcommand\onlineomit[1]{\ifonlineversion\vfill\begin{center}\fbox{\parbox{16.5em}{\footnotesize A re-printed manuscript that would appear here is omitted in the electronic version of the thesis.}}\end{center}\vfill\else#1\fi}
 
 % publication contributions
-\def\contF{\begin{tikzpicture}\fill circle(0.666ex);\end{tikzpicture}}
-\def\contP{\begin{tikzpicture}\begin{scope}[rotate=90]\clip circle(0.666ex);\fill (-0.666ex,-0.666ex) rectangle(-0.1ex,0.666ex);\end{scope}\draw circle(0.666ex);\end{tikzpicture}}
-\def\contN{\begin{tikzpicture}\draw[densely dotted] circle(0.666ex);\end{tikzpicture}}
+\def\contF{\begin{tikzpicture}\fill circle(0.666ex);\end{tikzpicture}\xspace}
+\def\contP{\begin{tikzpicture}\begin{scope}[rotate=90]\clip circle(0.666ex);\fill (-0.666ex,-0.666ex) rectangle(-0.1ex,0.666ex);\end{scope}\draw circle(0.666ex);\end{tikzpicture}\xspace}
+\def\contN{\begin{tikzpicture}\draw[densely dotted] circle(0.666ex);\end{tikzpicture}\xspace}
 %%% Detailed settings of bibliography
 
 \ifx\citet\undefined\else

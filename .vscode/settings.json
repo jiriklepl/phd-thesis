@@ -1,6 +1,7 @@
 {
     "cSpell.words": [
         "autotuning",
+        "bitonic",
         "Brabec",
         "Cellato",
         "CUDA",
@@ -9,6 +10,7 @@
         "Kokkos",
         "lualatex",
         "mdspan",
+        "MLIR",
         "Noarr",
         "parallelizable",
         "SIMT",

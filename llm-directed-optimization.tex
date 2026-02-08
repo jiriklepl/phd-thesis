@@ -7,13 +7,15 @@ Pragma-based approaches, etc.
 \end{XXX}
 
 Recent advances in large language models (LLMs) showed potential of using LLMs for code generation and optimization.
-However, most of the existing works focus on general-purpose code generation and optimization, without specific focus on high-performance computing (HPC) applications. % TODO: I hate this sentence
+\xxx{However, most of the existing works focus on general-purpose code generation and optimization, without specific focus on high-performance computing (HPC) applications.} % TODO: I hate this sentence
+
 \xxx{Brief history of LLM-directed code optimization in HPC.}
 
-In our work, we have explored \xxx{two} main questions regarding LLM-directed code optimization in HPC\@:
+In our work, we have explored three main questions regarding LLM-directed code optimization in HPC\@:
 \begin{itemize}
-  \item When implementing the optimized code, does guidance (tutoring) significantly improve the quality of the generated code even if the LLM is specifically tasked to provide as efficient code as possible for the target CUDA hardware?
-  \item \xxx{Outline the main questions of the second paper. TODO: continue from here.}
+  \item When implementing the optimized code, does guidance (tutoring) significantly improve the quality of the generated code even if the LLM is specifically tasked to provide as efficient code as possible for the target CUDA hardware?~\cite{brabec2025tutoring}
+  \item Does combining LLM-directed optimization with traditional code abstractions (e.g., DSLs and libraries) lead to better results than either approach alone?~\cite{klepl2026shifting}
+  \item Can LLMs reliably apply optimization techniques that are not easily accessible in existing DSLs and frameworks?~\cite{klepl2026shifting}
 \end{itemize}
 
 
@@ -21,10 +23,31 @@ In our work, we have explored \xxx{two} main questions regarding LLM-directed co
 
 \xxx{We will cite the tutoring paper~\cite{brabec2025tutoring}.}
 
+In \xxx{the tutoring paper}~\cite{brabec2025tutoring}, we investigated whether contemporary LLMs can generate efficient CUDA code for HPC applications and whether providing tutoring (guidance) to the LLM can significantly improve the quality of the generated code. The work focused on optimizing three computational kernels representing different optimization challenges in HPC\@: histogram computation, game of life simulation, and k-NN search (in a 2D space).
+
+For histogram computation, the expected optimization techniques included per-block privatization of the histogram in multiple copies in shared memory, avoidance of bank conflicts, and reduction of the privatized histograms into the final global histogram. For the Game of Life simulation, the expected optimization techniques included bit-packing of the grid and utilizing bitwise operations to compute multiple cells in parallel. For the k-NN search, the expected optimization techniques included buffering the input data in shared memory after filtering out the points that are too far from the query point \xxx{in shared memory}, and using bitonic sort to efficiently update the intermediate results of the k-NN search.
+
+At the time of our experiments, we found that the currently best-performing LLM (o3-mini; \xxx{TODO cite}) was able to generate code that was functionally correct for the histogram computation and Game of Life simulation and it was able to generate more efficient code with more detailed instructions --- matching the expected optimization level with the most detailed instructions. However, for the k-NN search, the LLM was not able to generate functionally correct code regardless of the level of instructions provided.
+
+
+\subsection{GPT-5 replication}\label{sec:gpt5-replication}
+
+Since the original experiments were performed, we have replicated the experiments with GPT-5, which was released in the meantime. We found that GPT-5 was able to generate functionally correct code for all three kernels, including the k-NN search (however, at a success rate of around $30\%$ across all levels of instructions; while the success rate for the other two kernels reached almost $100\%$).
+
+The more recent LLM generally performed better than the previously best-performing LLM on the histogram computation and Game of Life simulation. The performance of the generated code was almost independent of the detail level of instructions provided to the LLM past the prompt that clearly stated the optimization goal \xxx{(independent for the Game of Life simulation, and slightly negatively correlated for the histogram computation)}, showing that the level of detail of instructions provided to the LLM does not significantly affect the quality of the generated code for problems that are below some complexity threshold.
+
+For the k-NN search kernel, the performance of the generated code was clearly positively correlated with the level of instructions provided to the LLM\@, reaching the expected optimization level for the most detailed instructions.
+
 
 \section{Combining with abstractions}\label{sec:combining-with-abstractions}
 
 \xxx{We will cite the new paper~\cite{klepl2026shifting}.}
+
+We then investigated whether combining LLM-directed optimization with traditional code abstractions (DSLs and frameworks) can lead to better results than llm-directed optimization done without such abstractions --- as such abstractions are designed to make it easier to apply certain optimization techniques and improve performance portability across different hardware \xxx{(TODO: cite)}. We performed a case study using the GPT-5.1 LLM (the latest version at the time of our experiments\xxx{; TODO: cite}) as a representative of the state-of-the-art LLMs. The experiments were performed on the PolyBench/C benchmark suite \xxx{(TODO: cite)}, which consists of 30 computational kernels representing a variety of optimization challenges in HPC\@.
+
+We compared approaches differing in two dimensions: (1) whether the LLM was tasked to optimize the given code without any specific abstractions (i.e., the LLM had to apply all optimization techniques on its own), or whether the LLM was tasked to optimize the code using a specific abstraction (we used the Halide DSL \xxx{(TODO: cite the given version)}, Exo DSL \xxx{(TODO: cite the given version)}, and the Noarr library \xxx{(TODO: cite the given version)}); and (2) whether the LLM was provided with more detailed optimization hints, kernel-specific optimization instructions, or just a general optimization goal.
+
+\xxx{discuss the results.}
 
 
 \section{Discussion and future work}\label{sec:llm-directed-optimization-discussion}

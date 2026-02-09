@@ -12,6 +12,7 @@
         "mdspan",
         "MLIR",
         "Noarr",
+        "NUMA",
         "parallelizable",
         "SIMT",
         "SYCL",
@@ -35,7 +36,7 @@
         "files.insertFinalNewline": true,
     },
 
-    "todo-tree.regex.regex": "(//|%|#|<!--|;|\\\\|\\\\begin{|/\\*|^|^[ \\t]*(-|\\d+.))\\s*($TAGS)",
+    "todo-tree.regex.regex": "(//|\\(|%|#|<!--|;|\\\\|\\\\begin{|/\\*|^|^[ \\t]*(-|\\d+.))\\s*($TAGS)",
     "todo-tree.general.tags": [
         "BUG",
         "HACK",

@@ -19,6 +19,7 @@
         "parallelizable",
         "SIMT",
         "SYCL",
+        "techreport",
         "Traverser",
         "Traversers"
     ],

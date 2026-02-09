@@ -2,7 +2,7 @@
 
 % IDEA of the chapter: This is a background (or extended intro) chapter that overviews common code optimization techniques used in high-performance computing. It should explain why optimizations are important and how we can optimize the code.
 
-\xxx{history of the topic?}
+\xxx{history of the topic? (prbly not, quite boring and not relevant to our work)}
 
 Since our work focuses on optimizing data structures and memory access patterns in high-performance computing (HPC) applications, primarily by adjusting data layouts and loop structures; we first outline common optimization techniques used in this domain, as well as relevant hardware features (of CPU and GPU-based systems) that motivate these optimizations. In our work, we primarily focus on improving memory access patterns and parallelizing numerical computations on multidimensional arrays, performed in nested loops, and computed on clusters with modern multi-core CPUs and GPU accelerators, so we limit the scope of this chapter accordingly.
 
@@ -10,7 +10,7 @@ Since our work focuses on optimizing data structures and memory access patterns 
 
 Most optimizations that we will cover comprise various loop and memory layout transformations (e.g., transposition) and applying parallelization strategies to computation kernels performing some computation on (multi-dimensional) data arrays. This covers many computation kernels in HPC applications~\cite{bacon1994compiler,pouchet2012polybench}.
 
-In high-performance computing, such code optimizations are crucial for achieving efficient execution of programs on modern hardware architectures. The difference between a well-optimized code and a na\"{\i}ve implementation can easily be an order of magnitude or more~\cite{hennessy2019computer} (TODO cite some work getting empirical performance results).
+In high-performance computing, such code optimizations are crucial for achieving efficient execution of programs on modern hardware architectures. The difference between a well-optimized code and a na\"{\i}ve implementation can easily be an order of magnitude or more~\cite{hennessy2019computer,bondhugula2008pluto}.
 
 The impact of memory access patterns on performance is caused by memory hierarchies present in modern hardware architectures, which include multiple levels of caches and different types of memory (e.g., global, shared, local memory on GPUs), and, on distributed systems, communication overheads between nodes (e.g., via MPI)~\cite{hennessy2019computer,drepper2007every}. Different systems often require different optimization strategies or parameter tuning to achieve optimal performance. The complexity of the issue is further increased by features such as cache coherency protocols, prefetching mechanisms, coalesced memory accesses on GPUs, or non-uniform memory access (NUMA) effects on multi-core CPUs and clusters~\cite{cuda_programming_guide}.
 
@@ -55,7 +55,7 @@ Synchronization between different blocks in a grid or even between different dev
 
 An important metric affecting the CUDA kernel performance is (next to its clock speed and memory bandwidth) the \emph{occupancy} of the kernel. It is a ratio of active warps to the maximum supported by the SM. Occupancy is lowered by exhausting its resource limits (registers and shared memory), creating a trade-off between using low-latency memories and gaining maximum performance (and latency hiding) from high occupancy.
 
-Since the device has its own DRAM memory, data has to be transferred between the host (CPU) memory and the device (GPU) memory via relatively slow PCIe or NVLink buses (compared to the GPU internal memory speeds; \xxx{TODO find numbers}). This transfer overhead can be mitigated by overlapping data transfers with kernel execution using asynchronous memory copy operations and CUDA streams. To some extent, this concern is alleviated by unified memory, which allows the system to automatically manage data transfers between host and device memory.
+Since the device has its own DRAM memory, data has to be transferred between the host (CPU) memory and the device (GPU) memory via relatively slow PCIe or NVLink buses (e.g., PCIe~5.0 offers up to 64~GB/s per direction and NVLink~4.0 provides up to 900~GB/s, both of which are substantially lower than the GPU internal HBM bandwidth of several TB/s)~\cite{cuda_programming_guide,nvidia_h100_whitepaper}. This transfer overhead can be mitigated by overlapping data transfers with kernel execution using asynchronous memory copy operations and CUDA streams. To some extent, this concern is alleviated by unified memory, which allows the system to automatically manage data transfers between host and device memory.
 
 The following list summarizes the most important hardware considerations for code optimization on NVIDIA GPUs:
 \begin{itemize}

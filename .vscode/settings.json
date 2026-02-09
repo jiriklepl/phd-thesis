@@ -35,6 +35,16 @@
         "files.insertFinalNewline": true,
     },
 
-    "todo-tree.regex.regex": "(//|%|#|<!--|;|/\\*|^|^[ \\t]*(-|\\d+.))\\s*($TAGS)",
+    "todo-tree.regex.regex": "(//|%|#|<!--|;|\\\\|\\\\begin{|/\\*|^|^[ \\t]*(-|\\d+.))\\s*($TAGS)",
+    "todo-tree.general.tags": [
+        "BUG",
+        "HACK",
+        "FIXME",
+        "TODO",
+        "XXX",
+        "xxx",
+        "[ ]",
+        "[x]"
+    ],
     "makefile.configureOnOpen": false
 }

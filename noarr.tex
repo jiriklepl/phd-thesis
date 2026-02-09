@@ -163,4 +163,10 @@ In our work, we have also applied the layout-agnostic MPI datatype construction 
 
 \subsection{\xxx{How noarr saves the world}}\label{sec:noarr-saves-world}
 
-\xxx{We need to add some concluding remarks here: why is Noarr important? What does it enable? Who cares?}
+% \xxx{We need to add some concluding remarks here: why is Noarr important? What does it enable? Who cares?}
+
+The works described in this section show that layout-agnostic and traversal-agnostic abstractions, such as those provided by the Noarr library, can be used to express the logic of computations and communications in HPC applications in a way that allows for separation of concerns between the logic of the computation and communication and the data layout and traversal order. This separation of concerns allows for introducing more flexibility in the design and implementation of HPC applications, allowing the developers to easily change the data layout and traversal order by swapping transformations applied to the structures (i.e., proto-structures in Noarr) and adjusting any tile sizes or other tunable parameters, without having to modify the logic of the computation and communication.
+
+This flexibility, combined with possibility to infer sizes of co-dependent dimensions and to introduce type-safety of memory accesses and transformations (as exemplified by the Noarr library) allows for more easier exploration of the design space of HPC applications, enabling developers to find better-performing implementations. This improves performance portability of HPC applications across different hardware architectures, as we have shown in our work that the approach is applicable to a wide range of programming models and hardware architectures, including CUDA-enabled GPUs, and MPI-based distributed systems.
+
+\xxx{More yapping?}

@@ -1,26 +1,21 @@
 \chapter{Optimization methods}\label{chap:optimization-methods}
 
-\begin{XXX}
-TODO: Delame prehled do sirky
-\end{XXX}
+% IDEA of the chapter: This is the second, more technical, background chapter that overviews common optimization methods (as in software tools, frameworks, etc.) used in high-performance computing; especially those that are relevant to our work (data layout and traversal optimizations, parallelization, autotuning, etc.; but we might include some other methods as well for completeness). It should explain the state of the art in this area and provide context for our contributions. It roughly corresponds to the "Related work" section of a typical research paper.
 
-As discussed in \cref{chap:code-optimization}, code optimization is crucial for achieving efficient execution of programs on modern hardware architectures such as multi-core CPUs and GPUs. In this chapter, we outline several prominent optimization methods and frameworks that have been developed to facilitate (automated) code optimization in high-performance computing applications.
+As discussed in \cref{chap:code-optimization}, code optimization is crucial for achieving efficient execution of programs on modern hardware architectures such as multi-core CPUs and GPUs. In this chapter, we outline several prominent optimization methods and frameworks that have been developed to facilitate (automated) code optimization in high-performance computing applications, putting particular emphasis on those that are relevant to our work targeting data layout and traversal optimizations.
 
-Code optimization methods can target different points in the compilation and execution pipeline --- some methods operate above the source code level, providing abstractions or domain-specific languages (DSLs) that allow developers to express computations in a way that is amenable to optimization. Other methods perform optimizations at the source code level, possibly using annotations or pragmas to guide the optimization process. More low-level methods operate on intermediate representations (IRs) or directly on machine code, applying transformations to improve performance based on static analysis or empirical measurements. Some methods may also involve runtime systems that adaptively optimize code during execution based on observed performance characteristics; in such cases, methods like just-in-time (JIT) compilation techniques may be employed to generate optimized code on-the-fly based on the current execution patterns.
+Code optimization methods can target different points in the compilation and execution pipeline --- some methods operate above the source code level, providing high-level abstractions or domain-specific languages (DSLs) that allow developers to express computations in a way that is amenable to more powerful optimizations. Other methods perform optimizations at the source code level, possibly using annotations or pragmas to guide the optimization process. More low-level methods operate on intermediate representations (IRs) or directly on the generated machine code, applying transformations to improve performance based on static analysis or empirical measurements. Some methods may also involve runtime systems that adaptively optimize code during execution based on observed performance characteristics; in such cases, methods like just-in-time (JIT) compilation techniques may be employed to generate optimized code on-the-fly based on the current execution patterns.
 
 We primarily focus on abstractions and frameworks that operate above or at the source code level, as these are most relevant to our work. However, we also briefly discuss the wider landscape of optimization methods to provide context for our contributions.
 
 
 \section{Compiler optimizations}\label{sec:compiler-optimizations}
 
-\xxx{Traditional compiler optimizations; disregarding things like polyhedral optimization for now, as they will be discussed separately.}
+% TODO: Write intro to traditional compiler optimizations; polyhedral optimization will be discussed separately in \cref{sec:polyhedral-optimization}.
 
 \begin{XXX}
-Discuss compiler optimizations and frameworks:
+Discuss compiler optimizations and frameworks (not yet included):
 \begin{itemize}
-  \item LLVM~\cite{lattner2004llvm}
-  \item GCC~\cite{gcc}
-  \item MLIR~\cite{lattner2021mlir}
   \item Intel Compiler~\cite{intel-oneapi-dpcpp-cpp-compiler-devguide-2025-2,intel-oneapi-dpcpp-cpp-compiler-release-notes-2025}
   \item NVCC~\cite{nvidia_nvcc}
   \item others (TODO: literature review)
@@ -29,35 +24,34 @@ Discuss compiler optimizations and frameworks:
 
 Compiler optimizations are a fundamental aspect of modern compilers. In high-performance computing, compilers such as LLVM~\cite{lattner2004llvm} and GCC~\cite{gcc} implement a wide range of optimization techniques to improve the performance of source code, starting from basic optimizations that remove abstractions and redundant computations, inline functions, perform sub-expression elimination, etc. More advanced optimizations include loop transformations (e.g., loop unrolling, loop fusion, invariant code motion), vectorization, and inter-procedural optimizations that analyze and optimize across function boundaries.
 
-In the context of typical high-performance (scientific computing) applications with quite simple control flow and heavy numerical computations, these optimizations mainly allow using higher-level abstractions (e.g., \cpp templates, mdspan, \ldots) without significant performance penalties (most notably, when using so-called zero-cost abstractions) \xxx{TODO: cite}. They can also optimize arithmetic expressions, eliminate redundant computations, and perform some basic loop transformations. However, these optimizations by themselves are often insufficient to achieve optimal performance on modern hardware architectures, especially for complex loop nests and data access patterns.
+In the context of typical high-performance (scientific computing) applications with quite simple control flow and heavy numerical computations, these optimizations mainly allow using higher-level abstractions (e.g., \cpp templates, mdspan, \ldots) without significant performance penalties (most notably, when using so-called zero-cost abstractions~\cite{stroustrup2012foundations}). They can also optimize arithmetic expressions, eliminate redundant computations, and perform some basic loop transformations. However, these optimizations by themselves are often insufficient to achieve optimal performance on modern hardware architectures, especially for complex loop nests and data access patterns.
 
-Some compilers and frameworks, such as MLIR~\cite{lattner2021mlir}, provide extensible intermediate representations that allow for custom representation and optimization passes to be implemented --- some of them targeting specific domains or hardware architectures. This is particularly useful for domain-specific languages (DSLs) that can leverage MLIR to implement their own optimization pipelines, including polyhedral optimizations, autotuning, and other transformations that are not typically part of general-purpose compilers. While it is built on top of traditional SSA-based IRs, it allows for defining custom dialects, and facilitates all boilerplate such as parsing, code generation, and so on. It is used by many DSLs, such as (\xxx{TODO find out whether Halide, Tiramisu, \ldots use it}), for example, to optimize AI computation graphs.
+Some compilers and frameworks, such as MLIR~\cite{lattner2021mlir}, provide extensible intermediate representations that allow for custom representation and optimization passes to be implemented --- some of them targeting specific domains or hardware architectures. This is particularly useful for domain-specific languages (DSLs) that can leverage MLIR to implement their own optimization pipelines, including polyhedral optimizations, autotuning, and other transformations that are not typically part of general-purpose compilers. While it is built on top of traditional SSA-based IRs, it allows for defining custom dialects, and facilitates all boilerplate such as parsing, code generation, and so on. % Note: Halide and Tiramisu do NOT use MLIR; they have their own IRs. MLIR is used by e.g., IREE, Torch-MLIR, Polygeist~\cite{moses2021polygeist}.
 
 
 \subsection{Polyhedral optimization}\label{sec:polyhedral-optimization}
 
 \begin{XXX}
-Discuss polyhedral optimization frameworks:
+Discuss polyhedral optimization frameworks (not yet included):
 \begin{itemize}
-  \item Polly (LLVM)~\cite{grosser2012polly}
-  \item GRAPHITE (GCC)~\cite{trifunovic2010graphite}
-  \item Polygeist (MLIR) (TODO: find a paper about it)
-  \item PLuTo~\cite{bondhugula2008pluto}
-  \item ISL (maybe), dependency of many polyhedral tools (TODO: add to bibliography.bib)
+  \item Polygeist (MLIR)~\cite{moses2021polygeist}
   \item PolyMage~\cite{mullapudi2015polymage}
   \item others (TODO: literature review)
 \end{itemize}
 \end{XXX}
 
-Workloads comprising nested loops with affine bounds and affine memory accesses (Static Control Parts, or SCoPs) are common in high-performance computing applications (TODO: cite some good surveys). To target such applications, \xxx{someone proposed using some polynomial something to represent and optimize computations in loop nests.} Polyhedral optimization frameworks, such as Polly~\cite{grosser2012polly}, GRAPHITE~\cite{trifunovic2010graphite}, and PLuTo~\cite{bondhugula2008pluto}, use the powerful mathematical framework of polyhedral model (provided by libraries such as ISL~\cite{verdoolaege2010isl}) to represent the computations in loops in a more compact and analyzable form compared to traditional compiler IRs such as Static Single Assignment (SSA) forms. Polyhedra offer a way to represent data layouts, loop iteration spaces, and dependencies between computations in a unified manner.
+% TODO: Maybe mention the Clauss paper on Ehrhart polynomials for counting integer points in polyhedra (Automatic Memory Layout Transformations to Optimize Spatial Locality in Parameterized Loop Nest)
+Workloads comprising nested loops with affine bounds and affine memory accesses (Static Control Parts, or SCoPs) are common in high-performance computing applications (see, e.g., \citeauthor{bacon1994compiler}~\cite{bacon1994compiler}). To target such applications, \citeauthor{feautrier1992some}~\cite{feautrier1992some} and others pioneered the use of the polyhedral model to represent and optimize computations in loop nests. Polyhedral optimization frameworks, such as Polly~\cite{grosser2012polly}, GRAPHITE~\cite{trifunovic2010graphite}, and PLuTo~\cite{bondhugula2008pluto}, use the powerful mathematical framework of polyhedral model (provided by libraries such as ISL~\cite{verdoolaege2010isl}) to represent the computations in loops in a more compact and analyzable form compared to traditional compiler IRs such as Static Single Assignment (SSA) forms. Polyhedra offer a way to represent data layouts, loop iteration spaces, and dependencies between computations in a unified manner.
 
-Polyhedral optimization is application of integer linear algebra to optimize loop nests with affine bounds and affine memory accesses. The main idea is to represent the iteration space of loops, as well as memory accesses and dependencies, using polyhedra. This representation allows, for example, to find hyperplanes orthogonal to data dependencies, that can represent parallelizable loops; or to find transformations of the iteration space that improve data locality or enable vectorization. \xxx{TODO: connect this somehow to \cref{sec:formalizing-data-layouts-and-access-patterns} and also mention ISL\@. Do a brief comparison of the three mentioned frameworks.}
+Polyhedral optimization is application of integer linear algebra to optimize loop nests with affine bounds and affine memory accesses. The main idea is to represent the iteration space of loops, as well as memory accesses and dependencies, using polyhedra. This representation allows, for example, to find hyperplanes orthogonal to data dependencies, that can represent parallelizable loops; or to find transformations of the iteration space that improve data locality or enable vectorization.
+% TODO: Connect this to \cref{sec:formalizing-data-layouts-and-access-patterns} and also mention ISL\@. Do a brief comparison of the three mentioned frameworks (Polly, GRAPHITE, PLuTo).
 
-Many works iterate on the basic polyhedral model to extend its applicability or improve the optimization results by combining it with cost models, heuristics, or machine learning techniques (TODO: find some references). Some works show benefits of combining polyhedral optimization with autotuning (TODO: find some references) or human insights (TODO: find some references). \xxx{Find works doing domain-specific optimizations using polyhedral model (e.g., PolyMage) and discuss here.}
+Many works iterate on the basic polyhedral model to extend its applicability or improve the optimization results by combining it with cost models, heuristics, or machine learning techniques (e.g.,\citeauthor{baghdadi2021deep}~\cite{baghdadi2021deep}). Some works show benefits of combining polyhedral optimization with autotuning (TODO: find some references) or human insights (TODO: find some references).
+% TODO: Find works doing domain-specific optimizations using polyhedral model (e.g., PolyMage~\cite{mullapudi2015polymage}) and discuss here.
 
 Many DSL compilers (e.g., Halide~\cite{ragan2013halide}, Tiramisu~\cite{baghdadi2019tiramisu}) that will be discussed in \cref{sec:abstractions} use polyhedral optimization techniques as part of their optimization pipelines. These DSLs often provide higher-level abstractions that allow developers to guide the optimization process using directives that can be mapped to polyhedral transformations.
 
-\xxx{TODO: continue from here.}
+% TODO: continue from here.
 
 
 \section{Autotuning}\label{sec:autotuning}
@@ -77,7 +71,7 @@ Discuss autotuning techniques and frameworks:
 
 Autotuning techniques are powerful methods for optimizing performance of applications based on empirical performance measurements or cost models. They involve data-driven methods for exploring large parameter spaces to find optimal configurations. They can control various parameters, such as algorithmic choices, data layouts, tiling sizes, unrolling factors, and parallelization strategies; or even tune build configurations and compiler flags.
 
-\xxx{Add more text here. Discuss some different approaches (e.g., the annealing/swarm/genetic algorithms vs Bayesian optimization vs reinforcement learning vs whatnot; do not forget grid-search, hill-climbing, random search, \ldots). References to papers that use autotuning and show its benefits. Find the Halide paper with autotuning.}
+% TODO: Add more text here. Discuss some different approaches (e.g., the annealing/swarm/genetic algorithms vs Bayesian optimization vs reinforcement learning vs whatnot; do not forget grid-search, hill-climbing, random search, \ldots). References to papers that use autotuning and show its benefits. The Halide autotuning paper is Adams et al.~\cite{adams2019learning}. Also see Baghdadi et al.~\cite{baghdadi2021deep} for ML-based cost models for code optimization.
 
 
 \section{Abstractions}\label{sec:abstractions}
@@ -94,7 +88,7 @@ Need to mention the following abstractions:
   \item Exo~\cite{ikarashi2022exocompilation}
   \item Cutlass/Cute~\cite{thakkar2023cutlass}
   \item GridTools~\cite{afanasyev2021gridtools}
-  \item Kokkos, RAJA~\cite{trott2021kokkos,beckingsale2019raja}, SYCL/DPC++ (TODO: add to the bib file), oneAPI (tbb, \ldots; TODO: add to the bib file), Thrust (TODO: add to the bib file)
+  \item Kokkos, RAJA~\cite{trott2021kokkos,beckingsale2019raja}, SYCL/DPC++~\cite{khronos2023sycl}, oneAPI (TBB~\cite{pheatt2008intel}), Thrust~\cite{bell2011thrust}
   \item mdspan (Kokkos, C++23)~\cite{trott2022mdspan}
   \item others (TODO: literature review)
 \end{itemize}
@@ -105,10 +99,10 @@ Flexible abstractions allowing manipulation of data layouts and iteration orders
 We can broadly categorize these abstractions into the following groups:
 
 \begin{description}
-  \item[Domain-specific languages (DSLs):]\label{des:dsl} These are specialized programming languages designed to express computations in specific domains, such as image processing (Halide~\cite{ragan2013halide}), tensor computations (Tiramisu~\cite{baghdadi2019tiramisu}), or array programming (Futhark~\cite{henriksen2017futhark}). They rely on sophisticated compilers or runtime systems to generate optimized code for the target hardware. These DSLs often sacrifice some generality for better analysis and optimization opportunities --- for example, Halide has a fixed computation model based on pipelines of processing stages that has limited expressivity for nested control flow or data-dependent computations.
+  \item[Domain-specific languages (DSLs):]\label{des:dsl} These are specialized programming languages designed to express computations in specific domains, such as image processing (Halide~\cite{ragan2013halide}), polyhedral code generation (Tiramisu~\cite{baghdadi2019tiramisu}), or array programming (Futhark~\cite{henriksen2017futhark}). They rely on sophisticated compilers or runtime systems to generate optimized code for the target hardware. These DSLs often sacrifice some generality for better analysis and optimization opportunities --- for example, Halide has a fixed computation model based on pipelines of processing stages that has limited expressivity for nested control flow or data-dependent computations.
   \item[Annotation-based tools:]\label{des:annotation-based-tools} These tools, relying on compiler extensions or external preprocessors, allow developers to annotate their code with optimization directives. Examples include OpenMP for parallelization and pragmas for loop transformations. Compared to DSLs, these tools operate on top of the target language (e.g., C/\cpp) and maintain higher generality, or at least compatibility with the host language. However, they may be also limited by specific semantics of the host language. % TODO: remove contradictions etc
   % TODO: the following name is not final (was named "Native tools" in the abstractions paper; I am thinking about breaking it into two categories: parallelization frameworks and libraries vs _something_ abstractions)
-  \item[Parallelization frameworks and libraries:]\label{des:parallelization-frameworks} These frameworks provide abstractions enabling developers to run computations in parallel using high-level constructs. Examples include Kokkos~\cite{trott2021kokkos}, RAJA~\cite{beckingsale2019raja}, and SYCL/DPC++.% TODO: maybe more yapping to balance the other items
+  \item[Parallelization frameworks and libraries:]\label{des:parallelization-frameworks} These frameworks provide abstractions enabling developers to run computations in parallel using high-level constructs. Examples include Kokkos~\cite{trott2021kokkos}, RAJA~\cite{beckingsale2019raja}, and SYCL/DPC++~\cite{khronos2023sycl}.% TODO: maybe more yapping to balance the other items
 \end{description}
 
 These abstractions play a crucial role in optimizing applications for modern high-performance computing, as the scale and complexity of diverse hardware architectures continue to grow and traditional low-level optimization techniques are not sufficient to achieve optimal performance. The abstractions enable developers to apply optimizations based on domain knowledge, empirical performance data, or autotuning techniques. Compared to hand-tuned low-level code, maintainability and portability of high-level abstractions is significantly better and the development time is reduced. Many of these abstractions also support advanced validation of correctness of the code transformations.
@@ -116,19 +110,23 @@ These abstractions play a crucial role in optimizing applications for modern hig
 
 \subsection{Domain-specific languages (DSLs)}\label{sec:dsls}
 
-\xxx{Discuss DSLs in more detail.}
+% TODO: Discuss DSLs in more detail.
 
 
 \subsection{Annotation-based tools}\label{sec:annotation-based-tools}
 
-\xxx{Discuss annotation-based tools in more detail.}
+% TODO: Discuss annotation-based tools in more detail.
 
 
 \subsection{Native tools and libraries}\label{sec:native-tools}
 
-\xxx{Discuss native tools and libraries in more detail.}
+% TODO: Discuss native tools and libraries in more detail.
 
 
-\section{Hybrid approaches}\label{sec:hybrid-approaches}
+\section{Machine learning and LLMs for optimization}\label{sec:ml-and-llms-for-optimization}
 
-\xxx{This section makes no sense.}
+% TODO: just stick to ML and LLMs for optimization, no extensive discussion of ML methods and LLM theory, etc.; just optimization
+
+
+% \section{Hybrid approaches}\label{sec:hybrid-approaches}
+% TODO: Consider removing this section entirely or merging its intended content into earlier sections.

@@ -13,6 +13,7 @@
         "MLIR",
         "Noarr",
         "NUMA",
+        "NVCC",
         "parallelizable",
         "SIMT",
         "SYCL",

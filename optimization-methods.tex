@@ -86,7 +86,7 @@ Need to mention the following abstractions:
   \item Halide~\cite{ragan2013halide}, Tiramisu~\cite{baghdadi2019tiramisu}, TVM~\cite{chen2018tvm}
   \item Futhark~\cite{henriksen2017futhark}
   \item Exo~\cite{ikarashi2022exocompilation}
-  \item Cutlass/Cute~\cite{thakkar2023cutlass}
+  \item Cutlass/CuTe~\cite{thakkar2023cutlass}
   \item GridTools~\cite{afanasyev2021gridtools}
   \item Kokkos, RAJA~\cite{trott2021kokkos,beckingsale2019raja}, SYCL/DPC++~\cite{khronos2023sycl}, oneAPI (TBB~\cite{pheatt2008intel}), Thrust~\cite{bell2011thrust}
   \item mdspan (Kokkos, C++23)~\cite{trott2022mdspan}
@@ -112,6 +112,19 @@ These abstractions play a crucial role in optimizing applications for modern hig
 
 % TODO: Discuss DSLs in more detail.
 
+Halide~\cite{ragan2013halide} is a C++-embedded DSL with a custom compiler and runtime system that primarily targets image and array processing applications (including regular stencil computations). It is based on defining pipelines of processing stages, where each stage represents a computation that can be optimized independently. The resulting computation pipeline is a directed acyclic graph (DAG) of stages that are subject to various transformations, such as tiling, fusion, and parallelization. These transformations can be guided by the developer using a scheduling language or by autotuning techniques. The Halide compiler performs various checks to ensure that each transformation preserves the semantics of the original computation. It uses interval analysis, which is a less expressive but more powerful (for the target domain) representation than the polyhedral model. Halide's design allows for a high degree of optimization at the cost of expressivity, as it is not suitable for more complex computations, such as those that contain imperfectly nested loops or data-dependent control flow, or non-rectangular iteration spaces.
+
+\xxx{Halide example, some yapping about the scheduling language, how it matches the data layout and traversal formalism from chap 1}
+
+Tiramisu~\cite{baghdadi2019tiramisu} is a C++-embedded DSL superficially similar to Halide that targets a wider range of applications, including those with more complex control flow and data access patterns. Unlike Halide, Tiramisu is based on the polyhedral model, which allows it to represent a broader class of computations, including those with imperfectly nested loops or skewed and non-rectangular iteration spaces. Its primary domains include image processing, deep learning, and general scientific computing applications, and also supports sparse computations. \xxx{Continue from here.}
+
+\xxx{Tiramisu example, some yapping about the scheduling language, how it matches the data layout and traversal formalism from chap 1}
+
+Exo~\cite{ikarashi2022exocompilation} is Python-embedded DSL that generates C code for specialized hardware. The target-specific instructions and optimization transformations performed on them are all defined in extensible user-level libraries. Similarly to Halide and Tiramisu, the transformations are guided by the developer using a scheduling language. Exo then performs various checks based on effect analysis to ensure program equivalence and memory safety throughout the transformations.
+
+\XXX{Give examples of Exo use, \lstinline{@instr}, \lstinline{@proc}, transformations, etc.}
+
+Cutlass~\cite{thakkar2023cutlass} CuTe is a collection of C++ template abstractions that can hierarchically represent multidimensional layouts of threads and data. They are specifically designed for representing and optimizing computations on NVIDIA GPUs\@. The multidimensional layouts can represent a wide range of dense linear algebra computations, and they also allow for functional composition of layouts like in Noarr\@, which is particularly useful for common transformations such as tiling or partitioning \xxx{(cite the cute wiki)}.
 
 \subsection{Annotation-based tools}\label{sec:annotation-based-tools}
 

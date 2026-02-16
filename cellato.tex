@@ -1,17 +1,13 @@
 \section{Cellato Library}\label{chap:cellato}
 
-\begin{XXX}
-This will probably cite the Cellato paper~\cite{brabec2025cellato}. We also need to add a motivation etc.
-\end{XXX}
+\xxx{This will probably cite the Cellato paper~\cite{brabec2025cellato}. We also need to add a micro-motivation etc.}
 
 % TODO: apparently, discrete iterative stencil computations is not a known term, so we should change it to something else
 % TODO: re-think "bit-level SIMD"
 
 In our ongoing research in the area of \xxx{discrete iterative stencil computations} (namely, cellular automata), we have observed that many well-optimized implementations share common design patterns such as bit-packing of cell states, temporal blocking of updates, and bit-level SIMD parallelism of cell update computations. Inspired by these observations and layout-agnostic paradigms explored in the Noarr library, we have developed the Cellato library, which enables the separation of concerns between the high-level definition of cellular automata and low-level details such as data layouts, parallelization strategies, and computation optimizations.
 
-\xxx{We need some motivation here: why is this important?}
-
-\xxx{Chellato does not fit the definition of layouts etc in \cref{sec:formalizing-data-layouts-and-access-patterns} exactly; discuss how it differs and how it is similar.}
+\xxx{Cellato does not fit the definition of layouts etc in \cref{sec:formalizing-data-layouts-and-access-patterns} exactly; discuss how it differs and how it is similar.}
 
 
 \subsection{Cellato traversers and evaluators}\label{sec:cellato-evaluators}

@@ -124,10 +124,31 @@ Exo~\cite{ikarashi2022exocompilation} is Python-embedded DSL that generates C co
 
 % TODO: Discuss annotation-based tools in more detail.
 
-\xxx{OpenMP}
+OpenMP~\cite{openmp_6.0_spec} is a widely used API for parallel programming in C, C++, and Fortran\@. It provides a set of compiler directives, library routines, and environment variables that allow developers to specify parallelization and synchronization of code regions, as well as to control data sharing or privatization between threads. It supports various loop transformations such as loop unrolling, tiling, and vectorization via \lstinline{#pragma omp} directives. GPUs can be targeted using the \lstinline{#pragma omp target} directive along the \lstinline{teams} construct to control warps/wavefronts and threads within them.
 
-\xxx{Loopy}
+\xxx{Give examples of OpenMP use, how it can be used to express parallelism and transformations, etc.}
 
+Loopy~\cite{namjoshi2016loopy} is an annotation-based tool that allows developers to express affine transformations of loop nests by specifying mappings of the schedules of the statements in nested loops as shown in the following example:
+
+\begin{lstlisting}
+for (i = 0; i < N; i++) {
+  for (j = 0; j < N; j++) {
+    Init: C[i][j] = 0;
+
+    for (k = 0; k < N; k++) {
+      Mult: C[i][j] += A[i][k] * B[k][j];
+    }
+  }
+}
+
+realign(Init, Mult, 0)
+affine(Mult, {[i, j, k] -> [i, k, j]})
+affine(Mult, {[i, j, k] -> [i1, j1, k1, i2, j2, k2]:
+  i1 = [i/64] and j1 = [j/64] and k1 = [k/64] and
+  i2 = [i%64] and j2 = [j%64] and k2 = [k%64]})
+\end{lstlisting}
+
+This performs loop interchange and tiling transformations on the original loop nest (the two \lstinline{affine} directives); the \lstinline{realign} directive is used to specify that the two statements should be treated as two separate loop nests (with data dependencies between them preserved), as the third argument ($0$ in this case) specifies the number of loops that should be shared between the two statements after the transformation. This allows the subsequent directives to be applied to each statement independently. The framework performs correctness checks to ensure that the transformations preserve the semantics of the original computation,
 
 \xxx{etc.}
 

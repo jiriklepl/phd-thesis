@@ -59,19 +59,23 @@ Many DSL compilers (e.g., Halide~\cite{ragan2013halide}, Tiramisu~\cite{baghdadi
 \begin{XXX}
 Discuss autotuning techniques and frameworks:
 \begin{itemize}
-  \item OpenTuner~\cite{ansel2014opentuner}
-  \item Optuna~\cite{akiba2019optuna}
-  \item ATF~\cite{rasch2018atf}
-  \item ytopt~\cite{wu2025ytopt}
-  \item Kernel Tuner~\cite{van2019kernel}
   \item AutoTVM~\cite{chen2018tvm}
+  \item Optuna~\cite{akiba2019optuna}
+  \item Kernel Tuner~\cite{van2019kernel}
+  \item ytopt~\cite{wu2025ytopt}
   \item others (TODO: literature review)
 \end{itemize}
 \end{XXX}
 
-Autotuning techniques are powerful methods for optimizing performance of applications based on empirical performance measurements or cost models. They involve data-driven methods for exploring large parameter spaces to find optimal configurations. They can control various parameters, such as algorithmic choices, data layouts, tiling sizes, unrolling factors, and parallelization strategies; or even tune build configurations and compiler flags.
+Autotuning techniques are powerful methods for optimizing performance of applications based on empirical performance measurements or cost models. They involve data-driven methods for exploring large parameter spaces (\emph{search space}s) to find optimal configurations. They can control various parameters, such as algorithmic choices, data layouts, tiling sizes, unrolling factors, and parallelization strategies; or even tune build configurations and compiler flags.
 
 % TODO: Add more text here. Discuss some different approaches (e.g., the annealing/swarm/genetic algorithms vs Bayesian optimization vs reinforcement learning vs whatnot; do not forget grid-search, hill-climbing, random search, \ldots). References to papers that use autotuning and show its benefits. The Halide autotuning paper is Adams et al.~\cite{adams2019learning}. Also see Baghdadi et al.~\cite{baghdadi2021deep} for ML-based cost models for code optimization.
+
+OpenTuner~\cite{ansel2014opentuner} is the first framework that combines multiple search techniques (e.g., genetic algorithms, simulated annealing, etc.) in ensembles with a flexible API for defining the search space and the objective function. It is a general-purpose autotuning framework in Python that allows users to define their own search spaces and objective functions, and the black-box running of the target application with different configurations from the search space. ATF~\cite{rasch2018atf} is a C++ framework that builds on top of OpenTuner and a domain-specific autotuner CLTune and provides options for pruning the search space by defining constraints on the parameters (e.g., divisibility constraints for tiling sizes) as well as employing parallelism when generating the search space.
+
+Tools such as Hyperopt~\cite{bergstra2015hyperopt} and Optuna~\cite{akiba2019optuna} are general-purpose optimization frameworks (albeit built for optimizing hyperparameters of machine learning models) that use Bayesian optimization techniques to efficiently explore large search spaces with a limited number of evaluations. They can be used for autotuning by defining the search space and objective function in a way that is suitable for optimizing code performance. Optuna stands out for its define-by-run API, which allows for dynamic construction of the search space during the optimization process, which can be particularly useful for complex optimization problems where the search space may not be known a priori, cannot be efficiently represented in a static manner, or is too large to be exhaustively explored.
+
+There are many auto-tuning frameworks that are specific to certain domains, such as AutoTVM~\cite{chen2018tvm} for deep learning workloads, Kernel Tuner~\cite{van2019kernel} for GPU kernels (TODO ATLAS, FFTW, \ldots)
 
 
 \section{Abstractions}\label{sec:abstractions}

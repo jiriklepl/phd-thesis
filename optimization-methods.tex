@@ -26,7 +26,7 @@ Compiler optimizations are a fundamental aspect of modern compilers. In high-per
 
 In the context of typical high-performance (scientific computing) applications with quite simple control flow and heavy numerical computations, these optimizations mainly allow using higher-level abstractions (e.g., \cpp templates, mdspan, \ldots) without significant performance penalties (most notably, when using so-called zero-cost abstractions~\cite{stroustrup2012foundations}). They can also optimize arithmetic expressions, eliminate redundant computations, and perform some basic loop transformations. However, these optimizations by themselves are often insufficient to achieve optimal performance on modern hardware architectures, especially for complex loop nests and data access patterns.
 
-Some compilers and frameworks, such as MLIR~\cite{lattner2021mlir}, provide extensible intermediate representations that allow for custom representation and optimization passes to be implemented --- some of them targeting specific domains or hardware architectures. This is particularly useful for domain-specific languages (DSLs) that can leverage MLIR to implement their own optimization pipelines, including polyhedral optimizations, autotuning, and other transformations that are not typically part of general-purpose compilers. While it is built on top of traditional SSA-based IRs, it allows for defining custom dialects, and facilitates all boilerplate such as parsing, code generation, and so on. % Note: Halide and Tiramisu do NOT use MLIR; they have their own IRs. MLIR is used by e.g., IREE, Torch-MLIR, Polygeist~\cite{moses2021polygeist}.
+Some compilers and frameworks, such as MLIR~\cite{lattner2021mlir}, provide extensible intermediate representations that allow for custom representation and optimization passes to be implemented --- some of them targeting specific domains or hardware architectures. This is particularly useful for domain-specific languages (DSLs) that can leverage MLIR to implement their own optimization pipelines, including polyhedral optimizations, autotuning, and other transformations that are not typically part of general-purpose compilers. While it is built on top of traditional SSA-based IRs, it allows for defining custom dialects, and facilitates all boilerplate such as parsing, code generation, and so on.
 
 
 \subsection{Polyhedral optimization}\label{sec:polyhedral-optimization}
@@ -34,8 +34,6 @@ Some compilers and frameworks, such as MLIR~\cite{lattner2021mlir}, provide exte
 \begin{XXX}
 Discuss polyhedral optimization frameworks (not yet included):
 \begin{itemize}
-  \item Polygeist (MLIR)~\cite{moses2021polygeist}
-  \item PolyMage~\cite{mullapudi2015polymage}
   \item others (TODO: literature review)
 \end{itemize}
 \end{XXX}
@@ -47,35 +45,27 @@ Polyhedral optimization is application of integer linear algebra to optimize loo
 % TODO: Connect this to \cref{sec:formalizing-data-layouts-and-access-patterns} and also mention ISL\@. Do a brief comparison of the three mentioned frameworks (Polly, GRAPHITE, PLuTo).
 
 Many works iterate on the basic polyhedral model to extend its applicability or improve the optimization results by combining it with cost models, heuristics, or machine learning techniques (e.g.,\citeauthor{baghdadi2021deep}~\cite{baghdadi2021deep}). Some works show benefits of combining polyhedral optimization with autotuning (TODO: find some references) or human insights (TODO: find some references).
-% TODO: Find works doing domain-specific optimizations using polyhedral model (e.g., PolyMage~\cite{mullapudi2015polymage}) and discuss here.
 
-Many DSL compilers (e.g., Halide~\cite{ragan2013halide}, Tiramisu~\cite{baghdadi2019tiramisu}) that will be discussed in \cref{sec:abstractions} use polyhedral optimization techniques as part of their optimization pipelines. These DSLs often provide higher-level abstractions that allow developers to guide the optimization process using directives that can be mapped to polyhedral transformations.
+Many DSL compilers (e.g., Halide~\cite{ragan2013halide}, Tiramisu~\cite{baghdadi2019tiramisu}) that will be discussed in \cref{sec:abstractions} use polyhedral optimization techniques (or derived versions) as part of their optimization pipelines. These DSLs often provide higher-level abstractions that allow developers to guide the optimization process using directives that can be mapped to polyhedral transformations.
 
-% TODO: continue from here.
+Polygeist~\cite{moses2021polygeist} is a tool that translates \cpp code to MLIR\@. It combines traditional compiler optimizations on SSA-based IRs with polyhedral optimizations on the affine dialect of MLIR\@, outperforming both Polly and PLuTo on the PolyBench~\cite{pouchet2012polybench} benchmark suite. \xxx{Continue from here.}
 
 
 \section{Autotuning}\label{sec:autotuning}
 
-\begin{XXX}
-Discuss autotuning techniques and frameworks:
-\begin{itemize}
-  \item AutoTVM~\cite{chen2018tvm}
-  \item Optuna~\cite{akiba2019optuna}
-  \item Kernel Tuner~\cite{van2019kernel}
-  \item ytopt~\cite{wu2025ytopt}
-  \item others (TODO: literature review)
-\end{itemize}
-\end{XXX}
-
-Autotuning techniques are powerful methods for optimizing performance of applications based on empirical performance measurements or cost models. They involve data-driven methods for exploring large parameter spaces (\emph{search space}s) to find optimal configurations. They can control various parameters, such as algorithmic choices, data layouts, tiling sizes, unrolling factors, and parallelization strategies; or even tune build configurations and compiler flags.
+Autotuning techniques are powerful methods for optimizing performance of applications based on empirical performance measurements or cost models. They involve performance-cost model-based and empirical search methods for exploring large parameter spaces (\emph{search space}s) to find optimal configurations. They can control various parameters, such as algorithmic choices, data layouts, tiling sizes, unrolling factors, and parallelization strategies; or even tune build configurations and compiler flags.
 
 % TODO: Add more text here. Discuss some different approaches (e.g., the annealing/swarm/genetic algorithms vs Bayesian optimization vs reinforcement learning vs whatnot; do not forget grid-search, hill-climbing, random search, \ldots). References to papers that use autotuning and show its benefits. The Halide autotuning paper is Adams et al.~\cite{adams2019learning}. Also see Baghdadi et al.~\cite{baghdadi2021deep} for ML-based cost models for code optimization.
 
-OpenTuner~\cite{ansel2014opentuner} is the first framework that combines multiple search techniques (e.g., genetic algorithms, simulated annealing, etc.) in ensembles with a flexible API for defining the search space and the objective function. It is a general-purpose autotuning framework in Python that allows users to define their own search spaces and objective functions, and the black-box running of the target application with different configurations from the search space. ATF~\cite{rasch2018atf} is a C++ framework that builds on top of OpenTuner and a domain-specific autotuner CLTune and provides options for pruning the search space by defining constraints on the parameters (e.g., divisibility constraints for tiling sizes) as well as employing parallelism when generating the search space.
+They usually involve a search algorithm that explores the search space, performing local or global optimization. Many such algorithms have been proposed, including simple methods such as grid search and random search that can be effective for search spaces with a small number of parameters or hill climbing methods that greedily explore the search space by iteratively moving towards better configurations based on performance measurements. These methods are surprisingly effective in many cases, especially when the search space is not too large or when the performance landscape does not have many local minima. Even methods that simply combine random search with local search (e.g., by performing random restarts) can be quite effective in practice. More sophisticated methods include simulated annealing, genetic algorithms, swarm optimization, Bayesian optimization, and many other methods. Many of these methods balance exploration and exploitation in different ways, and their effectiveness can depend on the specific characteristics of the search space and the performance landscape.
 
-Tools such as Hyperopt~\cite{bergstra2015hyperopt} and Optuna~\cite{akiba2019optuna} are general-purpose optimization frameworks (albeit built for optimizing hyperparameters of machine learning models) that use Bayesian optimization techniques to efficiently explore large search spaces with a limited number of evaluations. They can be used for autotuning by defining the search space and objective function in a way that is suitable for optimizing code performance. Optuna stands out for its define-by-run API, which allows for dynamic construction of the search space during the optimization process, which can be particularly useful for complex optimization problems where the search space may not be known a priori, cannot be efficiently represented in a static manner, or is too large to be exhaustively explored.
+OpenTuner~\cite{ansel2014opentuner} is the first framework that combines multiple search techniques (e.g., genetic algorithms, simulated annealing, etc.) in ensembles (based on multi-armed bandits) with a flexible API for defining the search space and the objective function. It is a general-purpose autotuning framework in Python that allows users to define their own search spaces and objective functions, and the black-box running of the target application with different configurations from the search space. ATF~\cite{rasch2018atf} is a C++ framework that builds on top of OpenTuner and a domain-specific autotuner CLTune and provides options for pruning the search space by defining constraints on the parameters (e.g., divisibility constraints for tiling sizes) as well as employing parallelism when generating the search space.
 
-There are many auto-tuning frameworks that are specific to certain domains, such as AutoTVM~\cite{chen2018tvm} for deep learning workloads, Kernel Tuner~\cite{van2019kernel} for GPU kernels (TODO ATLAS, FFTW, \ldots)
+Tools such as Hyperopt~\cite{bergstra2015hyperopt} and Optuna~\cite{akiba2019optuna} are general-purpose optimization frameworks (albeit built for optimizing hyperparameters of machine learning models) that use Bayesian optimization techniques to efficiently explore large search spaces with a limited number of evaluations --- Bayesian optimization involves building a surrogate model of the performance landscape based on the observed performance measurements, and using this model to guide the search towards promising regions of the search space. They can be used for autotuning by defining the search space and objective function in a way that is suitable for optimizing code performance. Optuna stands out for its define-by-run API, which allows for dynamic construction of the search space during the optimization process, which can be particularly useful for complex optimization problems where the search space may not be known a priori, cannot be efficiently represented in a static manner, or is too large to be exhaustively explored.
+
+% There are many autotuning frameworks that are specific to certain domains, such as AutoTVM~\cite{chen2018tvm} for deep learning workloads, Kernel Tuner~\cite{van2019kernel} for GPU kernels
+
+Autotuning techniques can be used in combination with other optimization methods, such as polyhedral optimization or DSLs\@. They are particularly useful for optimizing performance in cases where the performance landscape is complex and difficult to model analytically.
 
 
 \section{Abstractions}\label{sec:abstractions}
@@ -110,8 +100,6 @@ These abstractions play a crucial role in optimizing applications for modern hig
 
 \subsection{Domain-specific languages (DSLs)}\label{sec:dsls}
 
-% TODO: Discuss DSLs in more detail.
-
 Halide~\cite{ragan2013halide} is a \cpp-embedded DSL with a custom compiler and runtime system that primarily targets image and array processing applications (including regular stencil computations). It is based on defining pipelines of processing stages, where each stage represents a computation that can be optimized independently. The resulting computation pipeline is a directed acyclic graph (DAG) of stages that are subject to various transformations, such as tiling, fusion, and parallelization. These transformations can be guided by the developer using a scheduling language or by autotuning techniques. The Halide compiler performs various checks to ensure that each transformation preserves the semantics of the original computation. It uses interval analysis, which is a less expressive but more powerful (for the target domain) representation than the polyhedral model. Halide's design allows for a high degree of optimization at the cost of expressivity, as it is not suitable for more complex computations, such as those that contain imperfectly nested loops or data-dependent control flow, or non-rectangular iteration spaces.
 
 \xxx{Halide example, some yapping about the scheduling language, how it matches the data layout and traversal formalism from chap 1}
@@ -125,8 +113,6 @@ Exo~\cite{ikarashi2022exocompilation} is Python-embedded DSL that generates C co
 \xxx{Give examples of Exo use, \lstinline{@instr}, \lstinline{@proc}, transformations, etc.}
 
 \subsection{Annotation-based tools}\label{sec:annotation-based-tools}
-
-% TODO: Discuss annotation-based tools in more detail.
 
 OpenMP~\cite{openmp_6.0_spec} is a widely used API for parallel programming in C, C++, and Fortran\@. It provides a set of compiler directives, library routines, and environment variables that allow developers to specify parallelization and synchronization of code regions, as well as to control data sharing or privatization between threads. It supports various loop transformations such as loop unrolling, tiling, and vectorization via \lstinline{#pragma omp} directives. GPUs can be targeted using the \lstinline{#pragma omp target} directive along the \lstinline{teams} construct to control warps/wavefronts and threads within them.
 

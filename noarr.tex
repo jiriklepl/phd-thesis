@@ -6,7 +6,7 @@ The Noarr library, first introduced in~\cite{vsmelko2022astute}, is a \cpp libra
 
 Formally, the abstractions are based on partial functions on the index space and memory space of multidimensional arrays. Each such partial function is represented by a primitive building block called a \emph{proto-structure} --- examples of proto-structures include \texttt{scalar} that represents a single value, \texttt{array} that represents a contiguous array of elements represented by another structure, or \texttt{into\_blocks} that represents a view of another structure that divides one of its dimensions into blocks of a given size.
 
-The composable design of Noarr bears resemblance to views in the ranges library in \cpp20 (TODO cite); however, while being composable in a hierarchical manner, Noarr structures allow better flexibility and type-safety for multidimensional data structures by representing the index space using named dimensions that are resolved at compile time.
+The composable design of Noarr bears resemblance to views in the ranges library in \cpptwenty (TODO cite); however, while being composable in a hierarchical manner, Noarr structures allow better flexibility and type-safety for multidimensional data structures by representing the index space using named dimensions that are resolved at compile time.
 
 Since the index space is represented using named dimensions, all queries on the structure, such as obtaining the size of a dimension, or the memory offset of an element at a given index, are type-safe and checked at compile time. In contrast to traditional positional indexing of multidimensional arrays (e.g., \lstinline{data[i][j]}) that is prone to errors due wrong pairing of indices to dimensions, type-safe indexing using named dimensions (e.g., \lstinline{data[idx<'x'>(i) + idx<'y'>(j)]}) ensures that the indices are paired with the correct dimensions. This also ensures that the API of memory accesses is self-documenting and independent of the actual layout of the data in memory.
 
@@ -118,7 +118,7 @@ When the traverser is created over multiple Noarr structures, the resulting inde
   \label{fig:noarr-traverser-multiple-structures}
 \end{figure}
 
-Noarr traversers have a similar relationship to Noarr structures as iterators and range algorithms in the \cpp20 ranges library (TODO cite) have to ranges. The main difference is that Noarr traversers operate on multidimensional index spaces inferred from the Noarr structures, while range algorithms operate on one-dimensional sequences of elements.
+Noarr traversers have a similar relationship to Noarr structures as iterators and range algorithms in the \cpptwenty ranges library (TODO cite) have to ranges. The main difference is that Noarr traversers operate on multidimensional index spaces inferred from the Noarr structures, while range algorithms operate on one-dimensional sequences of elements.
 
 % TODO: ref/picture/snippet
 Similarly to iterators in \cpp algorithms, Noarr traversers can be used to run the given callable objects in parallel using the given backend. Noarr currently supports parallel execution using OpenMP, Intel TBB, \cpp standard threads, and CUDA\@. The following snippet shows binding four dimensions of the traverser to CUDA thread blocks.

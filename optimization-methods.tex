@@ -11,17 +11,6 @@ We primarily focus on abstractions and frameworks that operate above or at the s
 
 \section{Compiler optimizations}\label{sec:compiler-optimizations}
 
-% TODO: Write intro to traditional compiler optimizations; polyhedral optimization will be discussed separately in \cref{sec:polyhedral-optimization}.
-
-\begin{XXX}
-Discuss compiler optimizations and frameworks (not yet included):
-\begin{itemize}
-  \item Intel Compiler~\cite{intel-oneapi-dpcpp-cpp-compiler-devguide-2025-2,intel-oneapi-dpcpp-cpp-compiler-release-notes-2025}
-  \item NVCC~\cite{nvidia_nvcc}
-  \item others (TODO\@: literature review)
-\end{itemize}
-\end{XXX}
-
 Compiler optimizations are a fundamental aspect of modern compilers. In high-performance computing, compilers such as LLVM~\cite{lattner2004llvm} and GCC~\cite{gcc} implement a wide range of optimization techniques to improve the performance of source code, starting from basic optimizations that remove abstractions and redundant computations, inline functions, perform sub-expression elimination, etc. More advanced optimizations include loop transformations (e.g., loop unrolling, loop fusion, invariant code motion), vectorization, and inter-procedural optimizations that analyze and optimize across function boundaries.
 
 In the context of typical high-performance (scientific computing) applications with quite simple control flow and heavy numerical computations, these optimizations mainly allow using higher-level abstractions (e.g., \cpp templates, mdspan, \ldots) without significant performance penalties (most notably, when using so-called zero-cost abstractions~\cite{stroustrup2012foundations}). They can also optimize arithmetic expressions, eliminate redundant computations, and perform some basic loop transformations. However, these optimizations by themselves are often insufficient to achieve optimal performance on modern hardware architectures, especially for complex loop nests and data access patterns.
@@ -31,31 +20,24 @@ Some compilers and frameworks, such as MLIR~\cite{lattner2021mlir}, provide exte
 
 \subsection{Polyhedral optimization}\label{sec:polyhedral-optimization}
 
-\begin{XXX}
-Discuss polyhedral optimization frameworks (not yet included):
-\begin{itemize}
-  \item others (TODO: literature review)
-\end{itemize}
-\end{XXX}
-
-% TODO: Maybe mention the Clauss paper on Ehrhart polynomials for counting integer points in polyhedra (Automatic Memory Layout Transformations to Optimize Spatial Locality in Parameterized Loop Nest)
 Workloads comprising nested loops with affine bounds and affine memory accesses (Static Control Parts, or SCoPs) are common in high-performance computing applications (see, e.g., \citeauthor{bacon1994compiler}~\cite{bacon1994compiler}). To target such applications, \citeauthor{feautrier1992some}~\cite{feautrier1992some} and others pioneered the use of the polyhedral model to represent and optimize computations in loop nests. Polyhedral optimization frameworks, such as Polly~\cite{grosser2012polly}, GRAPHITE~\cite{trifunovic2010graphite}, and PLuTo~\cite{bondhugula2008pluto}, use the powerful mathematical framework of polyhedral model (provided by libraries such as ISL~\cite{verdoolaege2010isl}) to represent the computations in loops in a more compact and analyzable form compared to traditional compiler IRs such as Static Single Assignment (SSA) forms. Polyhedra offer a way to represent data layouts, loop iteration spaces, and dependencies between computations in a unified manner.
 
-Polyhedral optimization is application of integer linear algebra to optimize loop nests with affine bounds and affine memory accesses. The main idea is to represent the iteration space of loops, as well as memory accesses and dependencies, using polyhedra. This representation allows, for example, to find hyperplanes orthogonal to data dependencies, that can represent parallelizable loops; or to find transformations of the iteration space that improve data locality or enable vectorization.
-% TODO: Connect this to \cref{sec:formalizing-data-layouts-and-access-patterns} and also mention ISL\@. Do a brief comparison of the three mentioned frameworks (Polly, GRAPHITE, PLuTo).
+Polyhedral optimization is application of integer linear algebra to optimize loop nests with affine bounds and affine memory accesses. The main idea is to represent the iteration space of loops, as well as memory accesses and dependencies, using polyhedra. This representation allows, for example, to find hyperplanes orthogonal to data dependencies, that can represent parallelizable loops; or to find transformations of the iteration space that improve data locality or enable vectorization. There are works that apply theory of polyhedra and integer linear programming to optimize data layouts to improve cache performance, such as the work by \citeauthor{clauss2000automatic}~\cite{clauss2000automatic} that uses Ehrhart polynomials to change  accesses to arrays into consecutive memory accesses, effectively optimizing the data layout for better cache performance.
 
-Many works iterate on the basic polyhedral model to extend its applicability or improve the optimization results by combining it with cost models, heuristics, or machine learning techniques (e.g.,\citeauthor{baghdadi2021deep}~\cite{baghdadi2021deep}). Some works show benefits of combining polyhedral optimization with autotuning (TODO: find some references) or human insights (TODO: find some references).
+Many works iterate on the basic polyhedral model to extend its applicability or improve the optimization results by combining it with cost models, heuristics, or machine learning techniques (e.g.,\citeauthor{baghdadi2021deep}~\cite{baghdadi2021deep}). Some works show benefits of combining polyhedral optimization based on cost models or heuristics with autotuning~\cite{chelini2020automatic} or human insights~\cite{zinenko2014clint,bagneres2016opening}.
 
 Many DSL compilers (e.g., Halide~\cite{ragan2013halide}, Tiramisu~\cite{baghdadi2019tiramisu}) that will be discussed in \cref{sec:abstractions} use polyhedral optimization techniques (or derived versions) as part of their optimization pipelines. These DSLs often provide higher-level abstractions that allow developers to guide the optimization process using directives that can be mapped to polyhedral transformations.
 
 Polygeist~\cite{moses2021polygeist} is a tool that translates \cpp code to MLIR\@. It combines traditional compiler optimizations on SSA-based IRs with polyhedral optimizations on the affine dialect of MLIR\@, outperforming both Polly and PLuTo on the PolyBench~\cite{pouchet2012polybench} benchmark suite. \xxx{Continue from here.}
+
+Since polyhedral optimizations are powerful tools that can totally change the structure of the code, some works have focused on improving the interpretability of the transformations and their results, such as the work by \citeauthor{bagneres2016opening}~\cite{bagneres2016opening} that translates the scheduling decisions of polyhedral optimizers into a human-readable set of transformation directives --- e.g., loop interchange, strip-mine (tiling), \ldots --- that describe the transformations in a more intuitive way.
 
 
 \section{Autotuning}\label{sec:autotuning}
 
 Autotuning techniques are powerful methods for optimizing performance of applications based on empirical performance measurements or cost models. They involve performance-cost model-based and empirical search methods for exploring large parameter spaces (\emph{search space}s) to find optimal configurations. They can control various parameters, such as algorithmic choices, data layouts, tiling sizes, unrolling factors, and parallelization strategies; or even tune build configurations and compiler flags.
 
-% TODO: Add more text here. Discuss some different approaches (e.g., the annealing/swarm/genetic algorithms vs Bayesian optimization vs reinforcement learning vs whatnot; do not forget grid-search, hill-climbing, random search, \ldots). References to papers that use autotuning and show its benefits. The Halide autotuning paper is Adams et al.~\cite{adams2019learning}. Also see Baghdadi et al.~\cite{baghdadi2021deep} for ML-based cost models for code optimization.
+% TODO References to papers that use autotuning and show its benefits. The Halide autotuning paper is Adams et al.~\cite{adams2019learning}. Also see Baghdadi et al.~\cite{baghdadi2021deep} for ML-based cost models for code optimization.
 
 They usually involve a search algorithm that explores the search space, performing local or global optimization. Many such algorithms have been proposed, including simple methods such as grid search and random search that can be effective for search spaces with a small number of parameters or hill climbing methods that greedily explore the search space by iteratively moving towards better configurations based on performance measurements. These methods are surprisingly effective in many cases, especially when the search space is not too large or when the performance landscape does not have many local minima. Even methods that simply combine random search with local search (e.g., by performing random restarts) can be quite effective in practice. More sophisticated methods include simulated annealing, genetic algorithms, swarm optimization, Bayesian optimization, and many other methods. Many of these methods balance exploration and exploitation in different ways, and their effectiveness can depend on the specific characteristics of the search space and the performance landscape.
 
@@ -78,7 +60,6 @@ Need to mention the following abstractions:
   \item Cellato~\cite{brabec2025cellato}
 % Others
   \item Futhark~\cite{henriksen2017futhark}
-  \item Cutlass/CuTe~\cite{thakkar2023cutlass}
   \item SYCL/DPC++~\cite{khronos2023sycl}, oneAPI (TBB~\cite{pheatt2008intel}), Thrust~\cite{bell2011thrust}
   \item others (TODO: literature review)
 \end{itemize}
@@ -117,6 +98,8 @@ Exo~\cite{ikarashi2022exocompilation} is Python-embedded DSL that generates C co
 OpenMP~\cite{openmp_6.0_spec} is a widely used API for parallel programming in C, C++, and Fortran\@. It provides a set of compiler directives, library routines, and environment variables that allow developers to specify parallelization and synchronization of code regions, as well as to control data sharing or privatization between threads. It supports various loop transformations such as loop unrolling, tiling, and vectorization via \lstinline{#pragma omp} directives. GPUs can be targeted using the \lstinline{#pragma omp target} directive along the \lstinline{teams} construct to control warps/wavefronts and threads within them.
 
 \xxx{Give examples of OpenMP use, how it can be used to express parallelism and transformations, etc.}
+
+Some efforts have been made to extend OpenMP with directives for more complex, composable transformations. One example is the work by \citeauthor{kruse2018user}~\cite{kruse2018user} that extends the OpenMP API in the Clang compiler with directives for loop transformations such as tiling, reversal (the loop is executed in reverse order), interchange, and array packing (some subset of the accessed array is copied to a temporary buffer).
 
 Loopy~\cite{namjoshi2016loopy} is an annotation-based tool that allows developers to express affine transformations of loop nests by specifying mappings of the schedules of the statements in nested loops as shown in the following example:
 

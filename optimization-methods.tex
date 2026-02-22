@@ -22,7 +22,7 @@ Some compilers and frameworks, such as MLIR~\cite{lattner2021mlir}, provide exte
 
 Workloads comprising nested loops with affine bounds and affine memory accesses (Static Control Parts, or SCoPs) are common in high-performance computing applications (see, e.g., \citeauthor{bacon1994compiler}~\cite{bacon1994compiler}). To target such applications, \citeauthor{feautrier1992some}~\cite{feautrier1992some} and others pioneered the use of the polyhedral model to represent and optimize computations in loop nests. Polyhedral optimization frameworks, such as Polly~\cite{grosser2012polly}, GRAPHITE~\cite{trifunovic2010graphite}, and PLuTo~\cite{bondhugula2008pluto}, use the powerful mathematical framework of polyhedral model (provided by libraries such as ISL~\cite{verdoolaege2010isl}) to represent the computations in loops in a more compact and analyzable form compared to traditional compiler IRs such as Static Single Assignment (SSA) forms. Polyhedra offer a way to represent data layouts, loop iteration spaces, and dependencies between computations in a unified manner.
 
-Polyhedral optimization is application of integer linear algebra to optimize loop nests with affine bounds and affine memory accesses. The main idea is to represent the iteration space of loops, as well as memory accesses and dependencies, using polyhedra. This representation allows, for example, to find hyperplanes orthogonal to data dependencies, that can represent parallelizable loops; or to find transformations of the iteration space that improve data locality or enable vectorization. There are works that apply theory of polyhedra and integer linear programming to optimize data layouts to improve cache performance, such as the work by \citeauthor{clauss2000automatic}~\cite{clauss2000automatic} that uses Ehrhart polynomials to change  accesses to arrays into consecutive memory accesses, effectively optimizing the data layout for better cache performance.
+Polyhedral optimization is application of integer linear algebra to optimize loop nests with affine bounds and affine memory accesses. The main idea is to represent the iteration space of loops, as well as memory accesses and dependencies, using polyhedra. This representation allows, for example, to find hyperplanes orthogonal to data dependencies, that can represent parallelizable loops; or to find transformations of the iteration space that improve data locality or enable vectorization. There are works that apply theory of polyhedra and integer linear programming to optimize data layouts to improve cache performance, such as the work by \citeauthor{clauss2000automatic}~\cite{clauss2000automatic} that uses Ehrhart polynomials to change accesses to arrays into consecutive memory accesses, effectively optimizing the data layout for better cache performance.
 
 Many works iterate on the basic polyhedral model to extend its applicability or improve the optimization results by combining it with cost models, heuristics, or machine learning techniques (e.g.,\citeauthor{baghdadi2021deep}~\cite{baghdadi2021deep}). Some works show benefits of combining polyhedral optimization based on cost models or heuristics with autotuning~\cite{chelini2020automatic} or human insights~\cite{zinenko2014clint,bagneres2016opening}.
 
@@ -55,9 +55,6 @@ Autotuning techniques can be used in combination with other optimization methods
 \begin{XXX}
 Need to mention the following abstractions:
 \begin{itemize}
-% Ours
-  \item Noarr~\cite{klepl2024abstractions}
-  \item Cellato~\cite{brabec2025cellato}
 % Others
   \item Futhark~\cite{henriksen2017futhark}
   \item SYCL/DPC++~\cite{khronos2023sycl}, oneAPI (TBB~\cite{pheatt2008intel}), Thrust~\cite{bell2011thrust}
@@ -83,33 +80,140 @@ These abstractions play a crucial role in optimizing applications for modern hig
 
 Halide~\cite{ragan2013halide} is a \cpp-embedded DSL with a custom compiler and runtime system that primarily targets image and array processing applications (including regular stencil computations). It is based on defining pipelines of processing stages, where each stage represents a computation that can be optimized independently. The resulting computation pipeline is a directed acyclic graph (DAG) of stages that are subject to various transformations, such as tiling, fusion, and parallelization. These transformations can be guided by the developer using a scheduling language or by autotuning techniques. The Halide compiler performs various checks to ensure that each transformation preserves the semantics of the original computation. It uses interval analysis, which is a less expressive but more powerful (for the target domain) representation than the polyhedral model. Halide's design allows for a high degree of optimization at the cost of expressivity, as it is not suitable for more complex computations, such as those that contain imperfectly nested loops or data-dependent control flow, or non-rectangular iteration spaces.
 
-\xxx{Halide example, some yapping about the scheduling language, how it matches the data layout and traversal formalism from chap 1}
+\begin{lstlisting}[language=C++]
+#include <Halide.h>
+using namespace Halide;
 
-Tiramisu~\cite{baghdadi2019tiramisu} is a \cpp-embedded DSL superficially similar to Halide that targets a wider range of applications, including those with more complex control flow and data access patterns. Unlike Halide, Tiramisu is based on the polyhedral model, which allows it to represent a broader class of computations, including those with imperfectly nested loops or skewed and non-rectangular iteration spaces. Its primary domains include image processing, deep learning, and general scientific computing applications, and also supports sparse computations. \xxx{Continue from here.}
+ImageParam A(Float(32), 2, "A"), B(Float(32), 2, "B"), C(Float(32), 2, "C");
+Param<float> alpha("alpha"), beta("beta");
 
-\xxx{Tiramisu example, some yapping about the scheduling language, how it matches the data layout and traversal formalism from chap 1}
+Func gemm("gemm");
+Var i("i"), j("j");
+RVar k("k", 0, A.dim(1).extent());
+
+gemm(i, j) = beta * C(i, j);
+gemm(i, j) += alpha * A(i, k) * B(k, j);
+
+// Schedule
+gemm.tile(i, j, i0, j0, i1, j1, 64, 64)
+    .reorder(i1, j1, i0, j0)
+    .parallel(i0)
+    .vectorize(i1);
+\end{lstlisting}
+
+
+The above example shows how to express the matrix multiplication (GEMM) kernel in Halide. \lstinline{Param} and \lstinline{ImageParam} are used to define the input parameters and input data, respectively. The computation is defined in the \lstinline{Func} object using \lstinline{Var} (or \lstinline{RVar} for reduction variables) objects to represent dimensions involved in the computation. This computation (possibly appearing in a larger pipeline) is then subject to various transformations that can be expressed using the scheduling language. The \lstinline{gemm} computation then is, in the scheduling language, tiled with tile sizes of $64 \times 64$, the loops are then reordered to improve data locality, the outer loop is parallelized, and the inner loop is vectorized.
+
+Tiramisu~\cite{baghdadi2019tiramisu} is a \cpp-embedded DSL superficially similar to Halide that targets a wider range of applications, including those with more complex control flow and data access patterns. Unlike Halide, Tiramisu is more closely based on the polyhedral model, which allows it to represent a broader class of computations, including those with imperfectly nested loops or skewed and non-rectangular iteration spaces. Its primary domains include image processing, deep learning, and general scientific computing applications, and the framework also supports sparse computations. Similarly to Halide, Tiramisu provides its own scheduling language and a compiler that performs various checks to ensure that the transformations preserve the semantics of the original computation. It can target various hardware architectures, including multi-core CPUs and GPUs. Unlike Halide, Tiramisu also supports distributed computing over multiple nodes using MPI\@.
+
+The matrix multiplication example in Tiramisu is shown below.
+
+% TODO: check whether the syntax is correct
+\begin{lstlisting}[language=C++]
+#include <tiramisu/tiramisu.h>
+using namespace tiramisu;
+
+tiramisu::init("gemm");
+input A("A", {M, K}, p_float32), B("B", {K, N}, p_float32), C("C", {M, N}, p_float32);
+input alpha("alpha", p_float32), beta("beta", p_float32);
+
+computation gemm("gemm", {i, j, k}, p_float32);
+gemm.set_expression(beta * C(i, j) + alpha * A(i, k) * B(k, j));
+
+// Schedule
+gemm.tile(i, j, 64, 64, i0, j0, i1, j1);
+gemm.reorder(i1, j1, i0, j0);
+gemm.parallelize(i0);
+gemm.vectorize(i1);
+\end{lstlisting}
 
 Exo~\cite{ikarashi2022exocompilation} is Python-embedded DSL that generates C code for specialized hardware. The target-specific instructions and optimization transformations performed on them are all defined in extensible user-level libraries. Similarly to Halide and Tiramisu, the transformations are guided by the developer using a scheduling language. Exo then performs various checks based on effect analysis to ensure program equivalence and memory safety throughout the transformations.
 
-\xxx{Give examples of Exo use, \lstinline{@instr}, \lstinline{@proc}, transformations, etc.}
+In Exo, the \lstinline{@instr} decorator is used to define target-specific instructions as Python functions that specify the semantics of the instruction in terms of its inputs and outputs. The \lstinline{@proc} decorator is used to define procedures that can be called from the generated code and can be subject to various transformations. The transformations in Exo are defined as Python functions that take the procedures or instructions as input and produce transformed versions of them, while ensuring that the transformations preserve the semantics of the original code. If a function transformation relies on a certain invariant (e.g., that a certain dimension of an array is divisible by a certain value), the user can specify this invariant using python assertions.
+
+The matrix multiplication example in Exo is shown below with the same transformations as in the Halide example.
+
+% TODO: check whether the syntax is correct
+\begin{lstlisting}[language=Python]
+from exo import *
+
+@proc
+def gemm(M: size, N: size, K: size,
+         alpha: float, A: f32[M, K], B: f32[K, N],
+         beta: float, C: f32[M, N]):
+  assert M % 64 == 0 and N % 64 == 0 and K % 64 == 0
+  for i in range(M):
+    for j in range(N):
+      C[i][j] *= beta
+      for k in range(K):
+        C[i][j] += alpha * A[i][k] * B[k][j]
+
+# Schedule
+gemm = tile(gemm, 'i', 64)
+gemm = tile(gemm, 'j', 64)
+gemm = reorder(gemm, 'i', 'j')
+gemm = parallel(gemm, 'i')
+gemm = vectorize(gemm, 'i')
+\end{lstlisting}
+
+The framework then generates C code for the target hardware that can be integrated into a larger application. The generated code does not rely on any runtime system.
+
 
 \subsection{Annotation-based tools}\label{sec:annotation-based-tools}
 
-OpenMP~\cite{openmp_6.0_spec} is a widely used API for parallel programming in C, C++, and Fortran\@. It provides a set of compiler directives, library routines, and environment variables that allow developers to specify parallelization and synchronization of code regions, as well as to control data sharing or privatization between threads. It supports various loop transformations such as loop unrolling, tiling, and vectorization via \lstinline{#pragma omp} directives. GPUs can be targeted using the \lstinline{#pragma omp target} directive along the \lstinline{teams} construct to control warps/wavefronts and threads within them.
+OpenMP~\cite{openmp_6.0_spec} is a widely used API for parallel programming in C, C++, and Fortran\@. It provides a set of compiler directives, library routines, and environment variables that allow developers to specify parallelization and synchronization of code regions, as well as to control data sharing or privatization between threads. It supports various loop transformations such as loop unrolling, tiling, and vectorization via \lstinline{#pragma omp} directives, with varying levels of support across different compilers. GPUs can be targeted using the \lstinline{#pragma omp target} directive along the \lstinline{teams} construct to control warps/wavefronts and threads within them. The advantage of OpenMP is that it is widely supported by a wide range of compilers and hardware architectures, and its implementations follow a well-defined shared specification. The specification is continually evolving to support new features and optimizations.
 
-\xxx{Give examples of OpenMP use, how it can be used to express parallelism and transformations, etc.}
+The main limitation of OpenMP is that it is primarily focused on parallelization and does not provide a rich set of directives; nevertheless, the matrix multiplication example can be expressed in OpenMP as follows:
+
+\begin{lstlisting}[language=C++]
+void gemm(int M, int N, int K,
+          float alpha, float A[M][K], float B[K][N],
+          float beta, float C[M][N]) {
+  #pragma omp parallel for collapse(2) schedule(static)
+  for (int i = 0; i < M; i++) {
+    for (int j = 0; j < N; j++) {
+      C[i][j] *= beta;
+      for (int k = 0; k < K; k++) {
+        C[i][j] += alpha * A[i][k] * B[k][j];
+      }
+    }
+  }
+}
+\end{lstlisting}
+
+\lstinline{collapse(2)} is used to indicate that the two outer loops should be collapsed into a single loop for parallelization, which allows for better load balancing and performance on multi-core CPUs. However, this code does not include any other transformations such as tiling or vectorization, which would require additional directives that are not widely supported or manual code modifications.
+
+For tiling, OpenMP provides the \lstinline{#pragma omp tile} directive that can be used to specify tiling transformations for loops, and the vectorization can be achieved using the \lstinline{#pragma omp simd} directive. The matrix multiplication step of the above code can be tiled and vectorized as follows:
+
+\begin{lstlisting}[language=C++]
+#pragma omp tile sizes(64, 64)
+#pragma omp parallel for collapse(2) schedule(static)
+for (int i = 0; i < M; i++) {
+  for (int j = 0; j < N; j++) {
+    float temp = 0.0f;
+
+    #pragma omp simd reduction(+:temp)
+    for (int k = 0; k < K; k++) {
+      temp += alpha * A[i][k] * B[k][j];
+    }
+
+    C[i][j] = beta * C[i][j] + temp;
+  }
+}
+\end{lstlisting}
 
 Some efforts have been made to extend OpenMP with directives for more complex, composable transformations. One example is the work by \citeauthor{kruse2018user}~\cite{kruse2018user} that extends the OpenMP API in the Clang compiler with directives for loop transformations such as tiling, reversal (the loop is executed in reverse order), interchange, and array packing (some subset of the accessed array is copied to a temporary buffer).
 
 Loopy~\cite{namjoshi2016loopy} is an annotation-based tool that allows developers to express affine transformations of loop nests by specifying mappings of the schedules of the statements in nested loops as shown in the following example:
 
+% TODO: unify the transformations here and in the earlier examples
 \begin{lstlisting}
 for (i = 0; i < N; i++) {
   for (j = 0; j < N; j++) {
-    Init: C[i][j] = 0;
+    Init: C[i][j] = C[i][j] * beta;
 
     for (k = 0; k < N; k++) {
-      Mult: C[i][j] += A[i][k] * B[k][j];
+      Mult: C[i][j] += alpha * A[i][k] * B[k][j];
     }
   }
 }
@@ -128,9 +232,17 @@ This performs loop interchange and tiling transformations on the original loop n
 
 \subsection{Native tools and libraries}\label{sec:native-tools}
 
-Cutlass~\cite{thakkar2023cutlass} CuTe is a collection of \cpp template abstractions that can hierarchically represent multidimensional layouts of threads and data. They are specifically designed for representing and optimizing computations on NVIDIA GPUs\@. The multidimensional layouts can represent a wide range of dense linear algebra computations, and they also allow for functional composition of layouts like in Noarr\@, which is particularly useful for common transformations such as tiling or partitioning \xxx{(cite the cute wiki)}.
+Cutlass~\cite{thakkar2023cutlass} CuTe is a collection of \cpp template abstractions that can hierarchically represent multidimensional layouts of threads and data. They are specifically designed for representing and optimizing computations on NVIDIA GPUs\@. The multidimensional layouts can represent a wide range of dense linear algebra computations, and they also allow for functional composition of layouts like in Noarr\@, which is particularly useful for common transformations such as tiling or partitioning~\cite{nvidia-cute}.
 
-\xxx{Give examples of Cutlass/CuTe use, how it can represent data layouts and traversal orders, layout algebra, etc.}
+CuTe stands out for the expressiveness of its layout abstractions, including the algebraic composition of layouts. The most basic primitives are dynamic \lstinline|int{N}| and static \lstinline|Int<N>{}| integer values, possibly in tuples (\lstinline|make_tuple(int{M}, int{N})|) that can be constructed recursively --- all those collectively are called \emph{IntTuple}s.
+
+A CuTe layout is defined as a tuple $(\text{Shape}, \text{Stride})$ (written as \lstinline{shape:stride}) where both \text{Shape} and \text{Stride} are IntTuples. Since IntTuples can be hierarchical, $(2, (2, 2)) : (1, (2, 4))$ is a valid layout that represents a two-dimensional layout of shape $2 \times 4$ where the second dimension can be indexed as a tuple of two dimensions of size $2 \times 2$ --- this describes a tiled layout where the second dimension of size $4$ is tiled into two tiles of size $2$. Each layout (or equivalently, each multidimensional dimension) can be indexed either using a tuple of appropriate shape, or using a linear index that is upper-bounded by the product of the dimensions of the shape.
+
+CuTe defines layout compatibility (partial order between layouts): a layout $A$ is compatible with a layout $B$ if their shapes have the same size and if indices of $A$ are valid indices of $B$. This effectively means that a linear dimension of size $N$ in $A$ can be replaced by a tuple with the same total size $N$ in $B$, producing a compatible layout. For example, the layout with shape $(2, 6)$ is compatible with the layout with shape $(2, (2, 3))$ (second dimension of size $6$ has been broken into two dimensions of size $2$ and $3$).
+
+The compatibility relation is the basis for defining layout algebra that is based on functional composition of layouts: $R = A \circ B$ is defined as $R(x) = A(B(x))$ where $B$ is applied first and then $A$ is applied to the result (this is well-defined thanks to the ability to index layouts using linear indices). $B$ is compatible with the resulting layout $R$. The abstraction then uses the functional composition of layouts to define transformations (but only showcases tiling).
+
+This functional composition of layouts follows the same principle as Noarr. Most notably, that the right-hand-side input of the composition can be thought of as a partial function that transforms the input index space into a new index space.
 
 GridTools~\cite{afanasyev2021gridtools} is a \cpp-embedded DSL that targets stencil computations on structured grids, primarily in the context of weather and climate modeling. The stencil computations are represented as a composition of abstract stages implemented as \cpp functors. The framework supports backends for various hardware architectures, including many-core CPU systems and GPUs\@. Since the stencil stages are represented in a high-level manner, the framework can apply various hardware-specific optimizations depending on the target backend. \xxx{continue from here.}
 
@@ -138,7 +250,7 @@ MDSpans~\cite{trott2022mdspan} are a \cpp abstraction for representing multidime
 
 MDSpans are sufficient for representing simple data layouts, and the user-definable policies allow for using them beyond that as well. However, in such cases, they do not provide any benefits other than providing a uniform interface for accessing elements, which is not much different from using raw pointers and manual index calculations. In particular, they do not introduce any type safety or correctness guarantees and their interface is reliant on the user to correctly implement the access policies and communicate the intended semantics of the layout dimensions and the mapping to memory addresses by other means if they are not using the small set of predefined layouts. This is usually sufficient as long as the design of an optimized computation performs transformations such as tiling or transposition of the dimensions, which are supported by the \lstinline{submdspan} constructor and the predefined \lstinline{layout_transpose} policy adaptor.
 
-Kokkos~\cite{trott2021kokkos} is a \cpp library that provides abstractions for parallel execution and data management across different hardware architectures, its primary focus is providing a performance-portable programming model for multi-core CPUs and GPUs\@. It provides the \lstinline{Kokkos::View} abstraction for representing multidimensional arrays with flexible data layouts and memory spaces (e.g., host memory, device memory, \ldots). The expressiveness of the \lstinline{Kokkos::View} abstraction, when it comes to representing data layouts, is similar to that of MDSpans\@, with the same predefined layouts and user-definable mapping policies --- and the two abstractions can be easily interconverted. However, Kokkos views also allow specifying the memory space where the data is allocated, and they provide automatic data movement between memory spaces when necessary. Kokkos views also support shared ownership semantics similar to \cpp shared pointers. Kokkos provides a set of parallel algorithms (e.g., \lstinline{parallel_for}, \lstinline{parallel_reduce}, \ldots) that can run the user-defined computations in parallel on the target backend.
+Kokkos~\cite{trott2021kokkos} is a \cpp library that provides abstractions for parallel execution and data management across different hardware architectures, its primary focus is providing a performance-portable programming model for multi-core CPUs and GPUs\@. It provides the \lstinline{Kokkos::View} abstraction for representing multidimensional arrays with flexible data layouts and memory spaces (e.g., host memory, device memory, \ldots). The expressiveness of the \lstinline{Kokkos::View} abstraction, when it comes to representing data layouts, is similar to that of MDSpans\@, with the same predefined layouts and user-definable mapping policies --- and the two abstractions can be easily inter-converted. However, Kokkos views also allow specifying the memory space where the data is allocated, and they provide automatic data movement between memory spaces when necessary. Kokkos views also support shared ownership semantics similar to \cpp shared pointers. Kokkos provides a set of parallel algorithms (e.g., \lstinline{parallel_for}, \lstinline{parallel_reduce}, \ldots) that can run the user-defined computations in parallel on the target backend.
 
 To support multidimensional parallelism, Kokkos provides the \lstinline{MDRangePolicy} abstraction, which allows for defining parallel execution policies over multidimensional index spaces. The \lstinline{MDRangePolicy} parallelizes the execution of a user-defined computation in tiles of configurable sizes. To support more flexible parallelization strategies, Kokkos also provides the \lstinline{TeamPolicy}, which allows for defining teams of threads that can cooperate on executing a user-defined computation with synchronization and shared memory capabilities (team scratch memory). The \lstinline{ThreadVectorRange} can be used to express vector-level parallelism within a team (or warp/wavefront on GPU\@). These policies are composable, allowing for expressing multilevel parallelism. Furthermore, the computation can be queued to a specific execution stream on the target backend, which allows for overlapping computation and data movement.
 
@@ -158,9 +270,9 @@ RAJA::View<double, RAJA::OffsetLayout<3>> view(data, layout);
 
 using KJI_EXECPOL =
   RAJA::KernelPolicy<
-    RAJA::statement::For<2, RAJA::seq_exec,    // 2: k
-      RAJA::statement::For<1, RAJA::seq_exec,  // 1: j
-        RAJA::statement::For<0, RAJA::seq_exec,// 0: i
+    RAJA::statement::For<2, RAJA::seq_exec,     // 2: k
+      RAJA::statement::For<1, RAJA::seq_exec,   // 1: j
+        RAJA::statement::For<0, RAJA::seq_exec, // 0: i
           RAJA::statement::Lambda<0>
   > > > >;
 
@@ -185,3 +297,5 @@ In the above example, we define a 3D loop nest with iteration spaces defined by 
 
 
 \section{Summary}\label{sec:optimization-methods-summary}
+
+% TODO Let's do a table

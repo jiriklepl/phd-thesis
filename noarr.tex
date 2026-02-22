@@ -1,7 +1,5 @@
 \section{Noarr Library}\label{chap:noarr}
 
-\xxx{Micro-motivation}
-
 The Noarr library, first introduced in~\cite{vsmelko2022astute}, is a \cpp library that provides layout-agnostic abstractions for representing and manipulating multidimensional data structures and their traversals.
 
 Formally, the abstractions are based on partial functions on the index space and memory space of multidimensional arrays. Each such partial function is represented by a primitive building block called a \emph{proto-structure} --- examples of proto-structures include \texttt{scalar} that represents a single value, \texttt{array} that represents a contiguous array of elements represented by another structure, or \texttt{into\_blocks} that represents a view of another structure that divides one of its dimensions into blocks of a given size.

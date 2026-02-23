@@ -1,5 +1,6 @@
 {
     "cSpell.words": [
+        "autoscheduling",
         "autotuner",
         "autotuning",
         "bijections",
@@ -22,6 +23,7 @@
         "NVCC",
         "Optuna",
         "parallelizable",
+        "pdfx",
         "SIMT",
         "SYCL",
         "techreport",

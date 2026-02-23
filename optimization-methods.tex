@@ -297,7 +297,10 @@ Works that use LLMs for generating optimization directives include PragFormer~\c
 
 HPC-Coder~\cite{nichols2024hpc} and shows that fine-tuning LLMs on HPC code can enable them to generate OpenMP directives for parallelization with high accuracy as well as generate parallel code or MPI-based distributed code directly. The MPI code generation is further studied by works such as MPI-RICAL~\cite{schneider2023mpi} and MPIrigen~\cite{schneider2024mpirigen}.
 
-Works that use LLMs for generating scheduling directives include \xxx{continue from here.}
+Works that use LLMs or other deep learning methods for generating scheduling directives ComPilot~\cite{merouani2025agentic} that uses a LLM agent as a search driver when exploring the search space of transformation directives,
+and LOOPer~\cite{merouani2025looper} that uses LSTM-based solution inspired by the work of \citeauthor{baghdadi2021deep}, both solutions achieve autoscheduling in the Tiramisu compiler.
+
+\xxx{Do generating}
 
 
 \section{Summary}\label{sec:optimization-methods-summary}

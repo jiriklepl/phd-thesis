@@ -140,7 +140,13 @@ A secondary advantage is that all memory accesses are type-safe and checked at c
 
 \subsection{Noarr autotuning extension}\label{sec:noarr-autotuning}
 
-In our subsequent work~\cite{klepl2024abstractions}, we have introduced an autotuning extension to the Noarr library that allows expressing tunable parameters controlling data layouts and traversal orders using Noarr structures and traversers directly in \cpp code. \xxx{Continue from here.}
+In our subsequent work~\cite{klepl2024abstractions}, we have introduced an autotuning extension to the Noarr library that allows expressing tunable parameters controlling data layouts and traversal orders using Noarr structures and traversers directly in \cpp code. The tunable parameters can represent choices such as data layout permutations (e.g., row-major vs.\ column-major order), tiling sizes, and parallelization strategies.
+
+Since these parameters are expressed within the Noarr abstraction layer, changing them does not require modifying the computation logic in kernels, which remains layout-agnostic and traversal-agnostic. The autotuning extension then exposes these parameters to an external autotuning framework (such as OpenTuner~\cite{ansel2014opentuner}) that systematically explores the space of possible configurations to find the best-performing combination for the target hardware.
+
+The tuning is independent of Noarr structures and traversers, but is designed to work seamlessly with them. It is implemented directly in \cpp and any tuning specification is expressed in an enclosed section of the target source code. It allows to define tunable scalar parameters that can be used as first-class \cpp variables in the code as well as choices between different Noarr transformations (proto-structures) that can be applied to the structures and traversers.
+
+% TODO add example of tuning specification.
 
 
 \subsection{Noarr MPI extension}\label{sec:noarr-mpi}

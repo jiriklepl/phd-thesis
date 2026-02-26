@@ -22,7 +22,7 @@ Some compilers and frameworks, such as MLIR~\cite{lattner2021mlir}, provide exte
 
 \subsection{Polyhedral optimization}\label{sec:polyhedral-optimization}
 
-Workloads comprising nested loops with affine bounds and affine memory accesses (Static Control Parts, or SCoPs) are common in high-performance computing applications (see, e.g., \citeauthor{bacon1994compiler}~\cite{bacon1994compiler}). To target such applications, \citeauthor{feautrier1992some}~\cite{feautrier1992some} and others pioneered the use of the polyhedral model to represent and optimize computations in loop nests. Polyhedral optimization frameworks, such as Polly~\cite{grosser2012polly}, GRAPHITE~\cite{trifunovic2010graphite}, and PLuTo~\cite{bondhugula2008pluto}, use the powerful mathematical framework of the polyhedral model (provided by libraries such as ISL~\cite{verdoolaege2010isl}) to represent computations in loops in a more compact and analyzable form compared to traditional compiler IRs such as Static Single Assignment (SSA) forms. Polyhedra offer a way to represent data layouts, loop iteration spaces, and dependencies between computations in a unified manner.
+Workloads comprising nested loops with affine bounds and affine memory accesses (Static Control Parts, or SCoPs) are common in high-performance computing applications (see, e.g., \citeauthor{bacon1994compiler}~\cite{bacon1994compiler}). To target such applications, \citeauthor{feautrier1992some}~\cite{feautrier1992some} and others pioneered the use of the polyhedral model to represent and optimize computations in loop nests. Polyhedral optimization frameworks, such as \textbf{Polly}~\cite{grosser2012polly} (in LLVM), \textbf{GRAPHITE}~\cite{trifunovic2010graphite} (in GCC), and \textbf{PLuTo}~\cite{bondhugula2008pluto} (source-to-source), use the powerful mathematical framework of the polyhedral model (provided by libraries such as ISL~\cite{verdoolaege2010isl}) to represent computations in loops in a more compact and analyzable form compared to traditional compiler IRs such as Static Single Assignment (SSA) forms. Polyhedra offer a way to represent data layouts, loop iteration spaces, and dependencies between computations in a unified manner.
 
 Polyhedral optimization is the application of integer linear algebra to optimize loop nests with affine bounds and affine memory accesses. The main idea is to represent the iteration space of loops, as well as memory accesses and dependencies, using polyhedra. This representation allows, for example, finding hyperplanes orthogonal to data dependencies that can represent parallelizable loops, or finding transformations of the iteration space that improve data locality or enable vectorization.
 
@@ -81,22 +81,23 @@ Compared to hand-tuned low-level code, maintainability and portability of high-l
 
 The Halide compiler performs various checks to ensure that each transformation preserves the semantics of the original computation. It uses interval analysis, which is a less expressive but more powerful (for the target domain) representation than the polyhedral model. Halide's design allows for a high degree of optimization at the cost of expressivity: it is not suitable for more complex computations, such as those that contain imperfectly nested loops, data-dependent control flow, or non-rectangular iteration spaces.
 
-\begin{lstlisting}[language=C++]
+\begin{lstlisting}[language=C++, morekeywords={Param, ImageParam, Var, RVar, Func, Float}]
 #include <Halide.h>
 using namespace Halide;
 
-ImageParam A(Float(32), 2, "A"), B(Float(32), 2, "B"), C(Float(32), 2, "C");
+ImageParam A(Float(__3__2), __2, "A"), B(Float(__3__2), __2, "B"),
+           C(Float(__3__2), __2, "C");
 Param<float> alpha("alpha"), beta("beta");
 
 Func gemm("gemm");
 Var i("i"), j("j");
-RVar k("k", 0, A.dim(1).extent());
+RVar k("k", __0, A.dim(__1).extent());
 
 gemm(i, j) = beta * C(i, j);
 gemm(i, j) += alpha * A(i, k) * B(k, j);
 
 // Schedule
-gemm.tile(i, j, i0, j0, i1, j1, 64, 64)
+gemm.tile(i, j, i0, j0, i1, j1, __6__4, __6__4)
     .reorder(i1, j1, i0, j0)
     .parallel(i0)
     .vectorize(i1);
@@ -107,24 +108,28 @@ The above example shows how to express the matrix multiplication (GEMM) kernel i
 
 \textbf{Tiramisu}~\cite{baghdadi2019tiramisu} is a \cpp-embedded DSL superficially similar to Halide that targets a wider range of applications, including those with more complex control flow and data access patterns. Unlike Halide, Tiramisu is more closely based on the polyhedral model, which allows it to represent a broader class of computations, including those with imperfectly nested loops or skewed and non-rectangular iteration spaces. Its primary domains include image processing, deep learning, and general scientific computing applications, and the framework also supports sparse computations. Similarly to Halide, Tiramisu provides its own scheduling language and a compiler that performs various checks to ensure that the transformations preserve the semantics of the original computation. It can target various hardware architectures, including multi-core CPUs and GPUs. Unlike Halide, Tiramisu also supports distributed computing over multiple nodes using MPI\@.
 
-The matrix multiplication example in Tiramisu is shown below.
+The matrix multiplication example in Tiramisu is shown below (the syntax is simplified for illustration).
 
 % TODO: check whether the syntax is correct
-\begin{lstlisting}[language=C++]
+\begin{lstlisting}[language=C++, morekeywords={p_float32, var, input, computation}]
 #include <tiramisu/tiramisu.h>
 using namespace tiramisu;
 
 tiramisu::init("gemm");
-input C("C", {M, N}, p_float32),
-      A("A", {M, K}, p_float32), B("B", {K, N}, p_float32);
-input alpha("alpha", p_float32), beta("beta", p_float32);
+var i("i", __0, M), j("j", __0, N), k("k", __0, K);
 
+input A("A", {i, k}, p_float32), B("B", {k, j}, p_float32),
+      C("C", {i, j}, p_float32);
+input alpha("alpha", {}, p_float32), beta("beta", {}, p_float32);
+
+computation init("init", {i, j}, beta(__0) * C(i, j));
 computation gemm("gemm", {i, j, k}, p_float32);
-gemm.set_expression(beta * C(i, j) + alpha * A(i, k) * B(k, j));
+gemm.set_expression(init(i, j) + alpha(__0) * A(i, k) * B(k, j));
 
 // Schedule
-gemm.tile(i, j, 64, 64, i0, j0, i1, j1);
-gemm.reorder(i1, j1, i0, j0);
+var i0("i0"), j0("j0"), i1("i1"), j1("j1");
+gemm.tile(i, j, __6__4, __6__4, i0, j0, i1, j1);
+gemm.interchange(i1, j1);
 gemm.parallelize(i0);
 gemm.vectorize(i1);
 \end{lstlisting}
@@ -133,29 +138,28 @@ gemm.vectorize(i1);
 
 In Exo, the \lstinline{@instr} decorator is used to define target-specific instructions as Python functions that specify the semantics of the instruction in terms of its inputs and outputs. The \lstinline{@proc} decorator is used to define procedures that can be called from the generated code and can be subject to various transformations. The transformations in Exo are defined as Python functions that take the procedures or instructions as input and produce transformed versions of them, while ensuring that the transformations preserve the semantics of the original code. If a function transformation relies on a certain invariant (e.g., that a certain dimension of an array is divisible by a certain value), the user can specify this invariant using python assertions.
 
-The matrix multiplication example in Exo is shown below with the same transformations as in the Halide example.
+The matrix multiplication example in Exo is shown below with the same transformations as in the Halide example (the scheduling syntax is simplified for illustration).
 
 % TODO: check whether the syntax is correct
 \begin{lstlisting}[language=Python]
 from exo import *
+from exo.stdlib.scheduling import *
 
 @proc
 def gemm(M: size, N: size, K: size,
-         alpha: float, A: f32[M, K], B: f32[K, N],
-         beta: float, C: f32[M, N]):
-  assert M % 64 == 0 and N % 64 == 0 and K % 64 == 0
-  for i in range(M):
-    for j in range(N):
-      C[i][j] *= beta
-      for k in range(K):
-        C[i][j] += alpha * A[i][k] * B[k][j]
+         alpha: f32, A: f32[M, K], B: f32[K, N],
+         beta: f32, C: f32[M, N]):
+  assert M % __6__4 == __0 and N % __6__4 == __0
+  for i in seq(__0, M):
+    for j in seq(__0, N):
+      C[i, j] *= beta
+      for k in seq(__0, K):
+        C[i, j] += alpha * A[i, k] * B[k, j]
 
 # Schedule
-gemm = tile(gemm, 'i', 64)
-gemm = tile(gemm, 'j', 64)
-gemm = reorder(gemm, 'i', 'j')
-gemm = parallel(gemm, 'i')
-gemm = vectorize(gemm, 'i')
+gemm = divide_loop(gemm, 'i', __6__4, ['io', 'ii'], perfect=True)
+gemm = divide_loop(gemm, 'j #0', __6__4, ['jo', 'ji'], perfect=True)
+gemm = reorder_loops(gemm, 'ii jo')
 \end{lstlisting}
 
 The framework then generates C code for the target hardware that can be integrated into a larger application. The generated code does not rely on any runtime system.
@@ -171,11 +175,11 @@ The main limitation of OpenMP is that it is primarily focused on parallelization
 void gemm(int M, int N, int K,
           float alpha, float A[M][K], float B[K][N],
           float beta, float C[M][N]) {
-  #pragma omp parallel for collapse(2) schedule(static)
-  for (int i = 0; i < M; i++) {
-    for (int j = 0; j < N; j++) {
+  #pragma omp parallel for collapse(__2) schedule(static)
+  for (int i = __0; i < M; i++) {
+    for (int j = __0; j < N; j++) {
       C[i][j] *= beta;
-      for (int k = 0; k < K; k++) {
+      for (int k = __0; k < K; k++) {
         C[i][j] += alpha * A[i][k] * B[k][j];
       }
     }
@@ -183,19 +187,19 @@ void gemm(int M, int N, int K,
 }
 \end{lstlisting}
 
-\lstinline{collapse(2)} is used to indicate that the two outer loops should be collapsed into a single loop for parallelization, which allows for better load balancing and performance on multi-core CPUs. However, this code does not include any other transformations such as tiling or vectorization, which would require additional directives that are not widely supported or manual code modifications.
+\lstinline{collapse(__2)} is used to indicate that the two outer loops should be collapsed into a single loop for parallelization, which allows for better load balancing and performance on multi-core CPUs. However, this code does not include any other transformations such as tiling or vectorization, which would require additional directives that are not widely supported or manual code modifications.
 
 For tiling, OpenMP provides the \lstinline{#pragma omp tile} directive that can be used to specify tiling transformations for loops, and the vectorization can be achieved using the \lstinline{#pragma omp simd} directive. The matrix multiplication step of the above code can be tiled and vectorized as follows:
 
 \begin{lstlisting}[language=C++]
-#pragma omp tile sizes(64, 64)
-#pragma omp parallel for collapse(2) schedule(static)
-for (int i = 0; i < M; i++) {
-  for (int j = 0; j < N; j++) {
-    float temp = 0.0f;
+#pragma omp tile sizes(__6__4, __6__4)
+#pragma omp parallel for collapse(__2) schedule(static)
+for (int i = __0; i < M; i++) {
+  for (int j = __0; j < N; j++) {
+    float temp = __0__.__0__f;
 
     #pragma omp simd reduction(+:temp)
-    for (int k = 0; k < K; k++) {
+    for (int k = __0; k < K; k++) {
       temp += alpha * A[i][k] * B[k][j];
     }
 
@@ -210,21 +214,21 @@ Some efforts have been made to extend OpenMP with directives for more complex, c
 
 % TODO: unify the transformations here and in the earlier examples
 \begin{lstlisting}
-for (i = 0; i < N; i++) {
-  for (j = 0; j < N; j++) {
+for (i = __0; i < M; i++) {
+  for (j = __0; j < N; j++) {
     Init: C[i][j] = C[i][j] * beta;
 
-    for (k = 0; k < N; k++) {
+    for (k = __0; k < K; k++) {
       Mult: C[i][j] += alpha * A[i][k] * B[k][j];
     }
   }
 }
 
-realign(Init, Mult, 0)
+realign(Init, Mult, __0)
 affine(Mult, {[i, j, k] -> [i, k, j]})
 affine(Mult, {[i, j, k] -> [i1, j1, k1, i2, j2, k2]:
-  i1 = [i/64] and j1 = [j/64] and k1 = [k/64] and
-  i2 = [i%64] and j2 = [j%64] and k2 = [k%64]})
+  i1 = [i/__6__4] and j1 = [j/__6__4] and k1 = [k/__6__4] and
+  i2 = [i%__6__4] and j2 = [j%__6__4] and k2 = [k%__6__4]})
 \end{lstlisting}
 
 This performs loop interchange and tiling transformations on the original loop nest (the two \lstinline{affine} directives); the \lstinline{realign} directive is used to specify that the two statements should be treated as two separate loop nests (with data dependencies between them preserved), as the third argument ($0$ in this case) specifies the number of loops that should be shared between the two statements after the transformation. This allows the subsequent directives to be applied to each statement independently. The framework performs correctness checks to ensure that the transformations preserve the semantics of the original computation. One limitation of Loopy is that it does not have any support for parallelization or vectorization.
@@ -274,16 +278,16 @@ RAJA::TypedRangeSegment<KIDX> KRange(kmin, kmax);
 RAJA::TypedRangeSegment<JIDX> JRange(jmin, jmax);
 RAJA::TypedRangeSegment<IIDX> IRange(imin, imax);
 
-RAJA::OffsetLayout<3> layout = RAJA::make_permuted_offset_layout
-  ({{imin, imax}, {jmin, jmax}, {kmin, kmax}}, {2, 0, 1});
-RAJA::View<double, RAJA::OffsetLayout<3>> view(data, layout);
+RAJA::OffsetLayout<__3> layout = RAJA::make_permuted_offset_layout
+  ({{imin, imax}, {jmin, jmax}, {kmin, kmax}}, {__2, __0, __1});
+RAJA::View<double, RAJA::OffsetLayout<__3>> view(data, layout);
 
 using KJI_EXECPOL =
   RAJA::KernelPolicy<
-    RAJA::statement::For<2, RAJA::seq_exec,     // 2: k
-      RAJA::statement::For<1, RAJA::seq_exec,   // 1: j
-        RAJA::statement::For<0, RAJA::seq_exec, // 0: i
-          RAJA::statement::Lambda<0>
+    RAJA::statement::For<__2, RAJA::seq_exec,     // 2: k
+      RAJA::statement::For<__1, RAJA::seq_exec,   // 1: j
+        RAJA::statement::For<__0, RAJA::seq_exec, // 0: i
+          RAJA::statement::Lambda<__0>
   > > > >;
 
 RAJA::kernel<KJI_EXECPOL>(
@@ -329,14 +333,14 @@ Since the proficiency of LLMs as of the beginning of 2026 is still not sufficien
 
 \begin{table}[ht]
   \centering
-  \small
-  \setlength{\tabcolsep}{1.75em} % Adjust column separation
+  \scriptsize
+  % \setlength{\tabcolsep}{1.75em} % Adjust column separation
   \begin{tabular}{@{}lll@{}}
     \toprule
     \textbf{Tool/Method} & \textbf{Targets} & \textbf{Key Features} \\
     \midrule
     \multicolumn{3}{c}{\textit{Polyhedral optimization tools}} \\
-    \makecell[l]{PLuTo, Polly, \\ GRAPHITE} & CPU & Automatic loop transformations \\
+    \makecell[l]{PLuTo, Polly, GRAPHITE} & CPU & Automatic loop transformations \\
     Polygeist & CPU, GPU & C/\cpp to MLIR polyhedral opt. \\
     \midrule
     \multicolumn{3}{c}{\textit{Autotuning frameworks}} \\
@@ -358,12 +362,22 @@ Since the proficiency of LLMs as of the beginning of 2026 is still not sufficien
     MDSpan (std) & Any & Flexible layout policies \\
     CuTe (DSL) & NVIDIA GPU & Hierarchical layout algebra \\
     GridTools (DSL) & CPU, GPU & Stencil computations \\
-    Kokkos & CPU, GPU & Views, parallel execution \\
-    RAJA & CPU, GPU & Kernel policies, views \\
+    Kokkos, RAJA & CPU, GPU & Views, parallel execution \\
+    % RAJA & CPU, GPU & Kernel policies, views \\
     \midrule
-    % TODO ML-based methods
+    \multicolumn{3}{c}{\textit{ML and LLM-based methods}} \\
+    \makecell[l]{OMPify, Graph2Par, AutoParLLM} & CPU & GNN-based OpenMP directive generation \\
+    HPC-Coder, PragFormer & CPU, GPU & Transformer-based directive generation \\
+    MPI-RICAL, MPI{rigen} & CPU & MPI code generation \\
+    ComPilot, LOOPer & CPU, GPU & Autoscheduling (Tiramisu) \\
+    \makecell[l]{Codex, \xxx{\citeauthor{godoy2024large}}, \\ \xxx{\citeauthor{nichols2024performance}}, \xxx{\citeauthor{xu2022systematic}}} & CPU, GPU & LLM-based code generation \\
+    LASSI, \xxx{\citeauthor{palkowski2024gpt}} & CPU, GPU & LLM-based code translation with feedback \\
     \midrule
-    % TODO Noarr and Cellato
+    \multicolumn{3}{c}{\textit{Our contributions}} \\
+    Noarr & CPU, GPU, MPI & Layout-agnostic abstractions \\
+    Cellato & CPU & Stencil-specific layout agnosticism \\
+    \xxx{Tutoring} & GPU & LLM-based code generation with guidance \\
+    \xxx{Shifting} & CPU & LLM-based code translation and optimization \\
     \bottomrule
   \end{tabular}
   \caption{Overview of optimization methods and tools discussed in this chapter.}%

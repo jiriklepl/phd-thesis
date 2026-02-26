@@ -23,7 +23,7 @@ Noarr structures are immutable abstractions representing multidimensional data s
 
 The composition in this example simply adds a new dimension to the index space, extending it from two to three dimensions accordingly. However, other proto-structures may perform more complex transformations of the index space, such as splitting a dimension into multiple dimensions (e.g., \lstinline{into_blocks}, which consumes one dimension and produces two new dimensions) or reordering the logical hierarchy of dimensions (e.g., \lstinline{hoist}).
 
-The composition of proto-structures is done using \cpp template meta-programming and, in the Noarr library~\cite{vsmelko2022astute}, it is represented by the \lstinline{^} operator. Since each proto-structure represents a partial function on the index space and memory space of the sub-structure, the composition of proto-structures is naturally associative. This is a powerful property that allows defining more complex transformations from simpler ones, applying them simultaneously, and reusing them with multiple data structures. This mirrors the principle of composability of views in the ranges library via the \lstinline{operator|} operator, but with better support for multidimensional data structures and type-safety of transformations on the index space.
+The composition of proto-structures is done using \cpp template meta-programming and, in the Noarr library~\cite{vsmelko2022astute}, it is represented by the \lstinline{^} operator. Since each proto-structure represents a partial function on the index space and memory space of the sub-structure, the composition of proto-structures\footnote{mirroring functional composition, just like the composition of layouts in CuTe~\cite{nvidia-cute}} is naturally associative. This is a powerful property that allows defining more complex transformations from simpler ones, applying them simultaneously, and reusing them with multiple data structures. This mirrors the principle of composability of views in the ranges library via the \lstinline{operator|} operator, but with better support for multidimensional data structures and type-safety of transformations on the index space.
 
 \subsubsection*{Dimensions}
 
@@ -137,7 +137,6 @@ Noarr traversers have a similar relationship to Noarr structures as iterators an
 
 \subsubsection*{Parallel traversers}
 
-% TODO: add ref/picture/snippet for parallel traversers
 Similarly to iterators in \cpp algorithms, Noarr traversers can be used to run the given callable objects in parallel on a chosen backend. Noarr currently supports parallel execution using OpenMP, Intel TBB, \cpp standard threads, and CUDA\@. The following snippet shows binding four dimensions of the traverser to CUDA thread blocks.
 
 % TODO: fix the syntax
@@ -159,8 +158,70 @@ Since these parameters are expressed within the Noarr abstraction layer, changin
 
 The tuning is independent of Noarr structures and traversers, but is designed to work seamlessly with them. It is implemented directly in \cpp and any tuning specification is expressed in an enclosed section of the target source code. It allows to define tunable scalar parameters that can be used as first-class \cpp variables in the code as well as choices between different Noarr transformations (proto-structures) that can be applied to the structures and traversers.
 
-% TODO add example of tuning specification.
+\begin{lstlisting}[language=C++, caption={Schema of how a tuning specification is used}]
+struct tuning {
+// defines c_layout, a_layout, b_layout, order
+} tuning;
 
+auto set_lengths = set_length<'i'>(ni) ^
+                   set_length<'j'>(nj) ^
+                   set_length<'k'>(nk);
+
+// using the "*" dereference operator to use a tuned layout
+auto C = bag(scalar<num_t>() ^ *tuning.c_layout ^ set_lengths);
+auto A = bag(scalar<num_t>() ^ *tuning.a_layout ^ set_lengths);
+auto B = bag(scalar<num_t>() ^ *tuning.b_layout ^ set_lengths);
+
+traverser(C) | [=](auto state) {
+  C[state] *= beta;
+};
+
+// using a tuned loop order and tiling on a combined traverser
+traverser(C, A, B) ^ order | [=](auto state) {
+  C[state] += alpha * A[state] * B[state];
+};
+\end{lstlisting}
+
+The following snippet shows an example of a tuning specification outsourcing to OpenTuner~\cite{ansel2014opentuner} for the above matrix multiplication kernel, where the tunable parameters include block sizes for tiling, specification of the dimension order in the grid of tiles and the specification of the dimension order inside tiles.
+
+\begin{lstlisting}[language=C++, caption={An example of a tuning specification}]
+namespace nt = noarr::tuning;
+
+template<IsDim auto Dim, IsDim auto Major,
+         IsDim auto Minor, IsDim auto Guard>
+struct into_pow2_blocks_t {
+  constexpr auto operator()(auto block_size) const {
+    return into_blocks_dynamic<Dim, Major, Minor, Guard>
+      (lit<__1 << block_size>);
+  }
+};
+
+constexpr auto iVec = vector<'i'>();
+constexpr auto jVec = vector<'j'>();
+constexpr auto kVec = vector<'k'>();
+
+struct tuning {
+	NOARR_TUNE_BEGIN(MAKE_OPENTUNER_FORMATTER("gemm"));
+
+	NOARR_TUNE_PAR(blockI, nt::mapped_range,
+                   into_pow2_blocks<'i', 'I', 'i', 's'>, __6);
+	// ... (blockI, blockJ)
+	NOARR_TUNE_CONST(grid, *blockI ^ *blockJ ^ *blockK);
+
+	NOARR_TUNE_PAR(loopOrder, nt::mapped_permutation, xor_fold,
+    hoist<'j'>(), hoist<'k'>(), hoist<'i'>());
+  NOARR_TUNE_PAR(gridOrder, nt::mapped_permutation, xor_fold,
+    hoist<'J'>(), hoist<'K'>(), hoist<'I'>());
+
+	NOARR_TUNE_CONST(order, *loopOrder ^ *grid ^ *gridOrder);
+
+	NOARR_TUNE_PAR(cLayout, nt::choice, jVec ^ iVec, iVec ^ jVec);
+	NOARR_TUNE_PAR(aLayout, nt::choice, kVec ^ iVec, iVec ^ kVec);
+	NOARR_TUNE_PAR(bLayout, nt::choice, jVec ^ kVec, kVec ^ jVec);
+
+	NOARR_TUNE_END();
+} tuning;
+\end{lstlisting}
 
 \subsection{Noarr MPI extension}\label{sec:noarr-mpi}
 
@@ -193,5 +254,3 @@ The works described in this section show that layout-agnostic and traversal-agno
 This separation of concerns introduces more flexibility in the design and implementation of HPC applications, allowing developers to easily change the data layout and traversal order by swapping transformations applied to the structures (i.e., proto-structures in Noarr) and adjusting tile sizes or other tunable parameters, without modifying the logic of the computation and communication.
 
 This flexibility, combined with the ability to infer sizes of co-dependent dimensions and to enforce type-safety of memory accesses and transformations (as exemplified by the Noarr library), allows for easier exploration of the design space of HPC applications, enabling developers to find better-performing implementations. This improves performance portability of HPC applications across different hardware architectures, as we have shown that the approach is applicable to a wide range of programming models and hardware architectures, including CUDA-enabled GPUs and MPI-based distributed systems.
-
-% TODO: expand concluding remarks

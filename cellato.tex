@@ -1,11 +1,8 @@
 \section{Cellato Library}\label{chap:cellato}
 
-% TODO: write a proper introduction for Cellato (micro-motivation, relationship to Noarr, etc.)
+The Cellato library applies the layout-agnostic design principles of Noarr to the domain of cellular automata --- discrete iterative computations on structured grids, where each cell's state is updated based on the states of its neighbors. In this domain, high-performance implementations often employ highly specialized encodings and data representations that are tightly coupled with the computation logic, making it difficult to experiment with different optimization strategies. Cellato addresses this by providing abstractions that separate the automaton's update rules from the underlying data layout, traversal strategy, and per-cell evaluation method.
 
-% TODO: apparently, discrete iterative stencil computations is not a known term, so we should change it to something else
-% TODO: re-think "bit-level SIMD"
-
-In our ongoing research in the area of discrete iterative stencil computations (namely, cellular automata), we have observed that many well-optimized implementations share common design patterns such as bit-packing of cell states, temporal blocking of updates, and bit-level SIMD parallelism of cell update computations. Inspired by these observations and layout-agnostic paradigms explored in the Noarr library, we have developed the Cellato library~\cite{brabec2025cellato}, which enables the separation of concerns between the high-level definition of cellular automata and low-level details such as data layouts, parallelization strategies, and computation optimizations.
+In our ongoing research in the area of cellular automata, we have observed that many well-optimized implementations share common design patterns such as bit-packing of cell states, temporal blocking of updates, and bit-level SIMD parallelism of cell update computations. Inspired by these observations and layout-agnostic paradigms explored in the Noarr library, we have developed the Cellato library~\cite{brabec2025cellato}, which enables the separation of concerns between the high-level definition of cellular automata and low-level details such as data layouts, parallelization strategies, and computation optimizations.
 
 % TODO: discuss how Cellato relates to and differs from the formal data layout definitions in \cref{sec:formalizing-data-layouts-and-access-patterns}
 
@@ -42,12 +39,10 @@ In contrast, the bit planes layout (SoA) can store arbitrary bit-width values wi
 
 The bit-plane representation then also enables different tile-major encodings, where each tile contains a small rectangular block of cells stored in a contiguous set of words, which can improve memory access patterns and cache utilization for certain automata. Cellato supports various tile sizes $t_w \times t_h = w$, where $w$ is the machine word size in bits, allowing for flexible trade-offs between memory access patterns and implementation complexity.
 
-In our ongoing research, we explore the performance effects of using these abstractions on cellular automata from various domains. % TODO: give concrete domain examples (e.g., Game of Life, Wireworld, lattice gas automata, ...)
+\xxx{(UNPUBLISHED)} In our ongoing research, we explore the performance effects of using these abstractions on cellular automata from various domains, such as Conway's Game of Life, Wireworld, and lattice gas cellular automata.
 Compared to other state-of-the-art frameworks for cellular automata, Cellato demonstrates competitive performance while providing a high level of abstraction and flexibility. Compared to hand-optimized implementations using bit-level computations and equivalent encodings, Cellato achieves similar performance with significantly less development effort.
-
-% TODO: discuss whether we can tease some unpublished results here or not
 
 
 \subsection{Summary}\label{sec:cellato-summary}
 
-% TODO: write concluding remarks for Cellato (why is it important, what does it enable, etc.)
+Cellato demonstrates that the layout-agnostic and traversal-agnostic design principles explored in the Noarr library can be effectively specialized to the domain of cellular automata. By separating the automaton's update rules from the data layout, traversal strategy, and per-cell evaluation method, Cellato enables rapid experimentation with different optimization strategies --- including bit-packed encodings and various tiling schemes --- without modifying the core automaton logic. This separation of concerns reduces development effort while achieving performance competitive with hand-optimized implementations.

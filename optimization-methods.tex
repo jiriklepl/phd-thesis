@@ -32,7 +32,7 @@ Many works iterate on the basic polyhedral model to extend its applicability or 
 
 Many DSL compilers (e.g., Halide~\cite{ragan2013halide}, Tiramisu~\cite{baghdadi2019tiramisu}) that will be discussed in \cref{sec:abstractions} use polyhedral optimization techniques (or derived versions) as part of their optimization pipelines. These DSLs often provide higher-level abstractions that allow developers to guide the optimization process using directives that can be mapped to polyhedral transformations.
 
-\textbf{Polygeist}~\cite{moses2021polygeist} is a tool that translates \cpp code to MLIR\@. It combines traditional compiler optimizations on SSA-based IRs with polyhedral optimizations on the affine dialect of MLIR\@, outperforming both Polly and PLuTo on the PolyBench~\cite{pouchet2012polybench} benchmark suite. % TODO: expand Polygeist description (e.g., key techniques, how it bridges C++ and MLIR)
+\textbf{Polygeist}~\cite{moses2021polygeist} is a tool that translates \cpp code to MLIR\@. It uses the Clang frontend to parse C/\cpp source code and then raises the resulting low-level LLVM IR to higher-level MLIR representations, particularly the affine dialect. This allows Polygeist to apply MLIR's polyhedral optimization passes (e.g., affine fusion, loop tiling, and parallelization) to originally imperative C/\cpp code. It combines these polyhedral optimizations with traditional SSA-based compiler optimizations, outperforming both Polly and PLuTo on the PolyBench~\cite{pouchet2012polybench} benchmark suite.
 
 Since polyhedral optimizations are powerful tools that can fundamentally restructure the code, some works have focused on improving the interpretability of the transformations and their results, such as the work by \citeauthor{bagneres2016opening}~\cite{bagneres2016opening} that translates the scheduling decisions of polyhedral optimizers into a human-readable set of transformation directives --- e.g., loop interchange, strip-mine (tiling), \ldots --- that describe the transformations in a more intuitive way.
 
@@ -60,16 +60,6 @@ Autotuning techniques can be used in combination with other optimization methods
 
 \section{Abstractions}\label{sec:abstractions}
 
-\begin{XXX}
-Need to mention the following abstractions:
-\begin{itemize}
-% Others
-  \item Futhark~\cite{henriksen2017futhark}
-  \item SYCL/DPC++~\cite{khronos2023sycl}, oneAPI (TBB~\cite{pheatt2008intel}), Thrust~\cite{bell2011thrust}
-  \item others (TODO: literature review)
-\end{itemize}
-\end{XXX}
-
 Flexible abstractions allowing manipulation of data layouts and iteration orders have been the subject of extensive development. They provide a means to optimize performance for different hardware architectures without needing to change the core algorithmic logic. These abstractions can also serve as flexible API layers for libraries (such as linear algebra libraries~\cite{whaley1998automatically}).
 
 We can broadly categorize these abstractions into the following groups:
@@ -77,8 +67,7 @@ We can broadly categorize these abstractions into the following groups:
 \begin{description}
   \item[Domain-specific languages (DSLs):]\label{des:dsl} These are specialized programming languages designed to express computations in specific domains, such as image processing (Halide~\cite{ragan2013halide}), polyhedral code generation (Tiramisu~\cite{baghdadi2019tiramisu}), or array programming (Futhark~\cite{henriksen2017futhark}). They rely on sophisticated compilers or runtime systems to generate optimized code for the target hardware. These DSLs often sacrifice some generality for better analysis and optimization opportunities --- for example, Halide has a fixed computation model based on pipelines of processing stages that has limited expressivity for nested control flow or data-dependent computations.
   \item[Annotation-based tools:]\label{des:annotation-based-tools} These tools, relying on compiler extensions or external preprocessors, allow developers to annotate their code with optimization directives. Examples include OpenMP for parallelization and pragmas for loop transformations. Compared to DSLs, these tools operate on top of the target language (e.g., C/\cpp) and maintain higher generality, or at least compatibility with the host language. However, they may also be limited by specific semantics of the host language.
-  % TODO: the following name is not final (was named "Native tools" in the abstractions paper; I am thinking about breaking it into two categories: parallelization frameworks and libraries vs _something_ abstractions)
-  \item[Parallelization frameworks and libraries:]\label{des:parallelization-frameworks} These frameworks provide abstractions enabling developers to run computations in parallel using high-level constructs. Examples include Kokkos~\cite{trott2021kokkos}, RAJA~\cite{beckingsale2019raja}, and SYCL/DPC++~\cite{khronos2023sycl}. % TODO: expand this item to balance the other descriptions
+  \item[Parallelization frameworks and libraries:]\label{des:parallelization-frameworks} These frameworks provide abstractions for performance-portable parallel execution, multidimensional data management, and memory management across heterogeneous hardware architectures. Unlike DSLs, they operate within the host language (\cpp) and do not require custom compilers. They typically provide flexible data layout abstractions and parallel execution policies that can target different backends (e.g., multi-core CPUs, GPUs) from a single source code base. Examples include Kokkos~\cite{trott2021kokkos}, RAJA~\cite{beckingsale2019raja}, Thrust~\cite{bell2011thrust}, and Intel TBB~\cite{pheatt2008intel}.
 \end{description}
 
 These abstractions play a crucial role in optimizing applications for modern high-performance computing, as the scale and complexity of diverse hardware architectures continue to grow and traditional low-level optimization techniques alone are not sufficient to achieve optimal performance. The abstractions enable developers to apply optimizations based on domain knowledge, empirical performance data, or autotuning techniques.
@@ -238,7 +227,7 @@ affine(Mult, {[i, j, k] -> [i1, j1, k1, i2, j2, k2]:
   i2 = [i%64] and j2 = [j%64] and k2 = [k%64]})
 \end{lstlisting}
 
-This performs loop interchange and tiling transformations on the original loop nest (the two \lstinline{affine} directives); the \lstinline{realign} directive is used to specify that the two statements should be treated as two separate loop nests (with data dependencies between them preserved), as the third argument ($0$ in this case) specifies the number of loops that should be shared between the two statements after the transformation. This allows the subsequent directives to be applied to each statement independently. The framework performs correctness checks to ensure that the transformations preserve the semantics of the original computation.
+This performs loop interchange and tiling transformations on the original loop nest (the two \lstinline{affine} directives); the \lstinline{realign} directive is used to specify that the two statements should be treated as two separate loop nests (with data dependencies between them preserved), as the third argument ($0$ in this case) specifies the number of loops that should be shared between the two statements after the transformation. This allows the subsequent directives to be applied to each statement independently. The framework performs correctness checks to ensure that the transformations preserve the semantics of the original computation. One limitation of Loopy is that it does not have any support for parallelization or vectorization.
 
 
 \subsection{Native tools and libraries}\label{sec:native-tools}
@@ -256,8 +245,6 @@ The compatibility relation is the basis for defining layout algebra that is base
 This functional composition of layouts follows the same principle as Noarr. Most notably, that the right-hand-side input of the composition can be thought of as a partial function that transforms the input index space into a new index space.
 
 \textbf{GridTools}~\cite{afanasyev2021gridtools} is a \cpp-embedded DSL that targets stencil computations on structured grids, primarily in the context of weather and climate modeling. The stencil computations are represented as a composition of abstract stages implemented as \cpp functors. The framework supports backends for various hardware architectures, including many-core CPU systems and GPUs\@. Since the stencil stages are represented in a high-level manner, the framework can apply various hardware-specific optimizations depending on the target backend.
-
-\xxx{continue from here.}
 
 \textbf{MDSpans}~\cite{trott2022mdspan} are a \cpp abstraction for representing multidimensional arrays with flexible data layouts. The mapping of multidimensional indices to linear memory addresses and the element access policy that translates the resulting linear index to element references are both customizable, allowing for a wide range of data layouts and special memory types. The predefined layouts include row-major, column-major, and generic strided layouts, but the abstraction also allows defining custom memory layouts. However, it does not provide any built-in mechanism for hierarchical composition of layouts or their analysis beyond recognizing the predefined ones and retrieving their strides and extents.
 
@@ -338,4 +325,47 @@ Since the proficiency of LLMs as of the beginning of 2026 is still not sufficien
 
 \section{Summary}\label{sec:optimization-methods-summary}
 
-% TODO Let's do a table
+\Cref{tab:optimization-methods-summary} provides an overview of the optimization methods and tools discussed in this chapter, comparing them along several key dimensions: the level of abstraction at which they operate, the optimization techniques they support, the target hardware architectures, and the degree of automation they provide.
+
+\begin{table}[ht]
+  \centering
+  \small
+  \setlength{\tabcolsep}{1.75em} % Adjust column separation
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    \textbf{Tool/Method} & \textbf{Targets} & \textbf{Key Features} \\
+    \midrule
+    \multicolumn{3}{c}{\textit{Polyhedral optimization tools}} \\
+    \makecell[l]{PLuTo, Polly, \\ GRAPHITE} & CPU & Automatic loop transformations \\
+    Polygeist & CPU, GPU & C/\cpp to MLIR polyhedral opt. \\
+    \midrule
+    \multicolumn{3}{c}{\textit{Autotuning frameworks}} \\
+    OpenTuner & Any & Ensemble search \\
+    ATF & Any & Ensemble, conditional parameters \\
+    Hyperopt & Any & Bayesian optimization \\
+    Optuna & Any & Dynamic search spaces, pruning \\
+    \midrule
+    \multicolumn{3}{c}{\textit{Domain-specific languages}} \\
+    Halide & CPU, GPU & Image/array pipelines, scheduling \\
+    Tiramisu & CPU, GPU, MPI & Polyhedral model, scheduling \\
+    Exo & Customizable & User-defined instructions \\
+    \midrule
+    \multicolumn{3}{c}{\textit{Annotation-based tools}} \\
+    OpenMP & CPU, GPU & Parallelization directives \\
+    Loopy & CPU & Affine schedule annotations \\
+    \midrule
+    \multicolumn{3}{c}{\textit{Library-based native tools}} \\
+    MDSpan (std) & Any & Flexible layout policies \\
+    CuTe (DSL) & NVIDIA GPU & Hierarchical layout algebra \\
+    GridTools (DSL) & CPU, GPU & Stencil computations \\
+    Kokkos & CPU, GPU & Views, parallel execution \\
+    RAJA & CPU, GPU & Kernel policies, views \\
+    \midrule
+    % TODO ML-based methods
+    \midrule
+    % TODO Noarr and Cellato
+    \bottomrule
+  \end{tabular}
+  \caption{Overview of optimization methods and tools discussed in this chapter.}%
+  \label{tab:optimization-methods-summary}
+\end{table}

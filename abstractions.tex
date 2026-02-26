@@ -4,5 +4,9 @@
 
 Our work on abstractions for high-performance computing introduced layout-agnostic and traversal-agnostic abstractions that enable separation of concerns between data representation, data traversal, and algorithm implementation. We have developed two main abstractions: Noarr~\cite{vsmelko2022astute,klepl2024pure,klepl2024abstractions,klepl2025layout} and Cellato~\cite{brabec2025cellato} as experimental testbeds for exploring and showcasing these ideas.
 
+Noarr is a prototype of a general-purpose library that provides abstractions for multi-dimensional data layouts and their (combined) traversals (and transformations on such), which showcases the core ideas of layout-agnostic and traversal-agnostic abstractions. It has been designed to be a flexible and extensible framework that can be used to show the potential of the agnostic approach in context of HPC computing, primarily on CPUs and GPUs\@ in the \cpp programming language. \cpp allows us to leverage powerful features such as template meta-programming and compile-time computations to interpret the abstractions with negligible runtime overhead and to provide an interface usable in real-world applications. However, the concepts and ideas behind Noarr are not limited to \cpp and can be adapted to similarly focused languages or domain-specific tools (e.g., compilers or code generators).
+
+Cellato is a Domain-Specific Language (DSL) for discrete stencil computations that builds on the ideas of layout-agnostic and traversal-agnostic abstractions. It provides a high-level interface for expressing stencil computations while abstracting away the underlying data layout, execution policy, and backend. This addresses the common characteristic of these computations --- that they benefit from using specific bit-packed encodings and bit-vectorized computations.
+
 \input{noarr}
 \input{cellato}

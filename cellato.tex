@@ -10,37 +10,98 @@ In our ongoing research in the area of cellular automata, we have observed that 
 \subsection{Cellato traversers and evaluators}\label{sec:cellato-evaluators}
 
 % Cellato overview
-The Cellato framework is built around the following core abstractions:
+The Cellato framework is built around the following core abstractions with their relationships depicted in \cref{fig:runtime-arch}:
 \begin{description}
   \item[Algorithm:]\label{des:algorithm} an abstract definition of the cellular automaton update rules pertaining to a single cell, depending on its neighborhood.
   \item[Layout:]\label{des:layout} a grid data structure managing the storage of cell states.
   \item[Evaluator:]\label{des:evaluator} a visitor-style abstraction that applies the algorithm to a single cell, given access to its neighborhood via the layout interface.
-  \item[Traverser:]\label{des:traverser} a wrapper around the layout that applies the given evaluator to each cell in the grid.
+  \item[Traverser:]\label{des:traverser} a wrapper around the layout that applies the given evaluator to each cell in the grid. This defines the intended evaluation order of the cells, which may improve data locality.
 \end{description}
+
+\begin{figure}[ht]
+  \centering
+  \resizebox{0.5\linewidth}{!}{%
+    \begin{tikzpicture}[
+        node distance=1cm and 2cm,
+        component/.style={
+          draw,
+          fill=white,
+          rounded corners,
+          inner sep=4pt,
+          font=\sffamily\footnotesize
+        },
+        container/.style={
+          draw,
+          dashed,
+          rounded corners,
+          fill=gray!10,
+          inner sep=8pt
+        },
+        componentdashed/.style={
+          draw,
+          dashed,
+          rounded corners,
+          inner sep=4pt,
+          font=\sffamily\footnotesize
+        },
+        >=Stealth
+      ]
+
+      % LEFT
+      \node[component] (traverser) {Traverser};
+
+      % CENTER
+      \node[component,right=1.8cm of traverser] (evaluator) {Evaluator};
+      \node[component,below=of evaluator]       (layout)    {Layout};
+      \begin{scope}[on background layer]
+        \node[container,fit=(evaluator)(layout)] {};
+      \end{scope}
+
+      % RIGHT
+      \node[component,right=of evaluator] (algorithm) {Algorithm};
+      \node[componentdashed,below=of algorithm]    (grid)      {Grid};
+
+      % ARROWS
+      \draw[->]
+        (traverser) -- node[above,font=\scriptsize\itshape]{uses}       (evaluator);
+      \draw[->]
+        (evaluator) -- node[above,font=\scriptsize\itshape]{evaluates} (algorithm);
+      \draw[->]
+        (evaluator) -- node[midway,font=\scriptsize\itshape,fill=gray!10,inner sep=1pt,rounded corners]{operates on} (layout);
+      \draw[dashed,->]
+        (grid)      -- node[below,font=\scriptsize\itshape]{implements}(layout);
+
+    \end{tikzpicture}
+  }
+  \caption{The execution architecture}%
+  \label{fig:runtime-arch}
+\end{figure}
+
+As depicted in the figure, the evaluator and layout abstractions are tightly coupled --- for example, a bit-level encoding has to be paired with an evaluator that defines bit-vector computations.
 
 Traversers define the high-level execution strategy, such as parallelization and temporal blocking, while evaluators encapsulate the low-level cell update logic (for example, interpreting summations of neighboring cells in the algorithm as networks of bitwise operations).
 
-The framework leverages \cpp template meta-programming by encoding the algorithm as a static type consisting of nested nodes representing operations, data accesses, and constants. The evaluator comprises a set of specializations for each node type that, given access to the layout, evaluates to the result of the operation. All these components are further described in detail in~\cite{brabec2025cellato}.
+The framework leverages \cpp template meta-programming by encoding the algorithm as a static type consisting of nested nodes representing operations, data accesses, and constants. The evaluator comprises a set of specializations for each node type that, given access to the layout, evaluates to the result of the operation. All these components are further described in detail in our publication~\cite{brabec2025cellato}.
 
-The design consisting of primitive composable building blocks follows the same general principles as the Noarr library, specialized to the domain of discrete iterative stencil computations. We have shown that Cellato can achieve performance comparable to hand-written implementations with less effort. Most importantly, writing the automaton logic in Cellato is agnostic in terms of data layout, traversal strategy, and per-cell computation, enabling rapid experimentation with different optimizations and parallelization strategies.
+The design consisting of primitive composable building blocks follows the same general principles as the Noarr library, specialized to the domain of discrete iterative stencil computations. We have shown that Cellato can achieve performance comparable to hand-written implementations with less effort. Most importantly, writing the automaton logic in Cellato is agnostic in terms of data layout, traversal strategy, and per-cell computation logic (all of these are independent of specific stencil computations), enabling rapid
 
 
 \subsection{Bit-level optimizations}\label{sec:cellato-bit-optimizations}
 
-One of the key results of our research with Cellato is the ability to encode cell states in a compact bit-packed format, allowing for significant memory bandwidth savings as well as enabling bit-level SIMD parallelism, which performs better than byte-level SIMD for automata with a small number of states per cell and simple update rules.
+One of the key results of our research with Cellato is the ability to encode cell states in a compact bit-packed format, allowing for significant memory bandwidth savings as well as enabling bit-level SIMD-style parallelism, which performs better than byte-level SIMD for automata with a small number of states per cell and simple update rules (on contemporary GPU architectures).
 
-Since the cell states or the intermediate results of the update computations (such as neighborhood sums) often occupy more than one bit, Cellato provides abstractions for bit-level operations on two representations. The first is the AoS layout (called \emph{bit arrays} in Cellato terminology), where each cell's bits are stored contiguously. The second is the SoA layout (called \emph{bit planes} in Cellato terminology)\footnote{AoS and SoA layouts are described in \cref{sec:memory-layout-optimizations}.}, where each bit plane contains bits of the same significance for all cells.
+Since the cell states or the intermediate results of the update computations (such as neighborhood sums) often occupy more than one bit, Cellato provides abstractions for bit-level operations on two representations out-of-the-box. The first is the AoS layout (called \emph{bit arrays} in Cellato terminology), where each cell's bits are stored contiguously and a given machine word encodes multiple consecutive cell states. The second is the SoA layout (called \emph{bit planes} in Cellato terminology)\footnote{AoS and SoA layouts are described in \cref{sec:memory-layout-optimizations}.}, where each bit plane contains bits of the same significance for $w$ cells, where $w$ is a machine word.
 
-Both representations can store up to $n$ $k$-bit cells in $n k / w$ machine words, where $w$ is the machine word size in bits (typically 32 or 64). Each layout comes with its own trade-offs.
+Both representations can store up to $n$ $k$-bit cells in $n k / w$ machine words, where $w$ is the machine word size in bits (typically $32$ or $64$). Each layout comes with its own trade-offs.
 
 The bit arrays layout (AoS) is more intuitive to work with and allows operations such as addition and multiplication, provided that the result fits within the available number of bits per cell. However, it can be quite inefficient for storing values that are not powers of two, as each word then contains only $\lfloor w / k \rfloor$ cells with $k$ bits each and has $w \bmod k$ padding bits that are wasted.
 
-In contrast, the bit planes layout (SoA) can store arbitrary bit-width values without any padding, as each plane contains one bit per cell and the total number of planes corresponds to the number of bits per cell. However, operations are limited to bitwise logical operations (AND, OR, XOR, NOT) and bit shifts.
+In contrast, the bit planes layout (SoA) can store arbitrary bit-width values without any padding, as each plane contains one bit of each cell and the total number of planes corresponds to the number of bits per cell. However, operations are limited to bitwise logical operations (AND, OR, XOR, NOT) and bit shifts --- since consecutive bits in a word encode states or intermediate results corresponding to different cells, operations such as addition are not generally useful as any carries would overflow to surrounding cells' contexts.
 
-The bit-plane representation then also enables different tile-major encodings, where each tile contains a small rectangular block of cells stored in a contiguous set of words, which can improve memory access patterns and cache utilization for certain automata. Cellato supports various tile sizes $t_w \times t_h = w$, where $w$ is the machine word size in bits, allowing for flexible trade-offs between memory access patterns and implementation complexity.
+The bit-plane representation also enables different tile-major encodings, where each tile contains a small rectangular block of cells stored in a contiguous set of words, which can improve memory access patterns and cache utilization for certain automata. Cellato supports various tile sizes $t_w \times t_h = w$, where $w$ is the machine word size in bits, allowing for flexible trade-offs between memory access patterns and implementation complexity.
 
-\xxx{(UNPUBLISHED)} In our ongoing research, we explore the performance effects of using these abstractions on cellular automata from various domains, such as Conway's Game of Life, Wireworld, and lattice gas cellular automata.
-Compared to other state-of-the-art frameworks for cellular automata, Cellato demonstrates competitive performance while providing a high level of abstraction and flexibility. Compared to hand-optimized implementations using bit-level computations and equivalent encodings, Cellato achieves similar performance with significantly less development effort.
+\xxx{(UNPUBLISHED)} In our ongoing research, we explore the performance effects of using these abstractions on cellular automata from various domains, such as Conway's Game of Life, WireWorld, or lattice gas cellular automata.
+Compared to other state-of-the-art frameworks for cellular automata~\cite{cagigas2022efficient}, Cellato demonstrates competitive performance while providing a high level of abstraction and flexibility. Compared to hand-optimized using bit-level computations and equivalent encodings~\cite{fujita2016fast}, Cellato achieves similar performance with significantly less development effort.
 
 
 \subsection{Summary}\label{sec:cellato-summary}

@@ -86,6 +86,11 @@
 
 \usepackage[capitalize]{cleveref}
 
+% Use "Figure" instead of "Fig."
+\crefname{figure}{Figure}{Figures}
+\Crefname{figure}{Figure}{Figures}
+
+
 % Load the file with bibliography entries
 \addbibresource{bibliography.bib}
 
@@ -98,65 +103,6 @@
 
 %%% A page with automatically generated table of contents of the thesis
 \tableofcontents
-
-\begin{figure}[ht]
-  \centering
-  \resizebox{0.5\linewidth}{!}{%
-    \begin{tikzpicture}[
-        node distance=1cm and 2cm,
-        component/.style={
-          draw,
-          fill=white,
-          rounded corners,
-          inner sep=4pt,
-          font=\sffamily\footnotesize
-        },
-        container/.style={
-          draw,
-          dashed,
-          rounded corners,
-          fill=gray!10,
-          inner sep=8pt
-        },
-        componentdashed/.style={
-          draw,
-          dashed,
-          rounded corners,
-          inner sep=4pt,
-          font=\sffamily\footnotesize
-        },
-        >=Stealth
-      ]
-
-      % LEFT
-      \node[component] (traverser) {Traverser};
-
-      % CENTER
-      \node[component,right=1.8cm of traverser] (evaluator) {Evaluator};
-      \node[component,below=of evaluator]       (layout)    {Layout};
-      \begin{scope}[on background layer]
-        \node[container,fit=(evaluator)(layout)] {};
-      \end{scope}
-
-      % RIGHT
-      \node[component,right=of evaluator] (algorithm) {Algorithm};
-      \node[componentdashed,below=of algorithm]    (grid)      {Grid};
-
-      % ARROWS
-      \draw[->]
-        (traverser) -- node[above,font=\scriptsize\itshape]{uses}       (evaluator);
-      \draw[->]
-        (evaluator) -- node[above,font=\scriptsize\itshape]{evaluates} (algorithm);
-      \draw[->]
-        (evaluator) -- node[midway,font=\scriptsize\itshape,fill=gray!10,inner sep=1pt,rounded corners]{operates on} (layout);
-      \draw[dashed,->]
-        (grid)      -- node[below,font=\scriptsize\itshape]{implements}(layout);
-
-    \end{tikzpicture}
-  }
-  \caption{The execution architecture}%
-  \label{fig:runtime-arch}
-\end{figure}
 
 
 %%% Each chapter is kept in a separate file

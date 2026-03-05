@@ -12,7 +12,7 @@ Since the index space is represented using named dimensions, all queries on the 
 \subsection{Noarr Structures}\label{sec:noarr-structures}
 
 
-Noarr structures are immutable abstractions representing multidimensional data structures built by composing primitive proto-structures in a hierarchical manner as depicted in \cref{fig:noarr-structure-composition}. Each proto-structure represents a transformation of the index space and memory space of the nested \emph{sub-structure}; thus, if the sub-structure represents a multidimensional array with dimensions \lstinline{'y'} and \lstinline{'z'}, then wrapping it in an \lstinline{array} proto-structure with dimension \lstinline{'x'} results in a three-dimensional array with dimensions \lstinline{'x'}, \lstinline{'y'}, and \lstinline{'z'}.
+Noarr structures are immutable abstractions representing multidimensional data structures built by composing primitive proto-structures in a hierarchical manner as depicted in~\cref{fig:noarr-structure-composition}. Each proto-structure represents a transformation of the index space and memory space of the nested \emph{sub-structure}; thus, if the sub-structure represents a multidimensional array with dimensions \lstinline{'y'} and \lstinline{'z'}, then wrapping it in an \lstinline{array} proto-structure with dimension \lstinline{'x'} results in a three-dimensional array with dimensions \lstinline{'x'}, \lstinline{'y'}, and \lstinline{'z'}.
 
 \begin{figure}[htbp]
   \centering
@@ -49,7 +49,7 @@ Querying a specific property of a Noarr structure, such as obtaining the memory 
   \label{fig:noarr-structure-offset}
 \end{figure}
 
-For example, querying the offset of an element in an \lstinline{array} proto-structure with size~$N$, dimension~\lstinline{'x'}, and a sub-structure~$S$, given an index state $s$, depicted in \cref{fig:noarr-structure-offset} proceeds as follows:
+For example, querying the offset of an element in an \lstinline{array} proto-structure with size~$N$, dimension~\lstinline{'x'}, and a sub-structure~$S$, given an index state $s$, depicted in~\cref{fig:noarr-structure-offset} proceeds as follows:
 
 \begin{enumerate}
   \item Extract the index~$i$ for dimension~\lstinline{'x'}
@@ -69,7 +69,7 @@ The notion of sub-structure and (sub-)state provides a clean framework for defin
 An important feature of a Noarr structures is its \emph{signature}. A signature is a representation of the hierarchy of the dimensions of the structure (and thus, a simplification of its logical layout). It is a necessary component for specifying intended traversals of the structures and also allows for improved type-safety. Some proto-structures can be used to change the signature and thus the intended traversal of the structure; for example, \lstinline{hoist} moves a dimension up in the hierarchy, specifying that the corresponding traversal iterates it in the outermost loop.
 
 A signature can be interpreted as a tree where each node represents a dimension and its children represent nested dimensions.
-The signature of a given Noarr structure results from a transformation of the signature of its sub-structure(s) based on the semantics of the proto-structure. For example, the signature of an \lstinline{array} structure is represented by a root node representing the array dimension, with a single child representing the signature of the sub-structure as shown in \cref{fig:noarr-structure-signature}.
+The signature of a given Noarr structure results from a transformation of the signature of its sub-structure(s) based on the semantics of the proto-structure. For example, the signature of an \lstinline{array} structure is represented by a root node representing the array dimension, with a single child representing the signature of the sub-structure as shown in~\cref{fig:noarr-structure-signature}.
 
 % Signatures partially resemble the notion of types in lambda calculus, where the signature of an \lstinline{array} proto-structure roughly corresponds to a function type taking the new dimension and returning the sub-structure signature, and the signature of the \lstinline{fix<'x'>(i)} proto-structure (which fixes the index of dimension \lstinline{'x'} to a given value~$i$) roughly corresponds to application in this analogy. Proto-structures such as \lstinline{into_blocks} are better interpreted on the tree representation, where the path through the consumed dimension is replaced by a new subtree representing the newly produced dimensions.
 
@@ -84,7 +84,7 @@ Note that consumed and produced dimensions affect the signature accordingly (in 
 
 \subsubsection*{Bags}
 
-Since layouts are most often used as mappings to memory, Noarr provides a \emph{bag} wrapper that represents a pointer to a memory buffer containing the data described by the given structure. The \lstinline{bag} wrapper provides methods for obtaining references to elements at given indices as well as other utility methods. An example of creating a Noarr structure representing a two-dimensional matrix of size $N \times M$ is shown in \cref{lst:noarr-matrix-structure}.
+Since layouts are most often used as mappings to memory, Noarr provides a \emph{bag} wrapper that represents a pointer to a memory buffer containing the data described by the given structure. The \lstinline{bag} wrapper provides methods for obtaining references to elements at given indices as well as other utility methods. An example of creating a Noarr structure representing a two-dimensional matrix of size $N \times M$ is shown in~\cref{lst:noarr-matrix-structure}.
 
 \begin{lstlisting}[language=C++, caption={Creating a matrix structure using Noarr.}, label=lst:noarr-matrix-structure]
 auto matrix = bag(scalar<int>() ^ array<'x'>(N) ^ array<'y'>(M));
@@ -124,7 +124,7 @@ trav.for_each([&](auto state) { /* ... */ });
 
 When the traverser is created over multiple Noarr structures, the resulting index space is the cover of the index spaces of all structures, constructed using the leftmost structure as the base and extending its index space by adding the uncovered dimensions of each subsequent structure. This construction is represented by the traverser signature, formed by taking the signature of the leftmost structure and iteratively prepending the uncovered dimensions of the other structures in the order they appear.
 
-For example, if it is created over two two-dimensional structures with dimensions \lstinline{'x'}, \lstinline{'y'} and \lstinline{'y'}, \lstinline{'z'}, respectively, the resulting index space is three-dimensional with dimensions \lstinline{'x'}, \lstinline{'y'}, and \lstinline{'z'} as depicted in \cref{fig:noarr-traverser-multiple-structures}.
+For example, if it is created over two two-dimensional structures with dimensions \lstinline{'x'}, \lstinline{'y'} and \lstinline{'y'}, \lstinline{'z'}, respectively, the resulting index space is three-dimensional with dimensions \lstinline{'x'}, \lstinline{'y'}, and \lstinline{'z'} as depicted in~\cref{fig:noarr-traverser-multiple-structures}.
 
 \begin{figure}[htbp]
   \centering
@@ -225,9 +225,9 @@ struct tuning {
 
 \subsection{Noarr MPI extension}\label{sec:noarr-mpi}
 
-The MPI type system is compatible with layout-agnosticism, since MPI datatypes are equivalent for the purposes of communication whenever their signatures\footnote{An MPI datatype signature is a sequence of base element types in their semantic order, disregarding their displacements in memory.} are the same. This characteristic is similar to the notion of layout-agnosticism in Noarr structures, where the semantic order of elements is specified by the named dimensions; thus, given a linearization of the named dimensions in a Noarr structure, a Noarr structure corresponds to a specific MPI datatype (disregarding different ways of constructing it). As described in \cref{sec:noarr-structures}, such linearization can be represented by a Noarr signature. % TODO: choose a different term than linearization?
+The MPI type system is compatible with layout-agnosticism, since MPI datatypes are equivalent for the purposes of communication whenever their signatures\footnote{An MPI datatype signature is a sequence of base element types in their semantic order, disregarding their displacements in memory.} are the same. This characteristic is similar to the notion of layout-agnosticism in Noarr structures, where the semantic order of elements is specified by the named dimensions; thus, given a linearization of the named dimensions in a Noarr structure, a Noarr structure corresponds to a specific MPI datatype (disregarding different ways of constructing it). As described in~\cref{sec:noarr-structures}, such linearization can be represented by a Noarr signature. % TODO: choose a different term than linearization?
 
-In our work~\cite{klepl2024abstractions}, we have introduced the Noarr MPI extension that leverages the fact that traversers can be created over multiple Noarr structures simultaneously. This provides a clean API built on top of Noarr traversers to express communication patterns involving multiple Noarr structures that may have different layouts, as shown in \cref{fig:noarr-mpi-communication}. Each computation step connected by communication with other steps can use its own preferred layout without having to modify the communication logic.
+In our work~\cite{klepl2024abstractions}, we have introduced the Noarr MPI extension that leverages the fact that traversers can be created over multiple Noarr structures simultaneously. This provides a clean API built on top of Noarr traversers to express communication patterns involving multiple Noarr structures that may have different layouts, as shown in~\cref{fig:noarr-mpi-communication}. Each computation step connected by communication with other steps can use its own preferred layout without having to modify the communication logic.
 
 We showcase the proposed approach on a distributed matrix multiplication example, with \lstinline{broadcast} and \lstinline{scatter}/\lstinline{gather} communication patterns. Experimental evaluation shows that the automated generation of MPI datatypes from Noarr structures and traversers introduces negligible overhead compared to hand-crafted MPI datatype definitions, regardless of the data layout used.
 

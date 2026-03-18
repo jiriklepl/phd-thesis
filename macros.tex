@@ -94,7 +94,7 @@
 
 % Settings for lstlisting -- program listing with syntax highlighting
 \ifcsname lstset\endcsname
-\lstset{
+\lstdefinestyle{C++}{
   language=C++,
   tabsize=2,
   upquote=true,
@@ -106,11 +106,16 @@
   numberstyle=\tiny\color{black!50},
   backgroundcolor=\color{black!3},
   showstringspaces=false,
-  basicstyle=\footnotesize\tt\color{black!75},
+  basicstyle=\footnotesize\ttfamily\color{black!75},
   identifierstyle=\bfseries\color{black},
   commentstyle=\color{green!50!black},
   stringstyle=\color{red!75!black},
   keywordstyle=\color{blue!75!black},
+  morekeywords={concept,requires,co_await,co_yield,co_return,consteval,constexpr,decltype,final,noexcept,override,static_assert,thread_local},
+  classoffset=1,
+  morekeywords={noarr,cellato,std,Kokkos,RAJA},
+  keywordstyle=\color{teal!75!black},
+  classoffset=0,
   literate=
   {__0}{{\textcolor{teal!25!purple}{0}}}1
   {__1}{{\textcolor{teal!25!purple}{1}}}1
@@ -125,6 +130,7 @@
   {__.}{{\textcolor{teal!25!purple}{.}}}1
   {__f}{{\textcolor{teal!25!purple}{f}}}1
 }
+\lstset{style=C++}
 
 \fi
 

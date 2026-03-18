@@ -96,10 +96,14 @@ Memory layout optimizations involve changing the organization of data structures
 
 \subsection{Vectorization}\label{sec:vectorization}
 
+\xxx{Isn't vectorization a type of parallelization?}
+
 Vectorization techniques aim to exploit the SIMD (Single Instruction, Multiple Data) capabilities of modern processors. They usually involve restructuring loops and data layouts to enable either implicit vectorization by the compiler or explicit vectorization using intrinsic functions or assembly code. Vectorization typically requires that data is properly aligned and accessed contiguously so that, in an unrolled loop, multiple data elements can be processed simultaneously using vector registers and instructions.
 
 
 \subsection{Parallelization}\label{sec:parallelization}
+
+\xxx{Make this more beefy, more detailed.}
 
 Parallelization techniques are complementary to data locality optimizations and vectorization. They involve decomposing computations into multiple tasks that can be executed concurrently on multiple processing units, such as CPU cores, GPU threads, or distributed nodes (possibly with communication and synchronization). Common parallelization strategies include data parallelism, task parallelism, and pipeline parallelism.
 

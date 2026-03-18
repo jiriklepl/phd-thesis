@@ -25,17 +25,20 @@ The composition in this example simply adds a new dimension to the index space, 
 
 The composition of proto-structures is done using \cpp template meta-programming and, in the Noarr library~\cite{vsmelko2022astute}, it is represented by the \lstinline{^} operator. Since each proto-structure represents a partial function on the index space and memory space of the sub-structure, the composition of proto-structures\footnote{mirroring functional composition, just like the composition of layouts in CuTe~\cite{nvidia-cute}} is naturally associative. This is a powerful property that allows defining more complex transformations from simpler ones, applying them simultaneously, and reusing them with multiple data structures. This mirrors the principle of composability of views in the ranges library via the \lstinline{operator|} operator, but with better support for multidimensional data structures and type-safety of transformations on the index space.
 
+
 \subsubsection*{Dimensions}
 
 Proto-structures can have multiple input dimensions and multiple output dimensions. If a dimension is not mentioned in a proto-structure of a composite structure, it is passed through unchanged from its sub-structure to the resulting structure. If a dimension appears as an input dimension but not as an output dimension, it is \emph{consumed} by the proto-structure; similarly, if a dimension appears as an output dimension but not as an input dimension, it is \emph{produced} by the proto-structure.
 
 One further property of proto-structures that operate on multiple input dimensions (or multiple output dimensions) is that if there are dependencies between the input and output dimension lengths (e.g., the input dimension of \lstinline{into_blocks} can be expressed as the product of the two output dimensions), the Noarr library automatically infers the unspecified lengths and indices from these dependencies. It propagates them when querying dimension lengths, issuing static assertions on ambiguous constructions --- e.g., when all three lengths of the dimensions of \lstinline{into_blocks} are specified.
 
+
 \subsubsection*{State propagation}
 
 The intermediate state (most notably, lengths and indices of the named dimensions) is passed from the outermost proto-structure to the innermost sub-structure in a \emph{state} argument; just like each proto-structure represents a partial function (transformation) on the index space and memory space, it equally represents a partial function on the state in the reverse direction. Any produced dimensions are removed in the sub-state passed to the sub-structure and all consumed dimensions are added. This principle strengthens the type-safety of Noarr structures by ensuring that a dimension is not propagated unexpectedly.
 
 This property allows specifying the lengths either from the underlying untiled structure or from the tiled transformation, and vice versa. This comes in handy when some of the dimensions are freely tunable and others are fixed by the logic of the computation or by hardware constraints (e.g., specifying the tile size of a dimension based on the number of available threads).
+
 
 \subsubsection*{Structure property queries}
 
@@ -64,6 +67,7 @@ The notion of sub-structure and (sub-)state provides a clean framework for defin
 
 \xxx{(SIDENOTE)} Formally speaking, since sub-structure queries always use sub-states, we can conceptually define each query on a Noarr structure as a composition of the properties of the sub-structure (the propagation of the sub-state is implicit), formal arguments, and the contents of the state. For example, in the case of a vector proto-structure, we could define \lstinline{offset = index<'x'> * size + offset} and \lstinline{size = length<'x'> * size}, where all left-hand-side arguments refer to properties of the resulting structure and all right-hand-side arguments refer to state parameters or sub-structure properties dependent on the sub-state specified separately (e.g., \lstinline{state = state.without<'x'>()}), where the left-hand-side refers to the sub-state and the right-hand-side refers to the state of the current structure (since states are propagated in the reverse direction compared to the queried structure properties). This allows for a cleaner definition of proto-structures, but is only partially implemented in the Noarr library. Currently, this principle drives the design of proto-structures and their queries, but is left for further development either when language features allow for higher-level abstractions (for example, using reflection and compile-time code generation) or when the design principles are used to develop a framework separated from the design restrictions of the \cpp language. However, this design principle allows for developing formal proofs of the properties of proto-structures and their compositions --- only some of them are currently implemented in the Noarr library via static assertions.
 
+
 \subsubsection*{Structure signatures}
 
 An important feature of a Noarr structures is its \emph{signature}. A signature is a representation of the hierarchy of the dimensions of the structure (and thus, a simplification of its logical layout). It is a necessary component for specifying intended traversals of the structures and also allows for improved type-safety. Some proto-structures can be used to change the signature and thus the intended traversal of the structure; for example, \lstinline{hoist} moves a dimension up in the hierarchy, specifying that the corresponding traversal iterates it in the outermost loop.
@@ -81,6 +85,7 @@ Note that consumed and produced dimensions affect the signature accordingly (in 
   \caption{Signature of \lstinline{scalar<int>() ^ array<'x'>(N) ^ array<'y'>(M)} structure.}%
   \label{fig:noarr-structure-signature}
 \end{figure}
+
 
 \subsubsection*{Bags}
 
@@ -134,6 +139,7 @@ For example, if it is created over two two-dimensional structures with dimension
 \end{figure}
 
 Noarr traversers have a similar relationship to Noarr structures as iterators and range algorithms in the \cpptwenty ranges library~\cite{niebler2018one} have to ranges. The main difference is that Noarr traversers operate on multidimensional index spaces inferred from the Noarr structures, while range algorithms operate on one-dimensional sequences of elements.
+
 
 \subsubsection*{Parallel traversers}
 
@@ -222,6 +228,7 @@ struct tuning {
 	NOARR_TUNE_END();
 } tuning;
 \end{lstlisting}
+
 
 \subsection{Noarr MPI extension}\label{sec:noarr-mpi}
 

@@ -1,0 +1,40 @@
+vic principy
+
+vic focusovat clanky
+
+layout-agnostic a traversal-agnostic popsat v 2.*
+
+3.1 zacit mapovanim z idx spacu do memory
+1) index space (positioning je divnej, naming je lepsi)
+2) mapping
+
+vic story ze definujem index space (treba matici) a pak resime ten layout
+
+
+prohodit listingy 2 a 1 (zacit neagnostickym priklad)
+- zvazit to zmenit na transpozici nebo neco
+- posunout pred fig 1?
+
+ubrat srovnani s mdspanama atd
+
+"to enable layout agnosticism..." moc silny tvrzeni
+- netvrdit ze pojmenovavani dimenzi je agnosticita
+
+KAZDEJ ODSTAVEC A KAZDA UKAZKA UKAZUJOU JEN JEDNU MYSLENKU
+
+lez v tilingu (lepsi na vystrihovani podmatic)
+- tiling az u loop
+
+"first-class" nikde nezazni
+- kde co je ulozeny?
+- melo by zaznit driv nez 3.1.3
+
+std::malloc je horsi nez CudaMalloc
+
+3.1.4
+
+- moc magie
+- obrazek nematchuje to kde je
+- "rekurzivne" staci bez tech tri bodu
+- ukazat na matici
+

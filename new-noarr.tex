@@ -3,146 +3,241 @@
 Our work on abstractions for high-performance computing introduced layout-agnostic and traversal-agnostic abstractions that enable separation of concerns between data representation, data traversal, and algorithm implementation. We have developed two main abstractions: Noarr~\cite{vsmelko2022astute,klepl2024pure,klepl2024abstractions,klepl2025layout} and Cellato~\cite{brabec2025cellato} as experimental testbeds for exploring and showcasing these ideas. % TODO: resolve the disbalance between Noarr and Cellato
 
 
-\section{Noarr Structures}
+\section{Noarr Structures}\label{sec:noarr-structures}
 
-Noarr structures, introduced in our initial work~\cite{vsmelko2022astute}, are the fundamental abstraction in the Noarr library used for modeling multi-dimensional data layouts according to the principles of layout agnosticism.
+Noarr structures, introduced in our initial work~\cite{vsmelko2022astute}, are the fundamental abstraction in the Noarr library used for modeling multi-dimensional data layouts according to the principles of layout agnosticism and hierarchical composition of data layouts.
+
+\subsection{Layout-agnostic design}\label{sec:layout-agnostic-design}
+
+Layout-agnostic design separates the logical structure of the data (the index space defined by the dimension names) from the physical layout of the data in memory. Consider \cref{lst:non-agnostic-copy} as an example of a non-layout-agnostic copy algorithm for 2D arrays in \cpp. This implementation of the algorithm assumes a specific layout of the data in memory, and special care must be taken to ensure that the indexing logic correctly reflects the layout of the data. This is usually not desirable and, in general, the explicit indexing expressions (e.g., \texttt{i*N + j} and \texttt{j*M + i}) are replaced with abstractions of the data layouts (e.g., \lstinline{source(i, j)} and \lstinline{destination(i, j)}).
+
+\begin{lstlisting}[style=C++, caption={A non-layout-agnostic copy algorithm in \cpp.}, label={lst:non-agnostic-copy}]
+float* source = /*...*/; // an M by N array in column-major layout
+float* destination = /*...*/; // an M by N array in row-major layout
+
+for (size_t i = 0; i < M; ++i) {
+  for (size_t j = 0; j < N; ++j) {
+    destination[i*N + j] = source[j*M + i];
+  }
+}
+\end{lstlisting}
+
+\begin{defn}[Data layout]\label{def:data-layout} A data layout is a mapping from a (multi-dimensional) index space to an offset in a linear memory layout. Usually, a data layout has well-defined properties such as the length of each dimension commonly referred to as (individually) extent or (collectively) shape, the total buffer size, or the type of each element.
+\end{defn}
+
+The logic of the copy algorithm does not actually rely on the individual physical layouts of the source and destination data --- it simply copies the elements from one representation of the data to another; as such, it requires the two data structures to share the same logical structure (index space; in this case, a 2D space with size $M \times N$). \Cref{lst:layout-agnostic-copy} shows a layout-agnostic version of the copy algorithm that is implemented using Noarr structures. The algorithm does not encode specific assumptions about the physical layout of the data in memory (both data structures are indexed using the same logical index), and thus it can work with any data structure that shares the $M \times N$ logical structure.
+
+\begin{lstlisting}[style=C++, caption={A layout-agnostic copy algorithm using Noarr structures.}, label={lst:layout-agnostic-copy}]
+// defining Noarr structures will be covered later
+auto source = /*...*/;
+auto destination = /*...*/;
+
+for (size_t i = 0; i < M; ++i) {
+  for (size_t j = 0; j < N; ++j) {
+    // a point in the M by N index space
+    auto point = idx<'M', 'N'>(i, j);
+
+    destination[point] = source[point];
+  }
+}
+\end{lstlisting}
+
+Syntactically, the logical layout of the data can be expressed multiple ways --- for example, the \lstinline{std::mdspan} abstraction encodes different dimensions as positional arguments (e.g., \lstinline{my_mdspan(i, j)} passes $i$ as the index of the first dimension and $j$ as the index of the second dimension), while Noarr structures encode different dimensions as named arguments --- for example, \lstinline{idx<'M', 'N'>(i, j)} explicitly associates $i$ with the dimension \lstinline{'M'} and $j$ with the dimension \lstinline{'N'}, with an alternative form of \lstinline{idx<'N', 'M'>(j, i)}. While the latter form is generally more verbose, it can prevent many indexing mistakes, as any association between an index and a dimension is explicit. Furthermore, the approach of encoding dimensions as named arguments is more intuitive in cases where different data structures have unrelated index spaces.
+
+% \begin{figure}[ht]
+%   \centering
+%   \begin{subfigure}{.3\linewidth}
+%     \centering
+%     \includegraphics[width=.9\linewidth]{img/row-major.eps}
+%     \caption{Row-major layout}%
+%     \label{fig:row-major}
+%   \end{subfigure}%
+%   \hfill%
+%   \begin{subfigure}{.3\linewidth}
+%     \centering
+%     \includegraphics[width=.9\linewidth]{img/column-major.eps}
+%     \caption{Column-major layout}%
+%     \label{fig:column-major}
+%   \end{subfigure}%
+%   \hfill%
+%   \begin{subfigure}{.3\linewidth}
+%     \centering
+%     \includegraphics[width=.9\linewidth]{img/tiled.eps}
+%     \caption{Tiled layout}%
+%     \label{fig:tiled}
+%   \end{subfigure}%
+%   \caption{Examples of different data layouts for a 2D array.}%
+%   \label{fig:data-layouts}
+% \end{figure}
+
+% \Cref{fig:data-layouts} illustrates multiple data layouts for a 2D array, including row-major, column-major, and tiled layouts. Noarr structures are designed to be flexible and extensible to support the shown and many other layouts, as well as their transformations (the tiled layout at \cref{fig:tiled} is a transformation of the column-major layout at \cref{fig:column-major}).
+
+% \Cref{fig:row-major} and \cref{fig:column-major} have the same logical structure (a 2D array) but different physical layouts in memory, while \cref{fig:tiled} has a different logical structure (a 4D array with two dimensions indexing the tiles and two dimensions indexing the elements within the tiles) but the same physical layout in memory as \cref{fig:column-major}.
+
+% A Noarr structure is, at its core, a compile-time interpreted description that maps a multi-dimensional index space to a linear memory layout --- this makes them related to abstractions such as \lstinline{std::mdspan}~\cite{trott2022mdspan}, Kokkos Views~\cite{trott2021kokkos}, or CuTe Layouts~\cite{thakkar2023cutlass}. To enable layout agnosticism, each dimension of its index space is associated with a \emph{dimension name}. This allows the algorithm to access the data using semantically meaningful index names instead of relying on the order of dimensions in the layout.
+
+% A simple example of a layout-agnostic algorithm for matrix multiplication using Noarr structures is shown in \cref{lst:layout-agnostic-matmul}. For this example, we assume three data structures defined using Noarr: \texttt{matrixA}, \texttt{matrixB}, and \texttt{matrixC}, which represent the two input matrices and the output matrix, respectively. What makes the algorithm layout-agnostic is that it indexes the data structures using points in the index space (e.g., \lstinline{idx<'M', 'N', 'K'>(i, j, k)}) instead of relying on the order (and presence) of individual dimensions in the layout of each data structure --- for example, \texttt{matrixA} is indexed using the dimensions \lstinline{'M'}, and \lstinline{'K'}, while \texttt{matrixB} is indexed using the dimensions \lstinline{'K'} and \lstinline{'N'}, and the order typically matters in non-agnostic algorithms. This contrasts with the typical non-agnostic implementation of matrix multiplication in \cpp shown in \cref{lst:layout-non-agnostic-matmul}, which relies on the order of dimensions in the layout (e.g., \texttt{i * N + j} assumes a specific layout of the data in memory) and thus is not layout-agnostic. Since the layout-agnostic algorithm in \cref{lst:layout-agnostic-matmul} does not use any explicit offset calculations, it makes the approach simpler and cleaner, avoiding many opportunities for mistakes in the indexing logic (e.g., using \texttt{i * N + k} instead of \texttt{i * K + k} in the non-agnostic version).
+
+% \begin{lstlisting}[style=C++, caption={A layout-agnostic matrix multiplication algorithm using Noarr structures.}, label={lst:layout-agnostic-matmul}]
+% auto matrixC = /*...*/;
+% auto matrixA = /*...*/;
+% auto matrixB = /*...*/;
+
+% for (size_t i = 0; i < (matrixC | get_length<'M'>()); ++i) {
+%   for (size_t j = 0; j < (matrixC | get_length<'N'>()); ++j) {
+%     matrixC[idx<'M', 'N'>(i, j)] = 0;
+%     for (size_t k = 0; k < (matrixA | get_length<'K'>()); ++k) {
+%       auto point = idx<'M', 'N', 'K'>(i, j, k);
+%       matrixC[point] += matrixA[point] * matrixB[point];
+%     }
+%   }
+% }
+% \end{lstlisting}
+
+
+% \begin{lstlisting}[style=C++, caption={A layout-non-agnostic matrix multiplication algorithm in \cpp.}, label={lst:layout-non-agnostic-matmul}]
+% float* matrixC = /*...*/;
+% float* matrixA = /*...*/;
+% float* matrixB = /*...*/;
+
+% for (size_t i = 0; i < M; ++i) {
+%   for (size_t j = 0; j < N; ++j) {
+%     matrixC[i*N + j] = 0;
+%     for (size_t k = 0; k < K; ++k) {
+%       matrixC[i*N + j] += matrixA[i*K + k] * matrixB[k*N + j];
+%     }
+%   }
+% }
+% \end{lstlisting}
+
+% % In this simple example, the differences seem to exchange the complexity of the indexing logic (which is not quite complex in this case) for a more verbose and less familiar syntax of the layout-agnostic version. However, if, for example, a tiling is applied to the computation (a typical optimization for matrix multiplication), the indexing logic in the non-agnostic version becomes more complex and error-prone, while the layout-agnostic version remains unchanged.
+
+% The example in \cref{lst:layout-agnostic-matmul} also shows another important aspect of Noarr structures --- they allow for querying other properties of the data layout, such as the length of a dimension (e.g., \lstinline{matrixC | get_length<'M'>()}) or the total size of the data structure (e.g., \lstinline{matrixC | get_size()}). This barely scratches the surface of the capabilities of Noarr structures, but it illustrates yet another important aspect of the layout-agnostic approach. If an algorithm is parametrized by an input data structure, it should be able to infer the important properties of the data layout from the data structure itself, without requiring additional parameters or assumptions about the layout.
+
+
+\subsection{Hierarchical view of data layouts}\label{sec:hierarchical-view}
 
 \begin{figure}[ht]
   \centering
-  \begin{subfigure}{.3\linewidth}
+  \begin{subfigure}{.5\linewidth}
     \centering
     \includegraphics[width=.9\linewidth]{img/row-major.eps}
     \caption{Row-major layout}%
     \label{fig:row-major}
   \end{subfigure}%
   \hfill%
-  \begin{subfigure}{.3\linewidth}
+  \begin{subfigure}{.5\linewidth}
     \centering
     \includegraphics[width=.9\linewidth]{img/column-major.eps}
     \caption{Column-major layout}%
     \label{fig:column-major}
   \end{subfigure}%
-  \hfill%
-  \begin{subfigure}{.3\linewidth}
-    \centering
-    \includegraphics[width=.9\linewidth]{img/tiled.eps}
-    \caption{Tiled layout}%
-    \label{fig:tiled}
-  \end{subfigure}%
+  % \hfill%
+  % \begin{subfigure}{.3\linewidth}
+  %   \centering
+  %   \includegraphics[width=.9\linewidth]{img/tiled.eps}
+  %   \caption{Tiled layout}%
+  %   \label{fig:tiled}
+  % \end{subfigure}%
   \caption{Examples of different data layouts for a 2D array.}%
   \label{fig:data-layouts}
 \end{figure}
 
-\Cref{fig:data-layouts} illustrates multiple data layouts for a 2D array, including row-major, column-major, and tiled layouts. Noarr structures are designed to be flexible and extensible to support the shown and many other layouts, as well as their transformations (the tiled layout at \cref{fig:tiled} is a transformation of the column-major layout at \cref{fig:column-major}).
+\Cref{fig:data-layouts} illustrates multiple data layouts. \Cref{fig:row-major} and \cref{fig:column-major} show two different physical layouts for the same logical structure (a 2D array) --- row-major and column-major layouts, respectively. These two layouts can be understood hierarchically; the row-major layout can be viewed as a grid of $M$ rows of $N$ elements, while the column-major layout can be viewed as a grid of $N$ columns of $M$ elements. Thus, aligning with the principles of layout-agnostic algorithms, both compositions result in the same index space (a 2D space with dimensions \lstinline{'M'} and \lstinline{'N'}) and thus the same logical structure of the data, while the physical layout of the data in memory is different.
 
-\Cref{fig:row-major} and \cref{fig:column-major} have the same logical structure (a 2D array) but different physical layouts in memory. We call the design of an algorithm \emph{layout-agnostic} if the involved data structure can be in any of the layouts sharing the same logical structure (i.e., the same index space) without requiring changes to the algorithm implementation. Noarr structures are designed to have this property without sacrificing performance.
+Both layouts can be expressed using the same basic building block: introducing a new dimension to the layout and creating a grid of the original layout (now sub-layout) along the new dimension. This building block is present in many data layout abstractions, such as C arrays (in \lstinline{float matrix[M][N]}, each bracket represents this building block), or MPI datatypes (\lstinline{MPI_Type_contiguous} exactly matches this building block). In the Noarr library, this building block is represented by \lstinline{vector<dim>(length)}.
 
-A Noarr structure is, at its core, a compile-time interpreted description that maps a multi-dimensional index space to a linear memory layout --- this makes them related to abstractions such as \lstinline{std::mdspan}~\cite{trott2022mdspan}, Kokkos Views~\cite{trott2021kokkos}, or CuTe Layouts~\cite{thakkar2023cutlass}. To enable layout agnosticism, each dimension of its index space is associated with a \emph{dimension name}. This allows the algorithm to access the data using semantically meaningful index names instead of relying on the order of dimensions in the layout.
-
-A simple example of a layout-agnostic algorithm for matrix multiplication using Noarr structures is shown in \cref{lst:layout-agnostic-matmul}. For this example, we assume three data structures defined using Noarr: \texttt{matrixA}, \texttt{matrixB}, and \texttt{matrixC}, which represent the two input matrices and the output matrix, respectively. What makes the algorithm layout-agnostic is that it indexes the data structures using points in the index space (e.g., \lstinline{idx<'i', 'j', 'k'>(i, j, k)}) instead of relying on the order (and presence) of individual dimensions in the layout of each data structure --- for example, \texttt{matrixA} is indexed using the dimensions \lstinline{'i'}, and \lstinline{'k'}, while \texttt{matrixB} is indexed using the dimensions \lstinline{'k'} and \lstinline{'j'}, and the order typically matters in non-agnostic algorithms. This contrasts with the typical non-agnostic implementation of matrix multiplication in \cpp shown in \cref{lst:layout-non-agnostic-matmul}, which relies on the order of dimensions in the layout (e.g., \texttt{i * N + j} assumes a specific layout of the data in memory) and thus is not layout-agnostic. Since the layout-agnostic algorithm in \cref{lst:layout-agnostic-matmul} does not use any explicit offset calculations, it makes the approach simpler and cleaner, avoiding many opportunities for mistakes in the indexing logic (e.g., using \texttt{i * N + k} instead of \texttt{i * K + k} in the non-agnostic version).
-
-\begin{lstlisting}[style=C++, caption={A layout-agnostic matrix multiplication algorithm using Noarr structures.}, label={lst:layout-agnostic-matmul}]
-auto matrixC = /*...*/;
-auto matrixA = /*...*/;
-auto matrixB = /*...*/;
-
-for (size_t i = 0; i < (matrixC | get_length<'i'>()); ++i) {
-  for (size_t j = 0; j < (matrixC | get_length<'j'>()); ++j) {
-    matrixC[idx<'i', 'j'>(i, j)] = 0;
-    for (size_t k = 0; k < (matrixA | get_length<'k'>()); ++k) {
-      auto point = idx<'i', 'j', 'k'>(i, j, k);
-      matrixC[point] += matrixA[point] * matrixB[point];
-    }
-  }
-}
-\end{lstlisting}
+In most general terms, these building blocks are functions $\mathcal{L}^n \to \mathcal{L}$, where $\mathcal{L}$ represents a data layout and $n$ is the number of sub-layouts that the building block takes as input. For the above example, $n = 1$. But there are also building blocks with $n > 1$ --- for example, \lstinline{std::tuple} in \cpp (or \lstinline{MPI_Type_struct} in MPI) takes multiple sub-layouts and combines them into a single layout.
 
 
-\begin{lstlisting}[style=C++, caption={A layout-non-agnostic matrix multiplication algorithm in \cpp.}, label={lst:layout-non-agnostic-matmul}]
-float* matrixC = /*...*/;
-float* matrixA = /*...*/;
-float* matrixB = /*...*/;
+\subsection{Composing Noarr Structures}\label{sec:composing-noarr-structures}
 
-for (size_t i = 0; i < M; ++i) {
-  for (size_t j = 0; j < N; ++j) {
-    matrixC[i*N + j] = 0;
-    for (size_t k = 0; k < K; ++k) {
-      matrixC[i*N + j] += matrixA[i*K + k] * matrixB[k*N + j];
-    }
-  }
-}
-\end{lstlisting}
-
-% In this simple example, the differences seem to exchange the complexity of the indexing logic (which is not quite complex in this case) for a more verbose and less familiar syntax of the layout-agnostic version. However, if, for example, a tiling is applied to the computation (a typical optimization for matrix multiplication), the indexing logic in the non-agnostic version becomes more complex and error-prone, while the layout-agnostic version remains unchanged.
-
-The example in \cref{lst:layout-agnostic-matmul} also shows another important aspect of Noarr structures --- they allow for querying other properties of the data layout, such as the length of a dimension (e.g., \lstinline{matrixC | get_length<'i'>()}) or the total size of the data structure (e.g., \lstinline{matrixC | get_size()}). This barely scratches the surface of the capabilities of Noarr structures, but it illustrates yet another important aspect of the layout-agnostic approach. If an algorithm is parametrized by an input data structure, it should be able to infer the important properties of the data layout from the data structure itself, without requiring additional parameters or assumptions about the layout.
-
-
-\subsection{Composing Noarr Structures}
-
-To enable modeling data of arbitrary complexity, Noarr structures are designed to be composable in a hierarchical manner. The composition of Noarr structures follows a similar approach to the composition of \cpp ranges \xxx{(cite)}. Just like a range can be used as a basis for another range by applying a range view as a transformation, a Noarr structure can be transformed by applying a \emph{proto-structure}.
-
-We use \lstinline{scalar<T>()} to denote a Noarr structure representing a dimensionless data layout comprising a single element of type \texttt{T}. A more complex Noarr structure can be constructed by using the \lstinline{operator^} and proto-structures such as \lstinline{vector<'i'>(N)} as shown in \cref{lst:composing-noarr-structures}.
+Similarly to C types or MPI datatypes, Noarr structures are designed to be composed hierarchically. The individual building blocks of Noarr structures are called \emph{proto-structures}. We use \lstinline{scalar<T>()} to denote a Noarr structure representing a dimensionless data layout comprising a single element of type \texttt{T}. A more complex Noarr structure can be constructed by using the \lstinline{operator^} and proto-structures such as \lstinline{vector<'M'>(N)} as shown in \cref{lst:composing-noarr-structures}.
 
 \begin{lstlisting}[style=C++, caption={Composing Noarr structures using proto-structures.}, label={lst:composing-noarr-structures}]
 auto scalar = noarr::scalar<float>();
-auto row = scalar ^ noarr::vector<'j'>(N);
-auto matrix = row ^ noarr::vector<'i'>(M);
+auto row = scalar ^ noarr::vector<'N'>(N);
+auto matrix = row ^ noarr::vector<'M'>(M);
 \end{lstlisting}
 
-The resulting \texttt{matrix} Noarr structure in \cref{lst:composing-noarr-structures} represents a 2D array with dimensions \lstinline{'i'} and \lstinline{'j'} in the row-major layout as shown in \cref{fig:row-major}. Naturally, the composition \lstinline{scalar ^ noarr::vector<'i'>(M) ^ noarr::vector<'j'>(N)} results in the corresponding column-major layout.
+The resulting \texttt{matrix} Noarr structure in \cref{lst:composing-noarr-structures} represents a 2D array with dimensions \lstinline{'M'} and \lstinline{'N'} in the row-major layout as shown in \cref{fig:row-major}. Naturally, the composition \lstinline{scalar ^ noarr::vector<'M'>(M) ^ noarr::vector<'N'>(N)} results in the corresponding column-major layout.
 
-This approach to composition allows for a clear separation between the logical layout of the data (the index space defined by the dimension names) and the physical layout of the data in memory, since the both row-major and column-major layouts can be indexed using the same points in the index space (e.g., \lstinline{idx<'i', 'j'>(i, j)}).
+% This approach to composition allows for a clear separation between the logical layout of the data (the index space defined by the dimension names) and the physical layout of the data in memory, since the both row-major and column-major layouts can be indexed using the same points in the index space (e.g., \lstinline{idx<'M', 'N'>(i, j)}).
 
-The Noarr library implements this composition using powerful template metaprogramming techniques, encoding layout information in the type system to enable compile-time optimizations and zero-overhead interpretation of the Noarr structures. Furthermore, since each dimension is associated with a semantically meaningful name, the composition can also perform compile-time checks to ensure that the resulting Noarr structure is valid (e.g., it does not contain duplicate dimension names).
+The Noarr library implements this composition using powerful template metaprogramming techniques, encoding layout information in the type system to enable compile-time optimizations and zero-overhead interpretation of the Noarr structures. Only runtime parameters (e.g., the lengths of the dimensions) are stored as physical data members of the Noarr structures. Each Noarr structure is a first-class citizen in the \cpp type system, and its properties are fully transparent to the compiler, which allows for aggressive optimizations of their interpretation.
 
-As mentioned before, the order of composition matters, and changing the order of the proto-structures can define different layouts. As such, the composition of Noarr structures is not commutative; however, it is associative, which allows for preparing reusable building blocks, as shown in \cref{lst:associative-composition}.
+% Furthermore, since each dimension is associated with a semantically meaningful name, the composition can also perform compile-time checks to ensure that the resulting Noarr structure is valid (e.g., it does not contain duplicate dimension names).
+
+As mentioned before, the order of composition matters, and changing the order of the proto-structures can define different layouts. As such, the composition of Noarr structures is not commutative; however, it is fully associative, which allows for preparing reusable building blocks, as shown in \cref{lst:associative-composition}.
 
 \begin{lstlisting}[style=C++, caption={Associative composition of Noarr structures.}, label={lst:associative-composition}]
-auto column_major = noarr::vector<'i'>(M) ^ noarr::vector<'j'>(N);
+auto column_major = noarr::vector<'M'>(M) ^ noarr::vector<'N'>(N);
 auto matrix = noarr::scalar<float>() ^ column_major;
 \end{lstlisting}
 
-In \cref{lst:associative-composition}, we define a reusable building block \texttt{column\_major} that can be used to construct different layouts as grids of $M$ rows and $N$ columns of a given sub-layout (e.g., \lstinline{scalar<float>()} in case of defining a matrix layout).
+In \cref{lst:associative-composition}, we define a new reusable building block \texttt{column\_major} that can be used to construct different layouts as grids of $M$ rows and $N$ columns of a given sub-layout (e.g., \lstinline{scalar<float>()} in case of defining a matrix layout). \lstinline{column_major} itself is considered a proto-structure.
 
 
 \subsection{Transforming Noarr Structures}
 
-The composition of Noarr structures using proto-structures allows for defining transformations of Noarr structures using the same mechanism. For example, the tiled layout shown in \cref{fig:tiled} can be defined as a transformation of the column-major layout by applying a blocking proto-structure to the dimensions \lstinline{'i'} and \lstinline{'j'} as shown in \cref{lst:transforming-noarr-structures}.
+The composition of Noarr structures using proto-structures allows for defining transformations of Noarr structures using the same mechanism. For example, consider a sub-matrix. A sub-matrix layout results from any 2D (matrix) layout by restricting the index space to a contiguous sub-region (2D interval) of the original space. This is yet another example of a layout transformation of the form $\mathcal{L} \to \mathcal{L}$; or, equivalently, two transformations, for each dimension separately. In the Noarr library, this transformation is represented by the \lstinline{span<dim>(start, end)} proto-structure shown in \cref{lst:transforming-noarr-structures}.
 
 \begin{lstlisting}[style=C++, caption={Transforming Noarr structures using proto-structures.}, label={lst:transforming-noarr-structures}]
-constexpr auto i_outer = noarr::dim<[]{}>(); // new dimension
-constexpr auto i_inner = noarr::dim<[]{}>(); // another dimension
-// similarly for j_outer and j_inner
-
-auto tiled_matrix = matrix
-    ^ noarr::into_blocks<'i', i_outer, i_inner>(tile_size_i)
-    ^ noarr::into_blocks<'j', j_outer, j_inner>(tile_size_j);
+auto sub_matrix = matrix
+    ^ noarr::span<'M'>(start_i, end_i)
+    ^ noarr::span<'N'>(start_j, end_j);
 \end{lstlisting}
 
-In \cref{lst:transforming-noarr-structures}, we define new dimension variables (e.g., \texttt{i\_outer} and \texttt{i\_inner}) to show that the set of dimension names can be arbitrarily extended and that it also allows for more readable names (instead of just one-letter constants). The resulting \texttt{tiled\_matrix} Noarr structure represents the tiled layout shown in \cref{fig:tiled} --- it has $\lfloor M / tile\_size\_i \rfloor \times \lfloor N / tile\_size\_j \rfloor$ tiles (the product of the inferred lengths for \texttt{i\_outer} and \texttt{j\_outer}). This time, contrasting the previous example of composition, the transformation changes the logical layout of the data (the index space defined by the dimension names) while keeping the physical layout of the data in memory unchanged.
+Notice that this transformation satisfies the principle of layout agnosticism: it is applicable to a matrix of any physical layout (e.g., row-major or column-major) as long as the index space contains the dimensions \lstinline{'M'} and \lstinline{'N'}. Since we do not use positional syntax, the transformation can be actually applied to any layout with the appropriate dimensions.
 
-There are many other proto-structures with the property of preserving the physical layout of the data, such as \lstinline{rename<old_dim, new_dim>()} for renaming dimensions, which can be used to translate between different semantic conventions (e.g., from \lstinline{'i'} and \lstinline{'j'} to \lstinline{'x'} and \lstinline{'y'}), and \lstinline{span<dim>(start, end)} for slicing dimensions, which can be used to define sub-layouts of the original layout.
+% In \cref{lst:transforming-noarr-structures}, we define new dimension variables (e.g., \texttt{i\_outer} and \texttt{i\_inner}) to show that the set of dimension names can be arbitrarily extended and that it also allows for more readable names (instead of just one-letter constants). The resulting \texttt{tiled\_matrix} Noarr structure represents the tiled layout shown in \cref{fig:tiled} --- it has $\lfloor M / tile\_size\_i \rfloor \times \lfloor N / tile\_size\_j \rfloor$ tiles (the product of the inferred lengths for \texttt{i\_outer} and \texttt{j\_outer}). This time, contrasting the previous example of composition, the transformation changes the logical layout of the data (the index space defined by the dimension names) while keeping the physical layout of the data in memory unchanged.
+
+The \lstinline{span} proto-structure is an example of a transformation that changes the logical layout of the data while preserving the physical layout of the data in memory. This contrasts with the \lstinline{vector} proto-structure, which changes the physical layout as well. The category of transformations that preserve the physical layout will be especially relevant in the later discussion of traversal order transformations (since, in traversal order transformations, a change to the physical layout is not desirable).
+
+% There are many other proto-structures with the property of preserving the physical layout of the data, such as \lstinline{rename<old_dim, new_dim>()} for renaming dimensions, which can be used to translate between different semantic conventions (e.g., from \lstinline{'M'} and \lstinline{'N'} to \lstinline{'x'} and \lstinline{'y'}), and \lstinline{span<dim>(start, end)} for slicing dimensions, which can be used to define sub-layouts of the original layout.
+
+In \cref{sec:layout-agnostic-design}, we have asserted that naming dimensions is more intuitive in cases where different data structures have unrelated index spaces. This situation is shown in \cref{lst:layout-agnostic-matmul}, which exemplifies a layout-agnostic implementation of the na\"{\i}ve matrix multiplication algorithm.
+
+
+\begin{lstlisting}[style=C++, caption={A layout-agnostic matrix multiplication algorithm using Noarr structures.}, label={lst:layout-agnostic-matmul}]
+auto matrixC = /*...*/; // an M by N array
+auto matrixA = /*...*/; // an M by K array
+auto matrixB = /*...*/; // a K by N array
+
+for (size_t i = 0; i < M; ++i) {
+  for (size_t j = 0; j < N; ++j) {
+    auto mn_point = idx<'M', 'N'>(i, j);
+    matrixC[mn_point] = 0;
+
+    for (size_t k = 0; k < K; ++k) {
+      auto mnk_point = mn_point + idx<'K'>(k);
+      matrixC[mnk_point] += matrixA[mnk_point] * matrixB[mnk_point];
+    }
+  }
+}
+\end{lstlisting}
+
+The algorithm is, again, layout-agnostic because it does not rely on the specific physical layouts of the data in memory --- each data structure can be stored in any physical layout. However, there appears to be a noticeable issue: the algorithm relies on the fact that the three data structures have been defined with the dimensions \lstinline{'M'}, \lstinline{'N'}, and \lstinline{'K'} in a specific way that directly corresponds to the semantics of the matrix multiplication algorithm, which is not always the case in practice. This issue can be easily solved using yet another transformation of a layout, which is represented by the \lstinline{rename<old_dim, new_dim>} proto-structure --- this proto-structure simply renames a dimension in the layout without introducing any changes to the physical layout or the computation of an offset from a point in the index space.
 
 
 \subsection{Separating concerns even further}
 
-Sometimes it is desirable to separate concerns even further by decoupling the layout of the data from specific lengths of its dimensions. For example, in the case of matrix multiplication, the algorithm operates on three matrices with potentially different layouts but shared dimensions (e.g., the dimension \lstinline{'k'} is shared between the two input matrices). In such cases, we can define the layouts as shown in \cref{lst:further-separating-concerns}.
+Sometimes it is desirable to separate concerns even further by decoupling the layout of the data from specific lengths of its dimensions. For example, in the case of matrix multiplication, the algorithm operates on three matrices with potentially different layouts but shared dimensions (e.g., the dimension \lstinline{'K'} is shared between the two input matrices). In such cases, we can define the layouts as shown in \cref{lst:further-separating-concerns}.
 
 \begin{lstlisting}[style=C++, caption={Separating layout from dimension lengths.}, label={lst:further-separating-concerns}, basicstyle=\ttfamily\scriptsize]
 // using the shortcut vectors<dims...>() for (... ^ vector<dims>())
-auto A_layout = noarr::scalar<float>() ^ noarr::vectors<'i', 'k'>();
-auto B_layout = noarr::scalar<float>() ^ noarr::vectors<'k', 'j'>();
-auto C_layout = noarr::scalar<float>() ^ noarr::vectors<'i', 'j'>();
+auto A_layout = noarr::scalar<float>() ^ noarr::vectors<'M', 'K'>();
+auto B_layout = noarr::scalar<float>() ^ noarr::vectors<'K', 'N'>();
+auto C_layout = noarr::scalar<float>() ^ noarr::vectors<'M', 'N'>();
 
-auto lengths = noarr::set_lengths<'i', 'j', 'k'>(M, N, K);
+auto lengths = noarr::set_lengths<'M', 'N', 'K'>(M, N, K);
 
 auto matrixA = A_layout ^ lengths;
 auto matrixB = B_layout ^ lengths;
 auto matrixC = C_layout ^ lengths;
 \end{lstlisting}
 
-In \cref{lst:further-separating-concerns}, the layouts of the matrices are defined independently, possibly in a different part of the codebase. The lengths of the dimensions are defined separately and applied to the layouts (usually in the part of the code where the data structures are actually instantiated). This has many benefits, such as allowing for the dimension lengths of the sub-layouts to be inferred --- for example, if the layout of \texttt{matrixC} was used to define \texttt{tiled\_matrix} in \cref{lst:transforming-noarr-structures} and the lengths of \texttt{i\_outer} and \texttt{j\_outer} were set explicitly instead of \lstinline{'i'} and \lstinline{'j'}.
+In \cref{lst:further-separating-concerns}, the layouts of the matrices are defined independently, possibly in a different part of the codebase. The lengths of the dimensions are defined separately and applied to the layouts (usually in the part of the code where the data structures are actually instantiated). This has many benefits, such as allowing for the dimension lengths of the sub-layouts to be inferred --- for example, if the layout of \texttt{matrixC} was used to define \texttt{tiled\_matrix} in \cref{lst:transforming-noarr-structures} and the lengths of \texttt{i\_outer} and \texttt{j\_outer} were set explicitly instead of \lstinline{'M'} and \lstinline{'N'}.
 
 Separating the layout from the dimension lengths is useful for multiple reasons. The two main reasons that we have explored in our work were (1) to define the layouts separately as tunable parameters of the algorithm, and (2) to infer some of the dimension lengths from the data structures themselves, from run-time parameters, or hardware properties (such as the cache size or the number of available threads). \xxx{(cite the relevant papers)}
 
@@ -152,7 +247,7 @@ Separating the layout from the dimension lengths is useful for multiple reasons.
 So far, we have only discussed Noarr structures as abstractions for modeling data layouts. However, as shown in \cref{lst:layout-agnostic-matmul}, a reasonable use case requires a full-fledged data structure that can be indexed to access references to actual data in memory. Similarly to how the CuTe framework defines a rich algebra of layouts and then defines data structures called \emph{Tensors} as the combination of a layout and an actual data buffer, the Noarr library defines \emph{Noarr bags} as the combination of a Noarr structure and a data buffer.
 
 \begin{lstlisting}[style=C++, caption={Defining a Noarr bag as the combination of a Noarr structure and a data buffer.}, label={lst:defining-noarr-bag}, basicstyle=\ttfamily\scriptsize]
-auto matrix_layout = noarr::scalar<float>() ^ noarr::vectors<'i', 'j'>(M, N);
+auto matrix_layout = noarr::scalar<float>() ^ noarr::vectors<'M', 'N'>(M, N);
 
 // manually allocating a data buffer and defining a bag as a view of the buffer
 float* data_buffer = std::malloc(matrix_layout | get_size());
@@ -167,12 +262,12 @@ auto matrix_view_bag = matrix_bag.get_ref();
 
 \Cref{lst:defining-noarr-bag} shows the three most common ways to define a Noarr bag. The first case is especially useful if the data buffer is managed by another library or lives in a special memory space (e.g., GPU device memory or shared memory). The second case (owning bag) is the most convenient way to define a Noarr bag; it automatically allocates a data buffer of the appropriate size and manages its lifetime. The third case (view bag) is useful for passing a Noarr bag to a function so that regardless of whether the original bag is owning or a view, the function can work with a view bag as a trivially copyable and movable reference to the original bag.
 
-The bags extend the interface of the underlying Noarr structure (such as \lstinline{get_length<'i'>()} or \lstinline{get_size()}) and also provide the indexing operator (i.e., \lstinline{operator[]}) to access references to the actual data in memory, as shown in \cref{lst:layout-agnostic-matmul}.
+The bags extend the interface of the underlying Noarr structure (such as \lstinline{get_length<'M'>()} or \lstinline{get_size()}) and also provide the indexing operator (i.e., \lstinline{operator[]}) to access references to the actual data in memory, as shown in \cref{lst:layout-agnostic-matmul}.
 
 
 \subsection{Noarr structure interpretation}
 
-The Noarr library implements the interpretation of Noarr structures using template metaprogramming. Each query to a Noarr structure (e.g., \lstinline{get_length<'i'>()} or an offset calculation during indexing) is transformed into a hierarchical traversal of the Noarr structure. At each level of the traversal, the corresponding proto-structure resolves the query as shown in \cref{fig:noarr-query}.
+The Noarr library implements the interpretation of Noarr structures using template metaprogramming. Each query to a Noarr structure (e.g., \lstinline{get_length<'M'>()} or an offset calculation during indexing) is transformed into a hierarchical traversal of the Noarr structure. At each level of the traversal, the corresponding proto-structure resolves the query as shown in \cref{fig:noarr-query}.
 
 \begin{figure}[htbp]
   \centering
@@ -181,7 +276,7 @@ The Noarr library implements the interpretation of Noarr structures using templa
   \label{fig:noarr-query}
 \end{figure}
 
-The intermediate state of the traversal is represented by a \emph{state} object that is passed through the hierarchy of proto-structures. At the top-most level, the state object directly relates to the point in the index space (e.g., \lstinline{idx<'i', 'j', 'k'>(i, j, k)}). Each proto-structure in the hierarchy then does the following three things:
+The intermediate state of the traversal is represented by a \emph{state} object that is passed through the hierarchy of proto-structures. At the top-most level, the state object directly relates to the point in the index space (e.g., \lstinline{idx<'M', 'N', 'K'>(i, j, k)}). Each proto-structure in the hierarchy then does the following three things:
 
 \begin{itemize}
   \item Transforms the state object into the appropriate sub-state(s) passed to its sub-structure(s) according to the semantics of the proto-structure.
@@ -197,7 +292,7 @@ In case of offset calculations inside a \lstinline{vector<dim>(length)} proto-st
   \item The final offset is calculated as $\text{inner\_offset} + \text{get\_index<dim>(state)} \times \text{inner\_size}$, where \texttt{get\_index<dim>(state)} retrieves the index of the dimension \texttt{dim} from the state object.
 \end{itemize}
 
-This schema is a powerful and flexible tool for implementing any proto-structure. The Noarr library also implements various checks on top of this mechanism to fail at compile time if the queries are invalid (e.g., if the queried dimension is not present in the Noarr structure). These checks are exposed to the user and usable in static assertions or \lstinline{if constexpr} statements --- for example, \lstinline{structure | has_length<'i'>()} can be used to check if the dimension \lstinline{'i'} has a defined length in the Noarr structure (optionally, the user can provide a state variable to the \lstinline{has_length} query to check if the structure has a defined length for the dimension \lstinline{'i'} in the context of the provided state variable). In simple terms, the user can use this mechanism to check whether a query to a Noarr structure depends on indexing a specific dimension or not.
+This schema is a powerful and flexible tool for implementing any proto-structure. The Noarr library also implements various checks on top of this mechanism to fail at compile time if the queries are invalid (e.g., if the queried dimension is not present in the Noarr structure). These checks are exposed to the user and usable in static assertions or \lstinline{if constexpr} statements --- for example, \lstinline{structure | has_length<'M'>()} can be used to check if the dimension \lstinline{'M'} has a defined length in the Noarr structure (optionally, the user can provide a state variable to the \lstinline{has_length} query to check if the structure has a defined length for the dimension \lstinline{'M'} in the context of the provided state variable). In simple terms, the user can use this mechanism to check whether a query to a Noarr structure depends on indexing a specific dimension or not.
 
 
 \section{Noarr Traversals}

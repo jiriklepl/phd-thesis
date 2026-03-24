@@ -44,7 +44,9 @@ for (size_t i = 0; i < M; ++i) {
 }
 \end{lstlisting}
 
-Syntactically, the logical layout of the data can be expressed multiple ways --- for example, the \lstinline{std::mdspan} abstraction encodes different dimensions as positional arguments (e.g., \lstinline{my_mdspan(i, j)} passes $i$ as the index of the first dimension and $j$ as the index of the second dimension), while Noarr structures encode different dimensions as named arguments --- for example, \lstinline{idx<'M', 'N'>(i, j)} explicitly associates $i$ with the dimension \lstinline{'M'} and $j$ with the dimension \lstinline{'N'}, with an alternative form of \lstinline{idx<'N', 'M'>(j, i)}. While the latter form is generally more verbose, it can prevent many indexing mistakes, as any association between an index and a dimension is explicit. Furthermore, the approach of encoding dimensions as named arguments is more intuitive in cases where different data structures have unrelated index spaces.
+Syntactically, the logical layout of the data can be expressed multiple ways --- for example, the \lstinline{std::mdspan} abstraction encodes different dimensions as positional arguments (e.g., \lstinline{my_mdspan(i, j)} passes $i$ as the index of the first dimension and $j$ as the index of the second dimension), while Noarr structures encode different dimensions as named arguments --- for example, \lstinline{idx<'M', 'N'>(i, j)} explicitly associates $i$ with the dimension \lstinline{'M'} and $j$ with the dimension \lstinline{'N'}.
+%, with an alternative form of \lstinline{idx<'N', 'M'>(j, i)}.
+While the latter form is generally more verbose, it can prevent many indexing mistakes, as any association between an index and a dimension is explicit. Furthermore, the approach of encoding dimensions as named arguments is more intuitive in cases where different data structures have unrelated index spaces, which will be discussed in more detail in \cref{sec:composing-noarr-structures}. In \cref{sec:transforming-noarr-structures}, we will show that the points in the index space can be defined implicitly, inferring the indices from the iterated index space of an algorithm, reducing the verbosity overhead.
 
 % \begin{figure}[ht]
 %   \centering
@@ -320,4 +322,68 @@ To ensure some level of type safety, the properties of each layout (\cref{def:ge
 The properties of the layout defined by the proto-structure are calculated from the properties of the sub-layout defined by the sub-structure and the parameters of the proto-structure in the state variable. For the \lstinline{vector<'M'>(length)} proto-structure, the offset is calculated as $$\text{\lstinline{sub_struct.offset(sub_state)}} + \text{\lstinline{get_index<'M'>(state)}} \times \text{\lstinline{sub_struct.size(sub_state)}}$$ where \lstinline{get_index<'M'>(state)} retrieves the index of the dimension \lstinline{'M'} from the state variable.
 
 
-\section{Noarr Traversals}
+\section{Noarr Traversals}\label{sec:noarr-traversals}
+
+Noarr traversers~\cite{klepl2024pure} are wrapper abstractions over one or multiple Noarr structures that provide an interface for performing actions over their index spaces. In the simplest case, creating a Noarr traverser over a single Noarr structure and invoking its \lstinline{for_each} method with a callable results in invoking the callable for each point in the index space of the structure.
+
+\begin{lstlisting}[language=C++, caption={Creating and using a Noarr traverser over a single structure.}, label=lst:noarr-traverser-single-structure, basicstyle=\ttfamily\scriptsize]
+auto matrix = bag(scalar<int>() ^ vector<'M'>(M) ^ vector<'N'>(N));
+traverser(matrix).for_each([&](auto state) {
+  auto [i, j] = get_indices<'M', 'N'>(state);
+  matrix[state] = i + j;
+});
+\end{lstlisting}
+
+The single argument passed to the callable is a state object containing the named indices for all dimensions of the structure. The traverser iteration, in this case, is equivalent to the nested loop defined by the hierarchical order of the proto-structures in the Noarr structure --- the outer loop iterates over the dimension \lstinline{'N'} and the inner loop iterates over the dimension \lstinline{'M'} (the inner/outer relationship is the same as the order of the proto-structures in the composition of the Noarr structure). Drawing on the example in \cref{lst:layout-agnostic-copy}, the similar principle applies to the case of multiple Noarr structures sharing the same index space, simplifying the implementation of layout-agnostic copy algorithm into the following.
+
+\begin{lstlisting}[language=C++,basicstyle=\ttfamily\scriptsize]
+auto source = bag(scalar<int>() ^ vector<'M'>(M) ^ vector<'N'>(N));
+auto target = bag(scalar<int>() ^ vector<'N'>(N) ^ vector<'M'>(M));
+
+traverser(source, target).for_each([&](auto state) {
+  target[state] = source[state];
+});
+\end{lstlisting}
+
+The traverser in the above example iterates over the shared index space of the two Noarr structures, which is a 2D space with dimensions \lstinline{'M'} and \lstinline{'N'}. The order of iteration is in this case determined by the order of the proto-structures in the first Noarr structure as its index space already covers the index space of the second Noarr structure.
+
+A more complex example of using Noarr traversers is shown in \cref{lst:layout-agnostic-matmul-traverser}, which implements the layout-agnostic matrix multiplication algorithm from \cref{lst:layout-agnostic-matmul} using Noarr traversers.
+
+\begin{lstlisting}[language=C++, caption={A layout-agnostic matrix multiplication algorithm using Noarr traversers}, label=lst:layout-agnostic-matmul-traverser,basicstyle=\ttfamily\scriptsize]
+auto matrixC = bag(scalar<float>() ^ vector<'M'>(M) ^ vector<'N'>(N));
+auto matrixA = bag(scalar<float>() ^ vector<'M'>(M) ^ vector<'K'>(K));
+auto matrixB = bag(scalar<float>() ^ vector<'K'>(K) ^ vector<'N'>(N));
+
+traverser(matrixC, matrixA, matrixB).for_sections<'M', 'N'>([&](auto inner) {
+  matrixC[inner] = 0;
+
+  inner.for_each([&](auto state) {
+    matrixC[state] += matrixA[state] * matrixB[state];
+  });
+});
+\end{lstlisting}
+
+In this example, the index spaces of the input data structures do not match --- the traverser is constructed first from the index space of the (first supplied) \lstinline{matrixC} and then extended to cover the index space of \lstinline{matrixA}. The newly added dimensions are added as outer relative to the existing dimensions (i.e., the order of the dimensions outermost to the innermost is $\text{\lstinline{'K'}} \to \text{\lstinline{'N'}} \to \text{\lstinline{'M'}}$). \lstinline{matrixB} triggers no change to the traverser index space as its index space is already covered by the traverser. Since the loop nest is imperfect, a different method of traversal is used --- the \lstinline{for_sections} method is used to iterate over the given list of dimensions (in this case, \lstinline{'M'} and \lstinline{'N'}) and for each such section of the index space, the provided callable is invoked with a new (inner) traverser that represents the inner loop nest. The \lstinline{inner} traverser is then used to finalize the traversal on each section through the \lstinline{'K'} dimension.
+
+
+\subsection{traversal order transformations}\label{sec:traversal-order-transformations}
+
+Similarly to Noarr structures, Noarr traversers can be further transformed using proto-structures that modify the index space and the signature. Let us imagine a scenario where the computation is performed by a cluster of $x \times y$ computation nodes organized in a 2D grid and the code runs on a node with rank \texttt{(r, s)} for the respective dimensions of the grid (ranks are zero-indexed).
+
+\begin{lstlisting}[language=C++, caption={Applying a tiling transformation to a Noarr traverser}, label=lst:tiling-traverser,basicstyle=\ttfamily\scriptsize]
+auto tiled_traverser = traverser(matrixC, matrixA, matrixB)
+    ^ into_blocks<'M', 'x', 'M'>() ^ set_length<'x'>(x)
+    ^ into_blocks<'N', 'y', 'N'>() ^ set_length<'y'>(y)
+    ^ fix<'x'>(r) ^ fix<'y'>(s); // fixing the index in the given dimension
+
+tiled_traverser.for_sections<'M', 'N'>([&](auto inner) {
+  // same as in the previous example
+});
+\end{lstlisting}
+
+In \cref{lst:tiling-traverser}, the iteration is split into tiles with the grid dimensions named \lstinline{'x'} and \lstinline{'y'} and tile dimensions named \lstinline{'M'} and \lstinline{'N'} to match the expected semantics of the matrix multiplication algorithm (i.e., the $M\times N$ tile of the traversal represents the computed tile of the output matrix). The lengths of the grid dimensions are then set to the number of nodes in the respective dimensions of the cluster. Finally, the indices of the traversal grid dimensions are set to the rank of the node in the respective dimensions of the cluster, which results in each node iterating over a different tile of the output matrix. The resulting tiled traverser is then used in the same way as in \cref{lst:layout-agnostic-matmul-traverser}.
+
+
+\subsection{Parallel traversers}\label{sec:parallel-traversers}
+
+\xxx{write this section}

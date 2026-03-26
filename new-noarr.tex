@@ -1,12 +1,13 @@
 \chapter{Noarr Library}\label{chap:noarr}
 
-Our work on abstractions for high-performance computing introduced layout-agnostic and traversal-agnostic abstractions that enable separation of concerns between data representation, data traversal, and algorithm implementation. We have developed two main abstractions: Noarr~\cite{vsmelko2022astute,klepl2024pure,klepl2024abstractions,klepl2025layout} and Cellato~\cite{brabec2025cellato} as experimental testbeds for exploring and showcasing these ideas. % TODO: resolve the disbalance between Noarr and Cellato
+Our work on abstractions for high-performance computing introduced layout-agnostic and traversal-agnostic abstractions that enable separation of concerns between data representation, data traversal, and algorithm implementation. We have developed two main abstractions: Noarr and Cellato as experimental testbeds for exploring and showcasing these ideas. % TODO: resolve the disbalance between Noarr and Cellato
 
 
 \section{Noarr Structures}\label{sec:noarr-structures}
 
-Noarr structures, introduced in our initial work (\fullcite{vsmelko2022astute}), are the fundamental abstraction in the Noarr library used for modeling multi-dimensional data layouts according to the principles of layout agnosticism and hierarchical composition of data layouts. Here, we will discuss the design principles of Noarr structures and their theoretical aspects relevant to this thesis, while more technical details of their implementation and usage are covered in the original paper and the documentation of the Noarr library~\cite{noarr-lib}.
+This section outlines work on Noarr structures published in \fullcite{vsmelko2022astute}, further expanding on the concepts of layout-agnostic design and hierarchical composition of data layouts and omitting many technical details of the implementation and usage of Noarr structures, which are covered in the original paper and the documentation of the Noarr library.
 
+Noarr structures, are the fundamental abstraction in the Noarr library used for modeling multi-dimensional data layouts according to the principles of layout agnosticism and hierarchical composition of data layouts.
 
 \subsection{Layout-agnostic design}\label{sec:layout-agnostic-design}
 
@@ -225,7 +226,7 @@ for (size_t i = 0; i < M; ++i) {
 The algorithm is, again, layout-agnostic because it does not rely on the specific physical layouts of the data in memory --- each data structure can be stored in any physical layout. However, there seemingly appears to be a noticeable issue: the algorithm relies on the fact that the three data structures have been defined with the dimensions \lstinline{'M'}, \lstinline{'N'}, and \lstinline{'K'} in a specific way that directly corresponds to the semantics of the matrix multiplication algorithm, which is not always the case in practice. This issue can be easily solved using yet another transformation of a layout, which is represented by the \lstinline{rename<old_dim, new_dim>} proto-structure --- this proto-structure simply renames a dimension in the layout without introducing any changes to the physical layout or the computation of an offset from a point in the index space.
 
 
-\section{Noarr bags}\label{sec:noarr-bags}
+\subsection{Noarr bags}\label{sec:noarr-bags}
 
 So far, we have only discussed Noarr structures as abstractions for modeling data layouts. However, as shown in \cref{lst:layout-agnostic-matmul}, a reasonable use case requires a full-fledged data structure that can be indexed to access references to actual data in memory. Similarly to how the CuTe framework defines a rich algebra of layouts and then defines data structures called \emph{Tensors} as the combination of a layout and an actual data buffer, the Noarr library defines \emph{Noarr bags} as the combination of a Noarr structure and a data buffer.
 
@@ -248,7 +249,7 @@ auto matrix_view_bag = matrix_bag.get_ref();
 The bags extend the interface of the underlying Noarr structure (such as \lstinline{get_length<'M'>()} or \lstinline{get_size()}) and also provide the indexing operator (i.e., \lstinline{operator[]}) to access references to the actual data in memory, as shown in \cref{lst:layout-agnostic-matmul}.
 
 
-\section{Generalizing the separation of concerns}\label{sec:generalizing-separation-of-concerns}
+\subsection{Generalizing the separation of concerns}\label{sec:generalizing-separation-of-concerns}
 
 % In \cref{def:data-layout}, we have defined a layout as a mapping from a multi-dimensional index space to a linear memory layout. This definition is usually sufficient for most use cases and for describing layout agnosticism. If $\mathcal{L}$ represents a data layout, each proto-structure can be viewed as a function $\mathcal{L}^n \to \mathcal{L}$ (transformation of layouts), as discussed in \cref{sec:hierarchical-view}.
 
@@ -283,7 +284,7 @@ In Noarr, this can be achieved by breaking the \lstinline{into_blocks} proto-str
 
 % In \cref{lst:further-separating-concerns}, the layouts of the matrices are defined independently, possibly in a different part of the codebase. The lengths of the dimensions are defined separately and applied to the layouts (usually in the part of the code where the data structures are actually instantiated). This has many benefits, such as allowing for the dimension lengths of the sub-layouts to be inferred --- for example, if the layout of \texttt{matrixC} was used to define \texttt{tiled\_matrix} in \cref{lst:transforming-noarr-structures} and the lengths of \texttt{i\_outer} and \texttt{j\_outer} were set explicitly instead of \lstinline{'M'} and \lstinline{'N'}.
 
-% Separating the layout from the dimension lengths is useful for multiple reasons. The two main reasons that we have explored in our work were (1) to define the layouts separately as tunable parameters of the algorithm, and (2) to infer some of the dimension lengths from the data structures themselves, from run-time parameters, or hardware properties (such as the cache size or the number of available threads). \xxx{(cite the relevant papers)}
+% Separating the layout from the dimension lengths is useful for multiple reasons. The two main reasons that we have explored in our work were (1) to define the layouts separately as tunable parameters of the algorithm, and (2) to infer some of the dimension lengths from the data structures themselves, from run-time parameters, or hardware properties (such as the cache size or the number of available threads).
 
 Replacing the \lstinline{set_length} proto-structure with one for another dimension is possible because there is a known relationship between the two parameters. However, this design flexibility does not fit the original definition of a data layout. Na\"{\i}vely, if just one of the transformations represented by proto-structures \lstinline{set_length<tile_dim>} and \lstinline{set_length<grid_dim>} would be supported, the \lstinline{into_blocks<old_dim, grid_dim, tile_dim>()} transformation could be defined as a layout that has an extra dimension used for emulating the tile or grid size parameterization. Such a workaround would fit the original definition, but it would not allow for the flexibility of inferring one or the other from the known relationship between the two parameters. We have to generalize the definition of a data layout to allow for multiple computation paths for the same property depending on the known parameters.
 
@@ -295,7 +296,7 @@ Noarr is a model of \cref{def:generalized-data-layout} (and encodes the index an
 Transformations of data layouts under \cref{def:generalized-data-layout} can be expressed as renaming the parameters of the original layout and defining new ones that use the renamed parameters in their definitions.
 
 
-\subsection{Noarr structure interpretation}
+\subsection{Noarr structure interpretation}\label{sec:noarr-structure-interpretation}
 
 The Noarr library implements Noarr structures using \cpp template metaprogramming. Each query to a Noarr structure (e.g., \lstinline{get_offset()}, which represents retrieving the linear offset as per~\cref{def:data-layout}) is transformed into a hierarchical static traversal of the Noarr structure --- recursively querying the proto-structures that compose the Noarr structure until reaching the base case of a \lstinline{scalar} proto-structure. A single level of the recursive traversal is shown in \cref{fig:noarr-query}.
 
@@ -337,7 +338,10 @@ where \lstinline{get_index<'M'>(state)} retrieves the index of the dimension \ls
 
 \section{Noarr Traversals}\label{sec:noarr-traversals}
 
-Noarr traversers (published in \fullcite{klepl2024pure}) are wrapper abstractions over one or multiple Noarr structures that provide an interface for performing actions over their index spaces. In the simplest case, creating a Noarr traverser over a single Noarr structure and invoking its \lstinline{for_each} method with a callable results in invoking the callable for each point in the index space of the structure.
+
+Noarr traversers are wrapper abstractions over one or multiple Noarr structures that provide an interface for performing actions over their index spaces. They were first introduced in \fullcite{klepl2024pure} as application of the philosophy of layout-agnostic algorithms to traversal order transformations.
+
+In the simplest case, creating a Noarr traverser over a single Noarr structure and invoking its \lstinline{for_each} method with a callable results in invoking the callable for each point in the index space of the structure.
 
 \begin{lstlisting}[language=C++, caption={Creating and using a Noarr traverser over a single structure.}, label=lst:noarr-traverser-single-structure, basicstyle=\ttfamily\scriptsize]
 auto matrix = bag(scalar<int>() ^ vector<'M'>(M) ^ vector<'N'>(N));
@@ -377,6 +381,13 @@ traverser(matrixC, matrixA, matrixB).for_sections<'M', 'N'>([&](auto inner) {
 \end{lstlisting}
 
 In this example, the index spaces of the input data structures do not match --- the traverser is constructed first from the index space of the (first supplied) \lstinline{matrixC} and then extended to cover the index space of \lstinline{matrixA}. The newly added dimensions are added as outer relative to the existing dimensions (i.e., the order of the dimensions outermost to the innermost is $\text{\lstinline{'K'}} \to \text{\lstinline{'N'}} \to \text{\lstinline{'M'}}$). \lstinline{matrixB} triggers no change to the traverser index space as its index space is already covered by the traverser. Since the loop nest is imperfect, a different method of traversal is used --- the \lstinline{for_sections} method is used to iterate over the given list of dimensions (in this case, \lstinline{'M'} and \lstinline{'N'}) and for each such section of the index space, the provided callable is invoked with a new (inner) traverser that represents the inner loop nest. The \lstinline{inner} traverser is then used to finalize the traversal on each section through the \lstinline{'K'} dimension.
+
+
+\subsection{Noarr signatures}\label{sec:noarr-signatures}
+
+To enable more complex transformations of Noarr traversers, the Noarr library also defines the concept of a \emph{signature} of a traverser (applicable to Noarr structures as well). The signature is representable as a tree with dimensions as nodes, where the parent-child relationship between nodes represents nesting of loops iterating the respective dimensions. For example, the signature of the traverser in \cref{lst:layout-agnostic-matmul-traverser} is simply $\text{\lstinline{'M'}} \to \text{\lstinline{'N'}} \to \text{\lstinline{'K'}}$. In Noarr, the signature is represented in the type system and computed at compile time. Signatures specify the semantic order of the traversal over the index space independently of the physical layout.
+
+Each proto-structure defines a specific way of transforming the signature. For example, the \lstinline{vector<dim>(length)} proto-structure adds dimension \texttt{dim} as the new root of the signature tree, while \lstinline{into_blocks<old_dim, grid_dim, tile_dim>()} replaces the dimension \texttt{old\_dim} with a new subtree with the root \texttt{grid\_dim} and the child \texttt{tile\_dim}, and \lstinline{fix<dim>(index)} (used for fixing the index in a given dimension) removes the dimension \texttt{dim} from the signature tree, moving the appropriate child subtree (if any) to the parent of the removed node.
 
 
 \subsection{traversal order transformations}\label{sec:traversal-order-transformations}
@@ -421,7 +432,54 @@ noarr::tbb_reduce(
   output);
 \end{lstlisting}
 
-In \cref{lst:parallel-reduction}, the \lstinline{tbb_reduce} executor is used to perform a parallel reduction over the index space of the input image, automatically privatizing the output histogram for each thread and then joining the results at the end. In this case, the parallelization is performed over the outermost dimension of the input image (i.e., the dimension \lstinline{'M'}), but this behavior is modifiable by applying traversal order transformations to the traverser before passing it to the executor. For example, the tiling transformation shown in \cref{lst:tiling-traverser} can be applied to the traverser to specify tiles of data that are to be processed together, or the \lstinline{hoist<dim>} proto-structure can be used to move a specific dimension to the outermost position in the index space of the traverser, changing the dimension over which the parallelization is performed.
+In \cref{lst:parallel-reduction}, the \lstinline{tbb_reduce} executor is used to perform a parallel reduction over the index space of the input image, automatically privatizing the output histogram for each thread and then joining the results at the end. In this case, the parallelization is performed over the outermost dimension of the input image (i.e., the dimension \lstinline{'M'}), but this behavior is modifiable by applying traversal order transformations to the traverser before passing it to the executor. For example, the tiling transformation shown in \cref{lst:tiling-traverser} can be applied to the traverser to specify tiles of data that are to be processed together, or the \lstinline{hoist<dim>()} proto-structure can be used to move a specific dimension to the outermost position in the index space of the traverser, changing the dimension over which the parallelization is performed.
 
 
 \subsubsection{CUDA traversers}\label{sec:cuda-traversers}
+
+For GPU parallelization on CUDA-enabled devices, the Noarr library provides specialized traversers that are bound to the GPU grid and block dimensions. Given a traverser, such binding can be defined and used to execute a histogram reduction in parallel on the GPU, as shown in \cref{lst:cuda-traverser}.
+
+\begin{lstlisting}[language=C++, caption={Binding a Noarr traverser to CUDA grid and block dimensions}, label=lst:cuda-traverser,basicstyle=\ttfamily\scriptsize]
+__global__ void cuda_kernel(auto inner_traverser, auto in, auto out) {
+  inner_traverser.for_each([&](auto state) {
+    auto pixel_value = in[state];
+    atomicAdd(&out[idx<'v'>(pixel_value)], 1); // reduction step
+  });
+}
+
+// in the host code
+auto traverser = noarr::traverser(input) ^ my_tiling;
+auto cuda_traverser = noarr::cuda_threads<'b', 't'>(traverser);
+
+auto grid = cuda_traverser.grid_dim();
+auto block = cuda_traverser.block_dim();
+cuda_kernel<<<grid, block>>>(cuda_traverser.inner(), input, output);
+\end{lstlisting}
+
+The example in \cref{lst:cuda-traverser} assumes that the traverser over the input image has already been transformed by a tiling transformation (e.g., similarly to \cref{lst:tiling-traverser}) so that there is a \lstinline{'t'} dimension that is to be mapped to \texttt{threadIdx.x} and a \lstinline{'b'} dimension that is to be mapped to \texttt{blockIdx.x}, two built-in variables in CUDA representing the thread and block indices, respectively. This means that the length of \lstinline{'t'} directs the block size and the length of \lstinline{'b'} directs the grid size of the CUDA kernel launch (methods \lstinline{grid_dim()} and \lstinline{block_dim()}). The \lstinline{inner()} method of the CUDA traverser is used to retrieve the inner traverser that is used within the CUDA kernel --- it is a regular (non-CUDA) traverser with dimensions \lstinline{'t'} and \lstinline{'b'} set to the respective CUDA built-in variables representing the traversal over the corresponding subset of the index space of the input image.
+
+Noarr library also provides a built-in proto-structure for copying a structure into multiple copies in such a way that each copy is associated with a specific subset of CUDA threads and the copies are allocated in different banks of shared memory to minimize bank conflicts to showcase that the approach allows for very specialized layout transformations for efficient GPU parallelization.
+
+
+\section{MPI bindings}\label{sec:mpi-bindings}
+
+After investigating the use of layout-agnostic and traversal-agnostic algorithms modeled by Noarr structures and traversers for parallelization on shared-memory devices (with GPU parallelization), we have also explored the applicability of the same principles to distributed-memory parallelization using MPI\@. We have published our study in \fullcite{klepl2025layout} and presented it at the EuroMPI conference co-hosted with the MPI Forum in 2025.
+
+The MPI type system is compatible with layout-agnosticism --- an MPI datatype is essentially a description of how the data of an arbitrary layout is linearized for communication purposes. MPI datatypes are considered equivalent if the data they describe has the same base types in the same order, regardless of individual displacements (layout), which makes MPI communication layout-agnostic by design if the appropriate MPI datatypes are used.
+%This characteristic is similar to the notion of layout-agnosticism in Noarr structures, where the semantic order of elements is specified by the named dimensions; thus, given a linearization of the named dimensions in a Noarr structure, a Noarr structure corresponds to a specific MPI datatype (disregarding different ways of constructing it).
+The only missing piece is specifying the linearization of data structures sharing the same index space in such a way that semantically equivalent elements from different data structures are linearized in the same order. As described in \cref{sec:noarr-signatures}, such linearization can be represented by a Noarr signature. % TODO: choose a different term than linearization?
+
+We have introduced the Noarr MPI extension that leverages the fact that traversers can be created over multiple Noarr structures simultaneously. This provides a clean API built on top of Noarr traversers to express communication patterns involving multiple Noarr structures that may have different layouts, as shown in~\cref{fig:noarr-mpi-communication}. Each computation step connected by communication with other steps can use its own preferred layout without having to modify the communication logic.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=.9\linewidth]{img/noarr-mpi-communication.eps}
+  \caption{Two matrices with different layouts transformed according to the common traverser \lstinline{T = traverser(A, B)} into matching MPI types for communication. Numbers indicate the offsets of elements in memory.}%
+  \label{fig:noarr-mpi-communication}
+\end{figure}
+
+Since two corresponding Noarr structures at the sender and receiver side (with same dimensions but possibly different layouts) correspond to many different MPI datatypes depending on the linearization of the dimensions, using Noarr traversers to express the semantic order of the communicated data brings the opportunity to explore different linearizations by adjusting the traverser. Noarr offers proto-structures, such as \lstinline{hoist} (see \cref{sec:parallel-traversers}), that can be used to safely reorder the dimensions of the traverser signature without affecting the correctness of the communication.
+
+We have also applied the layout-agnostic MPI datatype construction approach to Kokkos views~\cite{trott2021kokkos} and mdspan~\cite{trott2022mdspan}, which offer efficient multidimensional array abstractions. However, as these abstractions do not provide named dimensions or otherwise encode the semantic order of elements in their type system, such application relies on careful pairing of positional indices to the appropriate dimensions.
+
+% The tuning capability available in the Noarr-based approach could be replicated in this context by providing a permutation of the positional dimensions that controls the layout linearization. However, without named dimensions, such an approach generalizes poorly to more intricate data structures and communication patterns.

@@ -15,7 +15,7 @@ The impact of memory access patterns on performance is caused primarily by memor
 
 \section{General hardware considerations}\label{sec:general-hardware-considerations}
 
-Most of our work focuses on optimizing code for modern multi-core CPUs and GPU accelerators, possibly in clusters. These systems have various hardware features that significantly impact the performance of numerical computations depending on memory access patterns and parallelization strategies. Most notably, these systems feature complex memory hierarchies (aforementioned multiple levels of caches, different types of memory on GPUs, communication overheads in clusters), SIMD capabilities, and multiple processing units (CPU cores, GPU threads). Outlining these hardware features is crucial for understanding the motivation behind various code optimization techniques.
+Systems powered by multi-core CPUs and GPU accelerators have various hardware features that significantly impact the performance of numerical computations depending on memory access patterns and parallelization strategies. Most notably, these systems feature complex memory hierarchies (aforementioned multiple levels of caches, different types of memory on GPUs, communication overheads in clusters), SIMD capabilities, and multiple processing units (CPU cores, GPU threads). Outlining these hardware features is crucial for understanding the motivation behind various code optimization techniques.
 
 
 \subsection{CPU architecture}\label{sec:cpu-architecture}
@@ -26,56 +26,78 @@ Modern CPUs also support SIMD (Single Instruction, Multiple Data) instructions t
 
 CPUs also support out-of-order and speculative pipelined execution to hide latencies and improve instruction-level parallelism, along with cache prefetching mechanisms and branch prediction, which can further benefit from predictable and regular memory access patterns. Different memory access patterns and computation orders can also change how well the on-chip resources are utilized, including arithmetic logic units (ALUs) and other features that may differ between CPU models and generations. The overall complexity of modern CPU architectures and their sensitivity to memory access patterns and instruction-level parallelism make code optimization difficult, often requiring empirical tuning to achieve optimal performance.
 
-Modern CPUs excel at task parallelism using multiple cores, each capable of executing multiple threads. However, synchronization between threads is relatively costly due to the overhead of atomic operations, memory barriers, and cache coherency protocol traffic. Care must therefore be taken to minimize synchronization points and avoid false sharing of cache lines between threads\footnote{False sharing occurs when threads on different cores modify variables that reside on the same cache line, leading to unnecessary cache coherence traffic and performance degradation~\cite{drepper2007every}.}.
+Modern CPUs excel at task parallelism using multiple cores, each capable of executing multiple threads. However, synchronization between threads is relatively costly due to the overhead of atomic operations, memory barriers, and cache coherency protocol traffic. Care must therefore be taken to minimize
+% avoid false sharing of cache lines between threads\footnote{False sharing occurs when threads on different cores modify variables that reside on the same cache line, leading to unnecessary cache coherence traffic and performance degradation~\cite{drepper2007every}.}.
+time spent on synchronization and avoid contention between threads accessing shared data.
 
-The following list summarizes the most important hardware considerations for code optimization on modern multi-core CPUs:
-\begin{itemize}
-  \item Enhancing data locality to minimize cache misses by restructuring data layouts and loop structures.
-  \item Enabling vectorization by ensuring proper data alignment and access patterns.
-  \item Minimizing synchronization overheads and avoiding false sharing in multi-threaded scenarios; for example, by inserting padding between data accessed by different threads to ensure they do not share cache lines. This can be also addressed by adjusting the parallelization strategy.
-  \item Balancing the workload across CPU cores to maximize resource utilization.
-  \item Reordering computations to improve instruction-level parallelism and better utilize the CPU's out-of-order execution capabilities.
-\end{itemize}
+% The following list summarizes the most important hardware considerations for code optimization on modern multi-core CPUs:
+% \begin{itemize}
+%   \item Enhancing data locality to minimize cache misses by restructuring data layouts and loop structures.
+%   \item Enabling vectorization by ensuring proper data alignment and access patterns.
+%   \item Minimizing synchronization overheads and avoiding false sharing in multi-threaded scenarios; for example, by inserting padding between data accessed by different threads to ensure they do not share cache lines. This can be also addressed by adjusting the parallelization strategy.
+%   \item Balancing the workload across CPU cores to maximize resource utilization.
+%   \item Reordering computations to improve instruction-level parallelism and better utilize the CPU's out-of-order execution capabilities.
+% \end{itemize}
 
 
 \subsection{GPU architecture}\label{sec:gpu-architecture}
 
-Since GPU architectures by NVIDIA currently dominate the high-performance computing landscape~\cite{top500}, we will use their nomenclature to describe the relevant hardware features and use them as a reference point. Modern NVIDIA GPUs consist of multiple streaming multiprocessors (SMs), each comprising many CUDA cores that execute threads in a massively parallel manner. An SM is equipped with a register file and a cache space split between user-controlled \emph{shared memory} and \emph{L1 cache}, all shared among the threads running on that SM\@. Additionally, all SMs share a larger \emph{L2 cache}. The GPU also has a separate \emph{global memory} (device memory) accessible by all SMs, significantly larger than the on-chip memory of an SM but with much higher latency~\cite{cuda_programming_guide}.
+GPU accelerators are one of the most used hardware platforms for high-performance computing (especially since the advent of large language models and other deep learning workloads). GPUs are optimized for massively data-parallel workloads and feature a large number of processing units that can execute thousands of threads concurrently. They often benefit from regular and predictable memory access patterns and control flow.
 
-An SM executes threads organized into \emph{warps} (groups of 32 threads) in a SIMT (Single Instruction, Multiple Threads) fashion. The threads within a warp execute the same instruction simultaneously in lockstep\footnote{Since the Volta architecture (compute capability 7.0), NVIDIA GPUs support \emph{Independent Thread Scheduling}, which relaxes the strict lockstep model and allows threads within a warp to diverge and re-converge more flexibly. However, for performance purposes, the lockstep mental model remains a useful approximation.}, which means that divergent control flow within a warp (i.e., different threads taking different branches) can lead to high performance penalties due to serialization of the divergent paths and masking of inactive threads.
+Since GPU architectures by NVIDIA currently dominate the high-performance computing landscape~\cite{top500}, we will default to their nomenclature when describing the relevant hardware features and use them as a reference point.
 
-Shared memory of an SM is organized into 32 memory banks, each offering 32-bit bandwidth per clock cycle. This allows a thread warp to load a single 32-bit word from each bank to each thread in the warp simultaneously every clock cycle. However, if multiple threads in a warp access different addresses within the same memory bank, a \emph{bank conflict} occurs, and the accesses have to be serialized, leading to performance degradation.
+The \emph{execution model} of GPUs is based on a hierarchy of threads that are organized into blocks and grids. Blocks from the same grid are mapped to streaming multiprocessors (SMs). Threads within a block run in groups of 32 called warps, which execute instructions in lockstep (SIMT model).
+% Modern NVIDIA GPUs consist of multiple streaming multiprocessors (SMs), each comprising many CUDA cores that execute threads in a massively parallel manner.
+% An SM is equipped with a register file and a cache space split between user-controlled \emph{shared memory} and \emph{L1 cache}, all shared among the threads running on that SM\@. Additionally, all SMs share a larger \emph{L2 cache}. The GPU also has a separate \emph{global memory} (device memory) accessible by all SMs, significantly larger than the on-chip memory of an SM but with much higher latency~\cite{cuda_programming_guide}.
+% SM executes threads organized into \emph{warps} (groups of 32 threads) in a SIMT (Single Instruction, Multiple Threads) fashion. The threads within a warp execute the same instruction simultaneously in lockstep,
+% \footnote{Since the Volta architecture (compute capability 7.0), NVIDIA GPUs support \emph{Independent Thread Scheduling}, which relaxes the strict lockstep model and allows threads within a warp to diverge and re-converge more flexibly. However, for performance purposes, the lockstep mental model remains a useful approximation.}
+The lockstep execution model of warps means that divergent control flow within a warp (i.e., different threads taking different branches) can lead to high performance penalties. Similarly, divergent memory access patterns within a warp can degrade throughput of the executed algorithms.
 
-Just like the on-chip memory of an SM is partitioned between shared memory and L1 cache, the device DRAM memory is split into multiple memory spaces with different access characteristics: \emph{global}, \emph{local}, and \emph{constant} memory spaces. Older GPU architectures also featured \emph{texture} memory space that offered better caching for certain access patterns. Local memory is used by the compiler to store spilled registers, arrays indexed by non-constant expressions, and large structures that the compiler heuristically decides to place in local memory.
+\emph{Memory model} of GPUs is also quite different to CPU\@. A GPU device has its own DRAM memory (global memory) that is separate from the host (CPU) memory. Although the global memory has high bandwidth (compared to system memory), it serves orders of magnitude higher number of threads, so memory access patterns have a significant impact on performance.
 
-Global and local memory accesses have high latency, so register spilling should be minimized. The latencies are mitigated by L2 and L1 caches, but these caches are relatively small compared to global memory, and the L1 cache is shared with user-controlled shared memory.
+Each SM is then equipped with a register file and a cache space split between user-controlled \emph{shared memory} and \emph{L1 cache}, all shared among the threads running on that SM\@. Additionally, all SMs share a larger \emph{L2 cache}. The register file and shared memory offer much lower latency to the higher memory levels, making it crucial to utilize them effectively.
 
-Furthermore, global memory accesses should be \emph{coalesced} to achieve optimal performance, meaning that threads within a warp should ideally access contiguous memory locations (though some strided access patterns and broadcasts are also supported with minimal performance penalties). Local memory is automatically organized so that coalesced accesses are achieved whenever possible, which may not be the case for arrays indexed by non-constant expressions.
+% Shared memory of an SM is organized into 32 memory banks, each offering 32-bit bandwidth per clock cycle. This allows a thread warp to load a single 32-bit word from each bank to each thread in the warp simultaneously every clock cycle. However, if multiple threads in a warp access different addresses within the same memory bank, a \emph{bank conflict} occurs, and the accesses have to be serialized, leading to performance degradation.
 
-Since compute capability 9.0, NVIDIA GPUs also support \emph{distributed shared memory}, which allows an SM to directly load from and store to the shared memory of other SMs within the same thread block cluster, extending the addressable shared memory space beyond a single SM\@.
+% Just like the on-chip memory of an SM is partitioned between shared memory and L1 cache, the device DRAM memory is split into multiple memory spaces with different access characteristics: \emph{global}, \emph{local}, and \emph{constant} memory spaces. Older GPU architectures also featured \emph{texture} memory space that offered better caching for certain access patterns. Local memory is used by the compiler to store spilled registers, arrays indexed by non-constant expressions, and large structures that the compiler heuristically decides to place in local memory.
 
-\emph{Synchronization} between threads running on the same SM is relatively cheap using the \lstinline{__syncthreads()} primitive thanks to dedicated hardware barrier support in the SM\@. Synchronization of a warp (\lstinline{__syncwarp()}) is even cheaper, and performance-wise is practically equivalent to inserting a memory fence. This cheap synchronization is accompanied by allowing intra-warp communication using \emph{warp-wide} primitives such as \lstinline{__shfl\_sync()} that allow threads within a warp to exchange data without using shared memory. This is particularly useful for implementing parallel reduction algorithms or prefix sums efficiently. For inter-thread communication across different warps, shared memory is typically used as an intermediary storage with block-wide synchronization.
+% Global and local memory accesses have high latency, so register spilling should be minimized. The latencies are mitigated by L2 and L1 caches, but these caches are relatively small compared to global memory, and the L1 cache is shared with user-controlled shared memory.
 
-Synchronization between different blocks in a grid or even between different devices is significantly more costly, and it is the goal of optimization via privatization and algorithmic adjustments to reduce the number of any such synchronization points.
+% Furthermore, global memory accesses should be \emph{coalesced} to achieve optimal performance, meaning that threads within a warp should ideally access contiguous memory locations (though some strided access patterns and broadcasts are also supported with minimal performance penalties). Local memory is automatically organized so that coalesced accesses are achieved whenever possible, which may not be the case for arrays indexed by non-constant expressions.
 
-An important metric affecting the CUDA kernel performance is (next to its clock speed and memory bandwidth) the \emph{occupancy} of the kernel. It is a ratio of active warps to the maximum supported by the SM. Occupancy is lowered by exhausting its resource limits (registers and shared memory), creating a trade-off between using low-latency memories and gaining maximum performance (and latency hiding) from high occupancy.
+% Since compute capability 9.0, NVIDIA GPUs also support \emph{distributed shared memory}, which allows an SM to directly load from and store to the shared memory of other SMs within the same thread block cluster, extending the addressable shared memory space beyond a single SM\@.
 
-Since the device has its own DRAM memory, data has to be transferred between the host (CPU) memory and the device (GPU) memory via relatively slow PCIe or NVLink buses (e.g., PCIe~5.0 offers up to 64~GB/s per direction and NVLink~4.0 provides up to 900~GB/s, both of which are substantially lower than the GPU internal HBM bandwidth of several TB/s)~\cite{cuda_programming_guide,nvidia_h100_whitepaper}. This transfer overhead can be mitigated by overlapping data transfers with kernel execution using asynchronous memory copy operations and CUDA streams. Unified memory can partially alleviate this concern by allowing the system to automatically manage data movement between host and device memory.
+While the register file (and cache space) is allocated automatically so that it is used efficiently, the shared memory is explicitly allocated and controlled by the programmer. It is managed by 32 memory banks mapped to 32-bit words in round-robin fashion. The banks have a bandwidth of 32 bits per clock cycle, which means that they can serve threads in a warp efficiently if they access different banks (i.e., different 32-bit words) simultaneously, but more irregular memory access patterns can lead to \emph{bank conflicts} that penalize performance by serializing the accesses.
 
-The following list summarizes the most important hardware considerations for code optimization on NVIDIA GPUs:
-\begin{itemize}
-  \item Avoiding register spilling to local memory by using an appropriate number of registers per thread and using constant expressions to index local arrays.
-  \item Ensuring coalesced global memory accesses by organizing data layouts and access patterns appropriately.
-  \item Minimizing shared memory bank conflicts by carefully designing shared memory access patterns.
-  \item Maximizing occupancy by balancing the number of threads per block, register usage, and shared memory usage.
-  \item Leveraging warp-wide primitives for efficient intra-warp communication and synchronization.
-  \item Utilizing shared memory for inter-thread communication within a block.
-\end{itemize}
+
+Similarly, global memory accesses, which already have high latency, should be \emph{coalesced} (i.e., threads in a warp should access contiguous memory locations) to prevent even higher latencies. Furthermore, if data stored in registers does not fit into the register file, it is \emph{spilled} to local memory within the global memory by the compiler, increasing the number of global memory accesses on top of the explicit global memory accesses in the code.
+
+% \emph{Synchronization} between threads running on the same SM is relatively cheap using the \lstinline{__syncthreads()} primitive thanks to dedicated hardware barrier support in the SM\@. Synchronization of a warp (\lstinline{__syncwarp()}) is even cheaper, and performance-wise is practically equivalent to inserting a memory fence. This cheap synchronization is accompanied by allowing intra-warp communication using \emph{warp-wide} primitives such as \lstinline{__shfl\_sync()} that allow threads within a warp to exchange data without using shared memory. This is particularly useful for implementing parallel reduction algorithms or prefix sums efficiently. For inter-thread communication across different warps, shared memory is typically used as an intermediary storage with block-wide synchronization.
+
+% Synchronization between different blocks in a grid or even between different devices is significantly more costly, and it is the goal of optimization via privatization and algorithmic adjustments to reduce the number of any such synchronization points.
+
+% An important metric affecting the CUDA kernel performance is (next to its clock speed and memory bandwidth) the \emph{occupancy} of the kernel. It is a ratio of active warps to the maximum supported by the SM. Occupancy is lowered by exhausting its resource limits (registers and shared memory), creating a trade-off between using low-latency memories and gaining maximum performance (and latency hiding) from high occupancy.
+
+% Since the device has its own DRAM memory, data has to be transferred between the host (CPU) memory and the device (GPU) memory via relatively slow PCIe or NVLink buses (e.g., PCIe~5.0 offers up to 64~GB/s per direction and NVLink~4.0 provides up to 900~GB/s, both of which are substantially lower than the GPU internal HBM bandwidth of several TB/s)~\cite{cuda_programming_guide,nvidia_h100_whitepaper}. This transfer overhead can be mitigated by overlapping data transfers with kernel execution using asynchronous memory copy operations and CUDA streams. Unified memory can partially alleviate this concern by allowing the system to automatically manage data movement between host and device memory.
+
+% The following list summarizes the most important hardware considerations for code optimization on NVIDIA GPUs:
+% \begin{itemize}
+%   \item Avoiding register spilling to local memory by using an appropriate number of registers per thread and using constant expressions to index local arrays.
+%   \item Ensuring coalesced global memory accesses by organizing data layouts and access patterns appropriately.
+%   \item Minimizing shared memory bank conflicts by carefully designing shared memory access patterns.
+%   \item Maximizing occupancy by balancing the number of threads per block, register usage, and shared memory usage.
+%   \item Leveraging warp-wide primitives for efficient intra-warp communication and synchronization.
+%   \item Utilizing shared memory for inter-thread communication within a block.
+% \end{itemize}
+
+\emph{Synchronization} barriers between GPU threads are relatively inexpensive up to the block level, which allows for efficient shared memory communication and synchronization. On the warp level, data exchange can be performed via even more efficient warp-wide primitives that do not require shared memory and have even lower latencies than shared memory accesses (such as \lstinline{__shfl\_sync()}, which can load data from a register of another thread in the same warp).
+
+All these hardware nuances make GPU performance highly sensitive to memory access patterns and parallelization strategies, which makes algorithm design and code optimization for GPUs a complex and very important task in high-performance computing.
 
 
 \section{Optimization techniques}\label{sec:optimization-techniques}
 
-The most common code optimization techniques used in computation kernels appearing in high-performance computing can be broadly categorized into data locality optimizations, vectorization, and applying parallelization strategies.
+The most common code optimization techniques used in computation kernels appearing in high-performance computing can be broadly categorized into data locality optimizations and applying parallelization strategies (including vectorization). These techniques are often complementary and offer significant performance improvements on modern hardware architectures.
 
 
 \subsection{Data locality optimizations}\label{sec:data-locality-optimizations}
@@ -94,21 +116,22 @@ Loop transformations are the most powerful techniques for improving data localit
 Memory layout optimizations involve changing the organization of data structures in memory to improve access patterns. Common techniques include array of structures (AoS) to structure of arrays (SoA) transformations (or, more generally, transposing multidimensional arrays according to a permutation of the dimensions), inserting padding to avoid cache-line or bank conflicts, and aligning data to cache-line boundaries to improve memory latencies. More advanced techniques include data blocking, tiling, and bit-packing for compact data representations~\cite{allen2001optimizing,drepper2007every}.
 
 
-\subsection{Vectorization}\label{sec:vectorization}
-
-\xxx{Isn't vectorization a type of parallelization?}
-
-Vectorization techniques aim to exploit the SIMD (Single Instruction, Multiple Data) capabilities of modern processors. They usually involve restructuring loops and data layouts to enable either implicit vectorization by the compiler or explicit vectorization using intrinsic functions or assembly code. Vectorization typically requires that data is properly aligned and accessed contiguously so that, in an unrolled loop, multiple data elements can be processed simultaneously using vector registers and instructions.
-
-
 \subsection{Parallelization}\label{sec:parallelization}
 
-\xxx{Make this more beefy, more detailed.}
-
-Parallelization techniques are complementary to data locality optimizations and vectorization. They involve decomposing computations into multiple tasks that can be executed concurrently on multiple processing units, such as CPU cores, GPU threads, or distributed nodes (possibly with communication and synchronization). Common parallelization strategies include data parallelism, task parallelism, and pipeline parallelism.
+Parallelization techniques are complementary to data locality optimizations. They involve decomposing computations into multiple tasks that can be executed concurrently on multiple processing units, such as CPU cores, GPU threads, or distributed nodes (possibly with communication and synchronization). Common parallelization strategies include data parallelism, task parallelism, and pipeline parallelism.
 
 These strategies require careful consideration of data dependencies and synchronization mechanisms to ensure correct and efficient execution. Architectures such as GPUs provide efficient synchronization and communication primitives, further increasing the complexity of parallelization via GPU threads (GPU acceleration).
 
+Data parallelism is often the most straightforward approach for numerical computations on arrays, where the same operation is applied to different elements of an array concurrently. Task parallelism involves decomposing a computation into distinct tasks that can be executed in parallel. Pipeline parallelism involves breaking a computation into stages that can be executed concurrently, with data flowing between stages in a producer-consumer fashion.
+
+Parallelization leads to significant performance improvements by splitting the workload across multiple processing units, but it also introduces challenges such as load balancing, minimizing synchronization overheads, and avoiding contention between threads accessing shared data. In GPU computing, achieving high occupancy and efficient memory access patterns is crucial for maximizing the benefits of parallelization. This often requires an ability to adjust how the data is structured and accessed to enable efficient parallel execution and resource utilization
+
+
+\subsubsection{Vectorization}\label{sec:vectorization}
+
+Vectorization techniques aim to exploit the SIMD (Single Instruction, Multiple Data) capabilities of modern processors --- using vector registers and instructions to perform the same operation on multiple data elements simultaneously. These are mostly relevant for CPU architectures: even on consumer-grade CPUs, SIMD instructions can operate on 256-bit or 512-bit wide vector registers, which allows for processing 8 or 16 single-precision floating-point numbers simultaneously, respectively. On GPUs, support for vectorized instructions is quite limited, generally limited to sub-word data types (e.g., 8-bit or 16-bit integers) and not available for floating-point data types. However, GPU accelerators provide similar specialized hardware features such as tensor cores that serve a similar purpose for accelerating matrix operations.
+
+Vectorization techniques involve restructuring loops and data layouts to enable either implicit vectorization by the compiler or explicit vectorization using intrinsic functions or assembly code. Vectorization typically requires that data is properly aligned and accessed contiguously so that, in an unrolled loop, multiple data elements can be processed simultaneously using vector registers and instructions.
 
 % \section{Formalizing data layouts and access patterns}\label{sec:formalizing-data-layouts-and-access-patterns}
 

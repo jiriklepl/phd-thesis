@@ -250,7 +250,8 @@ Sometimes, it is desirable to have external control over the data buffer. For ex
 
 \begin{lstlisting}[style=C++, caption={Defining a Noarr bag with an externally managed data buffer}, label={lst:cuda-noarr-bag}, basicstyle=\ttfamily\scriptsize]
 // manually allocating a data buffer (in special memory space)
-float* data_buffer = CudaMalloc(matrix_layout | get_size());
+float* data_buffer;
+CudaMalloc((void**)(&data_buffer), matrix_layout | get_size());
 auto matrix_bag = noarr::bag(matrix_layout, data_buffer);
 
 // ...

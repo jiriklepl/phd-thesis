@@ -223,30 +223,45 @@ for (size_t i = 0; i < M; ++i) {
 }
 \end{lstlisting}
 
-The algorithm is, again, layout-agnostic because it does not rely on the specific physical layouts of the data in memory --- each data structure can be stored in any physical layout. However, there seemingly appears to be a noticeable issue: the algorithm relies on the fact that the three data structures have been defined with the dimensions \lstinline{'M'}, \lstinline{'N'}, and \lstinline{'K'} in a specific way that directly corresponds to the semantics of the matrix multiplication algorithm, which is not always the case in practice. This issue can be easily solved using yet another transformation of a layout, which is represented by the \lstinline{rename<old_dim, new_dim>} proto-structure --- this proto-structure simply renames a dimension in the layout without introducing any changes to the physical layout or the computation of an offset from a point in the index space.
+The algorithm is, again, layout-agnostic because it does not rely on the specific physical layouts of the data in memory --- each data structure can be stored in any physical layout. Since each matrix is indexed using its own set of dimensions and \lstinline{mnk_point} contains the union of all dimensions, the matrices implicitly extract the relevant dimensions with no need for explicit indexing logic, which eliminates some opportunities for mistakes and makes the algorithm simpler to maintain. However, there seemingly appears to be a noticeable issue: the algorithm relies on the fact that the three data structures have been defined with the dimensions \lstinline{'M'}, \lstinline{'N'}, and \lstinline{'K'} in a specific way that directly corresponds to the semantics of the matrix multiplication algorithm, which is not always the case in practice. This issue can be easily solved using yet another transformation of a layout, which is represented by the \lstinline{rename<old_dim, new_dim>} proto-structure --- this proto-structure simply renames a dimension in the layout without introducing any changes to the physical layout or the computation of an offset from a point in the index space.
 
 
 \subsection{Noarr bags}\label{sec:noarr-bags}
 
 So far, we have only discussed Noarr structures as abstractions for modeling data layouts. However, as shown in \cref{lst:layout-agnostic-matmul}, a reasonable use case requires a full-fledged data structure that can be indexed to access references to actual data in memory. Similarly to how the CuTe framework defines a rich algebra of layouts and then defines data structures called \emph{Tensors} as the combination of a layout and an actual data buffer, the Noarr library defines \emph{Noarr bags} as the combination of a Noarr structure and a data buffer.
 
-\begin{lstlisting}[style=C++, caption={Defining a Noarr bag as the combination of a Noarr structure and a data buffer.}, label={lst:defining-noarr-bag}, basicstyle=\ttfamily\scriptsize]
+\begin{lstlisting}[style=C++, caption={Defining a simple bag from a Noarr structure}, label={lst:simple-noarr-bag}, basicstyle=\ttfamily\scriptsize]
 auto matrix_layout = noarr::scalar<float>() ^ noarr::vectors<'M', 'N'>(M, N);
-
-// manually allocating a data buffer (in special memory space)
-float* data_buffer = CudaMalloc(M * N * sizeof(float));
-auto matrix_bag = noarr::bag(matrix_layout, data_buffer);
-
-// defining a bag that manages its own data buffer
 auto matrix_bag = noarr::bag(matrix_layout);
 
-// getting a view bag from an existing bag
-auto matrix_view_bag = matrix_bag.get_ref();
+// indexing a bag gives a reference to the actual data in memory
+auto idx = idx<'M', 'N'>(i, j);
+float &value = matrix_bag[idx];
+matrix_bag[idx] = value;
+
+// getting properties of the layout from the bag
+assert((matrix_bag | get_length<'M'>()) == M); // length of dimension 'M'
+assert((matrix_bag | get_size()) == M * N * sizeof(float)); // buffer size
 \end{lstlisting}
 
-\Cref{lst:defining-noarr-bag} shows the three most common ways to define a Noarr bag. The first case is especially useful if the data buffer is managed by another library or lives in a special memory space (e.g., GPU device memory or shared memory). The second case (owning bag) is the most convenient way to define a Noarr bag; it automatically allocates a data buffer of the appropriate size and manages its lifetime. The third case (view bag) is useful for passing a Noarr bag to a function so that regardless of whether the original bag is owning or a view, the function can work with a view bag as a trivially copyable and movable reference to the original bag.
+\Cref{lst:simple-noarr-bag} shows a simple example of defining a Noarr bag from a Noarr structure. The resulting \lstinline{matrix_bag} is a data structure that can be indexed to access the actual data in memory. The underlying buffer is automatically allocated and managed by the bag, and the bag offers the same interface as the underlying Noarr structure (e.g., \lstinline{get_length<'M'>()} or \lstinline{get_size()}) in addition to the indexing operator (i.e., \lstinline{operator[]}) to access references to the actual data in memory.
 
-The bags extend the interface of the underlying Noarr structure (such as \lstinline{get_length<'M'>()} or \lstinline{get_size()}) and also provide the indexing operator (i.e., \lstinline{operator[]}) to access references to the actual data in memory, as shown in \cref{lst:layout-agnostic-matmul}.
+Sometimes, it is desirable to have external control over the data buffer. For example, we might want to use the Noarr bag simply as a view of already existing data, which can come in handy when there are multiple possible interpretations of the same data (e.g., a matrix can be viewed as a grid of submatrix tiles). Another important use case for external control over the data buffer is when the data buffer is managed by another library or lives in a special memory space that requires specific allocation and deallocation logic (e.g., GPU device memory or shared memory). \Cref{lst:cuda-noarr-bag} shows one such example of defining a Noarr bag with an externally managed data buffer, which is allocated in GPU device memory using \lstinline{CudaMalloc}.
+
+\begin{lstlisting}[style=C++, caption={Defining a Noarr bag with an externally managed data buffer}, label={lst:cuda-noarr-bag}, basicstyle=\ttfamily\scriptsize]
+// manually allocating a data buffer (in special memory space)
+float* data_buffer = CudaMalloc(matrix_layout | get_size());
+auto matrix_bag = noarr::bag(matrix_layout, data_buffer);
+
+// ...
+
+// manually deallocating the data buffer
+CudaFree(data_buffer);
+\end{lstlisting}
+
+The \lstinline{matrix_bag} in \cref{lst:cuda-noarr-bag} is functionally equivalent to the one in \cref{lst:simple-noarr-bag} with two important differences: (1) the bag performs no allocation or deallocation of the data buffer (and thus does not guarantee its lifetime), and (2) the bag is a trivial wrapper around the underlying Noarr structure, which means that it is trivially copyable and movable. In contrast, the bag in \cref{lst:simple-noarr-bag} is not copyable and thus cannot be passed by value.
+
+If we want the same freedom of copying and moving with bags that manage their own data buffer, we can pass a view of the bag by calling \lstinline{matrix_bag.get_ref()}. The resulting view is a trivial wrapper same as the bag in \cref{lst:cuda-noarr-bag}, which can be freely copied and moved without any side effects.
 
 
 \subsection{Generalizing the separation of concerns}\label{sec:generalizing-separation-of-concerns}

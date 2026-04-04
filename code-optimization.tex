@@ -1,4 +1,4 @@
-\chapter{Code optimization}\label{chap:code-optimization}
+\chapter{\xxx{Code optimization}}\label{chap:code-optimization}
 
 % IDEA of the chapter: This is a background (or extended intro) chapter that overviews common code optimization techniques used in high-performance computing. It should explain why optimizations are important and how we can optimize the code. This chapter should provide the necessary baseline knowledge for understanding the topic of layout and traversal optimizations (and also parallelization strategies).
 
@@ -15,20 +15,26 @@ The impact of memory access patterns on performance is caused primarily by memor
 
 \section{General hardware considerations}\label{sec:general-hardware-considerations}
 
-Systems powered by multi-core CPUs and GPU accelerators have various hardware features that significantly impact the performance of numerical computations depending on memory access patterns and parallelization strategies. Most notably, these systems feature complex memory hierarchies (aforementioned multiple levels of caches, different types of memory on GPUs, communication overheads in clusters), SIMD capabilities, and multiple processing units (CPU cores, GPU threads). Outlining these hardware features is crucial for understanding the motivation behind various code optimization techniques.
+Systems powered by multi-core CPUs and GPU accelerators have various hardware features that significantly impact the performance of numerical computations depending on memory access patterns and parallelization strategies. Most notably, these systems feature complex memory hierarchies (aforementioned multiple levels of caches, different types of memory on GPUs, communication overheads in clusters), SIMD capabilities, and multiple processing units (CPU cores, GPU threads).
+% Outlining these hardware features is crucial for understanding the motivation behind various code optimization techniques.
+We will briefly overview the most relevant hardware features of modern multi-core CPUs and GPU accelerators that relate to memory access patterns \xxx{and parallelization strategies}.
 
 
 \subsection{CPU architecture}\label{sec:cpu-architecture}
 
-CPU architectures are typically optimized for serial processing, possibly in multi-threaded scenarios. They contain multiple levels of cache (L1, L2, L3) and on-chip registers to reduce the latency of memory accesses, with nontrivial cache coherency protocols and costly synchronization mechanisms.
+% CPU architectures are typically optimized for serial processing, possibly in multi-threaded scenarios. They contain multiple levels of cache (L1, L2, L3) and on-chip registers to reduce the latency of memory accesses, with nontrivial cache coherency protocols and costly synchronization mechanisms.
 
-Modern CPUs also support SIMD (Single Instruction, Multiple Data) instructions to perform vectorized operations on multiple data elements concurrently, which can significantly speed up numerical computations when the data is properly aligned and can be organized so that contiguous blocks have no internal dependencies. This is typically achieved via data layout transformations and loop unrolling techniques following loop transformations such as loop interchange, tiling (blocking), or skewing.
+CPU architectures are typically optimized for serial processing, possibly in multi-threaded scenarios. They contain multiple levels of cache and on-chip registers to reduce the latency of memory accesses, which makes memory access patterns a crucial factor for performance. Improving the locality of memory accesses (both spatial and temporal) can significantly reduce accesses to higher levels of the memory hierarchy and thus improve performance.
 
-CPUs also support out-of-order and speculative pipelined execution to hide latencies and improve instruction-level parallelism, along with cache prefetching mechanisms and branch prediction, which can further benefit from predictable and regular memory access patterns. Different memory access patterns and computation orders can also change how well the on-chip resources are utilized, including arithmetic logic units (ALUs) and other features that may differ between CPU models and generations. The overall complexity of modern CPU architectures and their sensitivity to memory access patterns and instruction-level parallelism make code optimization difficult, often requiring empirical tuning to achieve optimal performance.
+% Modern CPUs also support SIMD (Single Instruction, Multiple Data) instructions to perform vectorized operations on multiple data elements concurrently, which can significantly speed up numerical computations when the data is properly aligned and can be organized so that contiguous blocks have no internal dependencies. This is typically achieved via data layout transformations and loop unrolling techniques following loop transformations such as loop interchange, tiling (blocking), or skewing.
 
-Modern CPUs excel at task parallelism using multiple cores, each capable of executing multiple threads. However, synchronization between threads is relatively costly due to the overhead of atomic operations, memory barriers, and cache coherency protocol traffic. Care must therefore be taken to minimize
-% avoid false sharing of cache lines between threads\footnote{False sharing occurs when threads on different cores modify variables that reside on the same cache line, leading to unnecessary cache coherence traffic and performance degradation~\cite{drepper2007every}.}.
-time spent on synchronization and avoid contention between threads accessing shared data.
+\xxx{Changing the order of computations and memory layouts of data structures are two main approaches of achieving better data locality.}
+
+Changing memory access patterns affects the utilization of other hardware features as well. For example, modern CPUs feature SIMD (Single Instruction, Multiple Data) instructions and vector registers that can operate on multiple consecutive data elements simultaneously. To take advantage of these features, data must be properly aligned and the access patterns must be organized so that contiguous blocks of data may be accessed together.
+
+% CPUs also support out-of-order and speculative pipelined execution to hide latencies and improve instruction-level parallelism, along with cache prefetching mechanisms and branch prediction, which can further benefit from predictable and regular memory access patterns. Different memory access patterns and computation orders can also change how well the on-chip resources are utilized, including arithmetic logic units (ALUs) and other features that may differ between CPU models and generations. The overall complexity of modern CPU architectures and their sensitivity to memory access patterns and instruction-level parallelism make code optimization difficult, often requiring empirical tuning to achieve optimal performance.
+
+% Modern CPUs excel at task parallelism using multiple cores, each capable of executing multiple threads. However, synchronization between threads is relatively costly due to the overhead of atomic operations, memory barriers, and cache coherency protocol traffic. Care must therefore be taken to minimize time spent on synchronization and avoid contention between threads accessing shared data.
 
 % The following list summarizes the most important hardware considerations for code optimization on modern multi-core CPUs:
 % \begin{itemize}
@@ -38,6 +44,10 @@ time spent on synchronization and avoid contention between threads accessing sha
 %   \item Balancing the workload across CPU cores to maximize resource utilization.
 %   \item Reordering computations to improve instruction-level parallelism and better utilize the CPU's out-of-order execution capabilities.
 % \end{itemize}
+
+\xxx{Other features such as out-of-order and speculative pipelined execution and cache prefetching mechanisms further benefit from predictable and regular memory access patterns.}
+
+For multi-threaded (and distributed) scenarios, synchronization and communication overheads can significantly impact performance as well, so it is crucial to change the order of computations and memory layouts of data structures in such a way that the dependencies between different threads (or nodes) are minimized, and the workload is balanced across them.
 
 
 \subsection{GPU architecture}\label{sec:gpu-architecture}
@@ -90,113 +100,118 @@ Similarly, global memory accesses, which already have high latency, should be \e
 %   \item Utilizing shared memory for inter-thread communication within a block.
 % \end{itemize}
 
-\emph{Synchronization} barriers between GPU threads are relatively inexpensive up to the block level, which allows for efficient shared memory communication and synchronization. On the warp level, data exchange can be performed via even more efficient warp-wide primitives that do not require shared memory and have even lower latencies than shared memory accesses (such as \lstinline{__shfl_sync()}, which can load data from a register of another thread in the same warp).
+% \emph{Synchronization} barriers between GPU threads are relatively inexpensive up to the block level, which allows for efficient shared memory communication and synchronization. On the warp level, data exchange can be performed via even more efficient warp-wide primitives that do not require shared memory and have even lower latencies than shared memory accesses (such as \lstinline{__shfl_sync()}, which can load data from a register of another thread in the same warp).
+
+\emph{Synchronization} barriers between GPU threads are relatively inexpensive up to the block level, which allows for efficient shared memory communication and synchronization. On the warp level, data exchange can be performed via even more efficient warp-wide primitives that do not require shared memory and have even lower latencies than shared memory accesses.
 
 All these hardware nuances make GPU performance highly sensitive to memory access patterns and parallelization strategies, which makes algorithm design and code optimization for GPUs a complex and very important task in high-performance computing.
 
+\section{Summary}\label{sec:code-optimization-summary}
 
-\section{Optimization techniques}\label{sec:optimization-techniques}
+We have outlined the most relevant hardware features of modern multi-core CPUs and GPU accelerators that impact the performance of numerical computations based on memory access patterns. The differences in performance between optimized and unoptimized code can be orders of magnitude due to factors such as differences of bandwidth and latency of different memory levels, synchronization overheads, and the ability to utilize SIMD instructions or distribute the workload across multiple processing units (ranging from individual cores to different nodes in a computation cluster).
+The amount of different factors and their complex interactions (which are further complicated by differences between various system architectures) call for ways to separate the concerns of algorithm design and code optimization --- in the next chapter, we outline different approaches to this problem.
 
-The most common code optimization techniques used in computation kernels appearing in high-performance computing can be broadly categorized into data locality optimizations and applying parallelization strategies (including vectorization). These techniques are often complementary and offer significant performance improvements on modern hardware architectures.
+% \section{Optimization techniques}\label{sec:optimization-techniques}
 
-
-\subsection{Data locality optimizations}\label{sec:data-locality-optimizations}
-
-Data locality optimizations aim to improve the efficiency of memory accesses by enhancing spatial and temporal locality. They are crucial for reducing cache misses and other communication overheads, and typically involve restructuring data layouts and loop structures to ensure that accesses to the same or nearby memory locations occur closely in time and space.
-In the context of GPU computing, coalesced memory accesses and bank conflicts are also important considerations for data locality, whereas in distributed systems, minimizing communication overheads between nodes is a key aspect.
+% The most common code optimization techniques used in computation kernels appearing in high-performance computing can be broadly categorized into data locality optimizations and applying parallelization strategies (including vectorization). These techniques are often complementary and offer significant performance improvements on modern hardware architectures.
 
 
-\subsubsection{Loop transformations}\label{sec:loop-transformations}
+% \subsection{Data locality optimizations}\label{sec:data-locality-optimizations}
 
-Loop transformations are the most powerful techniques for improving data locality, as well as enabling vectorization and parallelization. Common loop transformations include loop interchange, loop fusion, loop fission, loop unrolling, loop tiling (blocking), and loop skewing~\cite{allen2001optimizing,bacon1994compiler,wolfe1989more}. These transformations can significantly enhance the performance of nested loops by changing the order of memory accesses while ensuring that any data dependencies between them are preserved.
-
-
-\subsubsection{Memory layout optimizations}\label{sec:memory-layout-optimizations}
-
-Memory layout optimizations involve changing the organization of data structures in memory to improve access patterns. Common techniques include array of structures (AoS) to structure of arrays (SoA) transformations (or, more generally, transposing multidimensional arrays according to a permutation of the dimensions), inserting padding to avoid cache-line or bank conflicts, and aligning data to cache-line boundaries to improve memory latencies. More advanced techniques include data blocking, tiling, and bit-packing for compact data representations~\cite{allen2001optimizing,drepper2007every}.
+% Data locality optimizations aim to improve the efficiency of memory accesses by enhancing spatial and temporal locality. They are crucial for reducing cache misses and other communication overheads, and typically involve restructuring data layouts and loop structures to ensure that accesses to the same or nearby memory locations occur closely in time and space. In the context of GPU computing, coalesced memory accesses and bank conflicts are also important considerations for data locality, whereas in distributed systems, minimizing communication overheads between nodes is a key aspect.
 
 
-\subsection{Parallelization}\label{sec:parallelization}
+% \subsubsection{Loop transformations}\label{sec:loop-transformations}
 
-Parallelization techniques are complementary to data locality optimizations. They involve decomposing computations into multiple tasks that can be executed concurrently on multiple processing units, such as CPU cores, GPU threads, or distributed nodes (possibly with communication and synchronization). Common parallelization strategies include data parallelism, task parallelism, and pipeline parallelism.
-
-These strategies require careful consideration of data dependencies and synchronization mechanisms to ensure correct and efficient execution. Architectures such as GPUs provide efficient synchronization and communication primitives, further increasing the complexity of parallelization via GPU threads (GPU acceleration).
-
-Data parallelism is often the most straightforward approach for numerical computations on arrays, where the same operation is applied to different elements of an array concurrently. Task parallelism involves decomposing a computation into distinct tasks that can be executed in parallel. Pipeline parallelism involves breaking a computation into stages that can be executed concurrently, with data flowing between stages in a producer-consumer fashion.
-
-Parallelization leads to significant performance improvements by splitting the workload across multiple processing units, but it also introduces challenges such as load balancing, minimizing synchronization overheads, and avoiding contention between threads accessing shared data. In GPU computing, achieving high occupancy and efficient memory access patterns is crucial for maximizing the benefits of parallelization. This often requires an ability to adjust how the data is structured and accessed to enable efficient parallel execution and resource utilization
+% Loop transformations are the most powerful techniques for improving data locality, as well as enabling vectorization and parallelization. Common loop transformations include loop interchange, loop fusion, loop fission, loop unrolling, loop tiling (blocking), and loop skewing~\cite{allen2001optimizing,bacon1994compiler,wolfe1989more}. These transformations can significantly enhance the performance of nested loops by changing the order of memory accesses while ensuring that any data dependencies between them are preserved.
 
 
-\subsubsection{Vectorization}\label{sec:vectorization}
+% \subsubsection{Memory layout optimizations}\label{sec:memory-layout-optimizations}
 
-Vectorization techniques aim to exploit the SIMD (Single Instruction, Multiple Data) capabilities of modern processors --- using vector registers and instructions to perform the same operation on multiple data elements simultaneously. These are mostly relevant for CPU architectures: even on consumer-grade CPUs, SIMD instructions can operate on 256-bit or 512-bit wide vector registers, which allows for processing 8 or 16 single-precision floating-point numbers simultaneously, respectively. On GPUs, support for vectorized instructions is quite limited, generally limited to sub-word data types (e.g., 8-bit or 16-bit integers) and not available for floating-point data types. However, GPU accelerators provide similar specialized hardware features such as tensor cores that serve a similar purpose for accelerating matrix operations.
+% Memory layout optimizations involve changing the organization of data structures in memory to improve access patterns. Common techniques include array of structures (AoS) to structure of arrays (SoA) transformations (or, more generally, transposing multidimensional arrays according to a permutation of the dimensions), inserting padding to avoid cache-line or bank conflicts, and aligning data to cache-line boundaries to improve memory latencies. More advanced techniques include data blocking, tiling, and bit-packing for compact data representations~\cite{allen2001optimizing,drepper2007every}.
 
-Vectorization techniques involve restructuring loops and data layouts to enable either implicit vectorization by the compiler or explicit vectorization using intrinsic functions or assembly code. Vectorization typically requires that data is properly aligned and accessed contiguously so that, in an unrolled loop, multiple data elements can be processed simultaneously using vector registers and instructions.
 
-% \section{Formalizing data layouts and access patterns}\label{sec:formalizing-data-layouts-and-access-patterns}
+% \subsection{Parallelization}\label{sec:parallelization}
 
-% % we want to keep this section relatively high-level and general --- not specific to polyhedral model or any other particular framework.
+% Parallelization techniques are complementary to data locality optimizations. They involve decomposing computations into multiple tasks that can be executed concurrently on multiple processing units, such as CPU cores, GPU threads, or distributed nodes (possibly with communication and synchronization). Common parallelization strategies include data parallelism, task parallelism, and pipeline parallelism.
 
-% To formalize the discussion of data layout and access pattern optimizations, we define a \emph{data layout} as the mapping of multi-dimensional indices to offsets in linear memory space ($\mathbb{N}^n \to \mathbb{N}$). \Cref{fig:row-major,fig:column-major} show two common examples of data layouts for a 2D array: row-major and column-major layouts, given by the mappings $(i, j) \mapsto i \cdot N + j$ and $(i, j) \mapsto j \cdot M + i$, respectively, where $M$ and $N$ are the dimensions of the array. This formalism is chosen to be consistent, among others, with the polyhedral model~\cite{feautrier1992some} and our work~\cite{klepl2024abstractions}.
+% These strategies require careful consideration of data dependencies and synchronization mechanisms to ensure correct and efficient execution. Architectures such as GPUs provide efficient synchronization and communication primitives, further increasing the complexity of parallelization via GPU threads (GPU acceleration).
 
-% \begin{figure}[ht]
-%   \centering
-%   \begin{subfigure}{.3\linewidth}
-%     \centering
-%     \includegraphics[width=.9\linewidth]{img/row-major.eps}
-%     \caption{Row-major layout}%
-%     \label{fig:row-major}
-%   \end{subfigure}%
-%   \hfill%
-%   \begin{subfigure}{.3\linewidth}
-%     \centering
-%     \includegraphics[width=.9\linewidth]{img/column-major.eps}
-%     \caption{Column-major layout}%
-%     \label{fig:column-major}
-%   \end{subfigure}%
-%   \hfill%
-%   \begin{subfigure}{.3\linewidth}
-%     \centering
-%     \includegraphics[width=.9\linewidth]{img/tiled.eps}
-%     \caption{Tiled layout}%
-%     \label{fig:tiled}
-%   \end{subfigure}%
-%   \caption{Examples of different data layouts for a 2D array.}%
-%   \label{fig:data-layouts}
-% \end{figure}
+% Data parallelism is often the most straightforward approach for numerical computations on arrays, where the same operation is applied to different elements of an array concurrently. Task parallelism involves decomposing a computation into distinct tasks that can be executed in parallel. Pipeline parallelism involves breaking a computation into stages that can be executed concurrently, with data flowing between stages in a producer-consumer fashion.
 
-% Usually, the domain of the mapping corresponds to the shape of a multi-dimensional array (e.g., for a 2D array of shape $M \times N$, the function domain is $\{0, \ldots, M-1\} \times \{0, \ldots, N-1\}$) --- exceptions include ragged arrays or other irregular data structures (which may be as simple as tuples of differently-sized arrays). The result of the mapping for any given multi-dimensional index in the domain is the linear offset (in number of elements or in bytes) from the start of the memory space (e.g., a pointer to the start of an array).
+% Parallelization leads to significant performance improvements by splitting the workload across multiple processing units, but it also introduces challenges such as load balancing, minimizing synchronization overheads, and avoiding contention between threads accessing shared data. In GPU computing, achieving high occupancy and efficient memory access patterns is crucial for maximizing the benefits of parallelization. This often requires an ability to adjust how the data is structured and accessed to enable efficient parallel execution and resource utilization
 
-% A \emph{layout transformation} is a change of the data layout, representable as a function $\mathbb{N}^m \to \mathbb{N}^n$ that maps indices in the new layout to indices in the old layout (composition of the two functions gives the new layout), accompanied by a corresponding change in the function domain. Some transformations may restrict the range of available indices (e.g., slicing) or expand them (e.g., cyclic mapping using the modulo operation). The vast majority of commonly used layouts and transformations are bijections as well as affine functions (i.e., linear functions with an added constant term).
 
-% \Cref{fig:tiled} shows an example of a tiled (blocked) layout, which can be represented as a composition of a column-major layout and a transformation that splits each dimension into two new dimensions (outer and inner tile): $(I, J, i, j) \mapsto (I \cdot T + i, J \cdot T + j)$, where $T$ is the tile size. If we consider only bijective transformations, we can also represent the transformation as a mapping from the old layout to the new layout (i.e., the inverse of the previous mapping): $(i, j) \mapsto (i / T, j / T, i \mod T, j \mod T)$, which is more intuitive and allows for determining the domain of the new layout more easily.
+% \subsubsection{Vectorization}\label{sec:vectorization}
 
-% An \emph{iteration order} (or, more generally, a \emph{schedule} of statements\footnote{Each statement comprises a computation on some data and an assignment, parametrized by some iteration variables and external (program) parameters.}) is the order in which elements of a multi-dimensional data structure are accessed during computation. It can be represented as $\mathbb{N}^n \to \mathbb{N}$, mapping the iteration space to a linear order of execution. An alternative, commonly used representation of a schedule is a mapping $\mathbb{N}^n \to \mathbb{N}^m$ to a multi-dimensional time space, where the lexicographical order of the time space defines the execution order of statements.
+% Vectorization techniques aim to exploit the SIMD (Single Instruction, Multiple Data) capabilities of modern processors --- using vector registers and instructions to perform the same operation on multiple data elements simultaneously. These are mostly relevant for CPU architectures: even on consumer-grade CPUs, SIMD instructions can operate on 256-bit or 512-bit wide vector registers, which allows for processing 8 or 16 single-precision floating-point numbers simultaneously, respectively. On GPUs, support for vectorized instructions is quite limited, generally limited to sub-word data types (e.g., 8-bit or 16-bit integers) and not available for floating-point data types. However, GPU accelerators provide similar specialized hardware features such as tensor cores that serve a similar purpose for accelerating matrix operations.
 
-% A simple schedule representing the sequential execution order of statements can be defined systematically by introducing a new dimension whenever there are multiple loops or statements running in sequence in the given nesting level and another dimension for each nested loop level. Any such mapping can be zero-padded so the dimensionality of all schedules for all statements and loops in the program is the same. For~\cref{lst:example}, such a schedule $\theta$ for each statement S, T, and U can be defined as $\theta_S : (i, j) \mapsto (i, 0, j, 0)$, $\theta_T : (i, j) \mapsto (i, 0, j, 1)$, and $\theta_U : (i) \mapsto (i, 1, 0, 0)$, respectively; where the first dimension corresponds to the outer loop over $i$, the second dimension corresponds to the sequence of statements/loops in the $i$ loop, the third dimension corresponds to the inner loop over $j$, and the fourth dimension corresponds to the sequence of statements/loops in the $j$ loop. Note that this schedule construction is just one of many possible ways to define a schedule that represents the sequential computation order of the given code.
+% Vectorization techniques involve restructuring loops and data layouts to enable either implicit vectorization by the compiler or explicit vectorization using intrinsic functions or assembly code. Vectorization typically requires that data is properly aligned and accessed contiguously so that, in an unrolled loop, multiple data elements can be processed simultaneously using vector registers and instructions.
 
-% \begin{lstlisting}[language=C++, caption={Example of a simple nested loop accessing two 2D arrays and one 1D array.}, label={lst:example}]
-% for (int i = 0; i < M; ++i) {
-%   // 0th statement/loop in i loop
-%   for (int j = 0; j < N; ++j) {
-%     // 0th statement/loop in j loop
-%     S: A[i][j] = i * N + j;
-%     // 1st statement/loop in j loop
-%     T: B[i][j] = A[i][j] * 2;
-%   }
-%   // 1st statement/loop in i loop
-%   U: C[i] = A[i][0] + B[i][0];
-% }
-% \end{lstlisting}
+% % \section{Formalizing data layouts and access patterns}\label{sec:formalizing-data-layouts-and-access-patterns}
 
-% Generally, unless the optimization agent (compiler, autotuner, or programmer) can infer further invariants or identities, the semantics of any optimized schedule must be equivalent to this sequential schedule. Typically, the schedule of a serial execution is required to be totally ordered, meaning that any two statements must have a defined order of execution. This might not be strictly necessary, but cost models, for example, might determine different performance characteristics for different total orders of statements even if they are semantically equivalent (e.g., due to caching effects).
+% % % we want to keep this section relatively high-level and general --- not specific to polyhedral model or any other particular framework.
 
-% On thusly defined schedules, a loop interchange can be represented as a permutation of the schedule dimensions, and loop tiling (blocking) as a mapping that splits a dimension into two dimensions (outer and inner tile), as shown in the example of tiled layout in~\cref{fig:tiled}. Our work performs such transformations on both data layouts and iteration orders by encoding them as partial functions over spaces of named dimensions resolved at compile time using \cpp template meta-programming techniques.
+% % To formalize the discussion of data layout and access pattern optimizations, we define a \emph{data layout} as the mapping of multi-dimensional indices to offsets in linear memory space ($\mathbb{N}^n \to \mathbb{N}$). \Cref{fig:row-major,fig:column-major} show two common examples of data layouts for a 2D array: row-major and column-major layouts, given by the mappings $(i, j) \mapsto i \cdot N + j$ and $(i, j) \mapsto j \cdot M + i$, respectively, where $M$ and $N$ are the dimensions of the array. This formalism is chosen to be consistent, among others, with the polyhedral model~\cite{feautrier1992some} and our work~\cite{klepl2024abstractions}.
 
-% Parallelization can be, for example, represented by adding new dimensions to the schedule that correspond to parallel execution units (e.g., thread blocks and threads on GPUs, or CPU threads) or, more na\"{\i}vely, by allowing multiple statements to share the same time coordinate in the schedule (i.e., executing them simultaneously).
+% % \begin{figure}[ht]
+% %   \centering
+% %   \begin{subfigure}{.3\linewidth}
+% %     \centering
+% %     \includegraphics[width=.9\linewidth]{img/row-major.eps}
+% %     \caption{Row-major layout}%
+% %     \label{fig:row-major}
+% %   \end{subfigure}%
+% %   \hfill%
+% %   \begin{subfigure}{.3\linewidth}
+% %     \centering
+% %     \includegraphics[width=.9\linewidth]{img/column-major.eps}
+% %     \caption{Column-major layout}%
+% %     \label{fig:column-major}
+% %   \end{subfigure}%
+% %   \hfill%
+% %   \begin{subfigure}{.3\linewidth}
+% %     \centering
+% %     \includegraphics[width=.9\linewidth]{img/tiled.eps}
+% %     \caption{Tiled layout}%
+% %     \label{fig:tiled}
+% %   \end{subfigure}%
+% %   \caption{Examples of different data layouts for a 2D array.}%
+% %   \label{fig:data-layouts}
+% % \end{figure}
 
-% To put formal constraints on valid schedule transformations, methods such as the polyhedral model~\cite{feautrier1992some,bondhugula2008pluto,verdoolaege2010isl} determine \emph{data dependencies} from the sequential schedule. A data dependency is a relation over statements, parametrized by their respective iteration variables, that arises whenever two statements access the same memory location at different times and at least one of the accesses is a write. The dependencies form a directed acyclic graph (DAG) between statements, equivalently describing inequalities on their schedule coordinates. The topological order of this DAG must be preserved by any valid schedule transformation.
+% % Usually, the domain of the mapping corresponds to the shape of a multi-dimensional array (e.g., for a 2D array of shape $M \times N$, the function domain is $\{0, \ldots, M-1\} \times \{0, \ldots, N-1\}$) --- exceptions include ragged arrays or other irregular data structures (which may be as simple as tuples of differently-sized arrays). The result of the mapping for any given multi-dimensional index in the domain is the linear offset (in number of elements or in bytes) from the start of the memory space (e.g., a pointer to the start of an array).
 
-% For~\cref{lst:example}, the data dependencies can be summarized as follows: $\theta_S(i, j) < \theta_T(i, j)$ for all $i, j$ (since $T$ reads from $A$ written by $S$), and $\theta_S(i, 0) < \theta_U(i)$ and $\theta_T(i, 0) < \theta_U(i)$ for all $i$ (since $U$ reads from $A$ and $B$ written by $S$ and $T$, respectively).
+% % A \emph{layout transformation} is a change of the data layout, representable as a function $\mathbb{N}^m \to \mathbb{N}^n$ that maps indices in the new layout to indices in the old layout (composition of the two functions gives the new layout), accompanied by a corresponding change in the function domain. Some transformations may restrict the range of available indices (e.g., slicing) or expand them (e.g., cyclic mapping using the modulo operation). The vast majority of commonly used layouts and transformations are bijections as well as affine functions (i.e., linear functions with an added constant term).
 
-% Most frameworks and optimization methods based on the polyhedral model and abstractions define these mappings as affine functions (i.e., linear functions with an added constant term). For the data layouts, the mapping can be efficiently represented using strides and an origin offset (e.g., a pointer to the first element) and the transformations can be represented as a simple matrix multiplication plus an offset addition. Affine transformations of schedules offer a powerful way to apply loop transformations such as interchange, skewing, tiling, and fusion in a mathematically rigorous manner, as many programs in high-performance computing exhibit affine access patterns in their loops --- which is why it is commonly used in various optimization frameworks and abstractions~\cite{bondhugula2008pluto,grosser2012polly,baghdadi2019tiramisu,ragan2013halide}.
+% % \Cref{fig:tiled} shows an example of a tiled (blocked) layout, which can be represented as a composition of a column-major layout and a transformation that splits each dimension into two new dimensions (outer and inner tile): $(I, J, i, j) \mapsto (I \cdot T + i, J \cdot T + j)$, where $T$ is the tile size. If we consider only bijective transformations, we can also represent the transformation as a mapping from the old layout to the new layout (i.e., the inverse of the previous mapping): $(i, j) \mapsto (i / T, j / T, i \mod T, j \mod T)$, which is more intuitive and allows for determining the domain of the new layout more easily.
+
+% % An \emph{iteration order} (or, more generally, a \emph{schedule} of statements\footnote{Each statement comprises a computation on some data and an assignment, parametrized by some iteration variables and external (program) parameters.}) is the order in which elements of a multi-dimensional data structure are accessed during computation. It can be represented as $\mathbb{N}^n \to \mathbb{N}$, mapping the iteration space to a linear order of execution. An alternative, commonly used representation of a schedule is a mapping $\mathbb{N}^n \to \mathbb{N}^m$ to a multi-dimensional time space, where the lexicographical order of the time space defines the execution order of statements.
+
+% % A simple schedule representing the sequential execution order of statements can be defined systematically by introducing a new dimension whenever there are multiple loops or statements running in sequence in the given nesting level and another dimension for each nested loop level. Any such mapping can be zero-padded so the dimensionality of all schedules for all statements and loops in the program is the same. For~\cref{lst:example}, such a schedule $\theta$ for each statement S, T, and U can be defined as $\theta_S : (i, j) \mapsto (i, 0, j, 0)$, $\theta_T : (i, j) \mapsto (i, 0, j, 1)$, and $\theta_U : (i) \mapsto (i, 1, 0, 0)$, respectively; where the first dimension corresponds to the outer loop over $i$, the second dimension corresponds to the sequence of statements/loops in the $i$ loop, the third dimension corresponds to the inner loop over $j$, and the fourth dimension corresponds to the sequence of statements/loops in the $j$ loop. Note that this schedule construction is just one of many possible ways to define a schedule that represents the sequential computation order of the given code.
+
+% % \begin{lstlisting}[language=C++, caption={Example of a simple nested loop accessing two 2D arrays and one 1D array.}, label={lst:example}]
+% % for (int i = 0; i < M; ++i) {
+% %   // 0th statement/loop in i loop
+% %   for (int j = 0; j < N; ++j) {
+% %     // 0th statement/loop in j loop
+% %     S: A[i][j] = i * N + j;
+% %     // 1st statement/loop in j loop
+% %     T: B[i][j] = A[i][j] * 2;
+% %   }
+% %   // 1st statement/loop in i loop
+% %   U: C[i] = A[i][0] + B[i][0];
+% % }
+% % \end{lstlisting}
+
+% % Generally, unless the optimization agent (compiler, autotuner, or programmer) can infer further invariants or identities, the semantics of any optimized schedule must be equivalent to this sequential schedule. Typically, the schedule of a serial execution is required to be totally ordered, meaning that any two statements must have a defined order of execution. This might not be strictly necessary, but cost models, for example, might determine different performance characteristics for different total orders of statements even if they are semantically equivalent (e.g., due to caching effects).
+
+% % On thusly defined schedules, a loop interchange can be represented as a permutation of the schedule dimensions, and loop tiling (blocking) as a mapping that splits a dimension into two dimensions (outer and inner tile), as shown in the example of tiled layout in~\cref{fig:tiled}. Our work performs such transformations on both data layouts and iteration orders by encoding them as partial functions over spaces of named dimensions resolved at compile time using \cpp template meta-programming techniques.
+
+% % Parallelization can be, for example, represented by adding new dimensions to the schedule that correspond to parallel execution units (e.g., thread blocks and threads on GPUs, or CPU threads) or, more na\"{\i}vely, by allowing multiple statements to share the same time coordinate in the schedule (i.e., executing them simultaneously).
+
+% % To put formal constraints on valid schedule transformations, methods such as the polyhedral model~\cite{feautrier1992some,bondhugula2008pluto,verdoolaege2010isl} determine \emph{data dependencies} from the sequential schedule. A data dependency is a relation over statements, parametrized by their respective iteration variables, that arises whenever two statements access the same memory location at different times and at least one of the accesses is a write. The dependencies form a directed acyclic graph (DAG) between statements, equivalently describing inequalities on their schedule coordinates. The topological order of this DAG must be preserved by any valid schedule transformation.
+
+% % For~\cref{lst:example}, the data dependencies can be summarized as follows: $\theta_S(i, j) < \theta_T(i, j)$ for all $i, j$ (since $T$ reads from $A$ written by $S$), and $\theta_S(i, 0) < \theta_U(i)$ and $\theta_T(i, 0) < \theta_U(i)$ for all $i$ (since $U$ reads from $A$ and $B$ written by $S$ and $T$, respectively).
+
+% % Most frameworks and optimization methods based on the polyhedral model and abstractions define these mappings as affine functions (i.e., linear functions with an added constant term). For the data layouts, the mapping can be efficiently represented using strides and an origin offset (e.g., a pointer to the first element) and the transformations can be represented as a simple matrix multiplication plus an offset addition. Affine transformations of schedules offer a powerful way to apply loop transformations such as interchange, skewing, tiling, and fusion in a mathematically rigorous manner, as many programs in high-performance computing exhibit affine access patterns in their loops --- which is why it is commonly used in various optimization frameworks and abstractions~\cite{bondhugula2008pluto,grosser2012polly,baghdadi2019tiramisu,ragan2013halide}.

@@ -31,3 +31,6 @@ thesis-archive.tar.gz
 *-eps-converted-to.pdf
 *.vrb
 *.xmpdata
+
+/dist
+%OUTDIR%/

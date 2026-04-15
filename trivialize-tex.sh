@@ -10,7 +10,8 @@ if ! [ -z "${1:-}" ]; then
 else
     cat
 fi |
-perl -pe 's/(?<!\\)%.*$//g' |  # remove comments, but not escaped ones
+perl -pe 's/(?<!\\)%.*(\n|$)//g' |  # remove comments, but not escaped ones, and the newline after the comment
+perl -pe 's/(?<=\w)\s*\n/ /g' |  # remove newlines between words (but not between paragraphs)
 sed 's/\$k\$NN/kNN/g' |
 sed 's/top-\$k\$/top-k/g' |
 sed 's/na\\"i/naï/g' |
@@ -26,6 +27,8 @@ sed 's/\\Large\b//g' |
 sed 's/\\LARGE\b//g' |
 sed 's/\\huge\b//g' |
 sed 's/\\Huge\b//g' |
+sed 's/\\centering\b//g' |
+sed 's/\\includegraphics\(\[[^]]*\]\)\?{[^}]*}//g' |
 sed 's/\\label{[^}]*}//g' |
 sed 's/~\?\\cite{[^}]*}//g' |
 sed 's/~/ /g' |
@@ -42,6 +45,7 @@ sed 's/\\%/%/g' |
 sed 's/\\lVert\b/|/g' |
 sed 's/\\rVert\b/|/g' |
 sed 's/\\item\b/- /g' |
+sed 's/\\lstinline\[[^]]*\]/\\lstinline/g' |
 sed 's/\\cdot\b/·/g' |
 sed 's/\\left\b//g' |
 sed 's/\\right\b//g' |

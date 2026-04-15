@@ -1,1 +1,24 @@
 \chapwithtoc{Introduction}
+
+Code optimization is a fundamental aspect of software development required to run applications efficiently on modern systems. In the domain of scientific and numerical computations, careful choice of data memory layouts and traversal orders in algorithms can lead to orders of magnitude improvements in execution time, runtime resources utilization, and energy efficiency.
+
+Two most significant factors that contribute to data layout and traversal orders playing a crucial role in performance are memory accesses and data dependencies. A memory accesses (reads and writes) may be subject to different latencies and bandwidths depending on the order in which they are performed --- for example, the vast majority of architectures employ caches to improve the performance of frequent memory accesses to the same or nearby memory locations; similarly, many architectures have specialized units for operating on data that are stored in sequential memory locations.
+\xxx{On modern systems, there are many different hardware features that influence the performance based on the memory access patterns in a program.}
+
+\xxx{An example}
+
+% While there are many formal approaches to code optimization in code compilation toolchains, ...
+While tools such as compilers can perform many optimizations automatically, optimal performance often requires specific data layouts and traversal orders that may not be discoverable by compilers due to many factors such as difficulties in proving semantic equivalence of transformations, intricacies of the effects of transformations on performance, and the number of possible transformations and their combinations.
+
+Many frameworks and tools such as polyhedral model-based optimizers, autotuning frameworks, and domain-specific languages for various areas of scientific computing have been developed to help design and optimize applications to different hardware architectures. \xxx{Then, what is the problem?}
+
+Our contributions lie in two complementary approaches to help with data layout and traversal optimization: \xxx{some micro-summary of shared goals, features, and benefits}
+
+\begin{itemize}
+  \item \xxx{We have explored the} design of flexible abstractions that separate the algorithmic logic of applications from the data layout and traversal optimizations.
+  \begin{itemize}
+    \item One branch, \xxx{targeting} general scientific computing, of these abstractions is based on layout-agnosticism, which separates the logical (semantic) structure of data (its dimensions and their relationships, sometimes called the \emph{shape}) from the physical structure of data in memory (where each individual element is located).
+    \item The other branch, \xxx{targeting} the domain of stencil computations, of these abstractions is based on \xxx{component-based} design, which strictly separates different aspects of a computation (algorithmic logic, data layout, traversal order, parallelization strategy, etc.) into separate components that can be independently designed and optimized.
+  \end{itemize}
+  \item \xxx{We have explored the} potential of Large Language Models (LLMs) to assist with code optimization in the domain of scientific computing.
+\end{itemize}

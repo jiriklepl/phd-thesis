@@ -31,6 +31,7 @@ thesis-archive.tar.gz
 *-eps-converted-to.pdf
 *.vrb
 *.xmpdata
+*-SAVE-ERROR
 
 /dist
 %OUTDIR%/

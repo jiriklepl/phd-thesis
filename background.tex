@@ -16,10 +16,6 @@
 % We should at least imply some research questions here\dots
 % \end{XXX}
 
-\begin{XXX}
-There is some lost progress that I will have to recover from Martin's printed version.
-\end{XXX}
-
 Code optimization is a \xxx{bane} of existence of many software developers, especially those working on high-performance computing applications. Our particular focus lies within the domain of scientific computing \xxx{and general numerical computing}, where performance optimizations can bring orders of magnitude improvements in execution time, runtime resources utilization, and energy efficiency.
 \xxx{With the advent of Large Language Models (LLMs) and their increasing use, code optimization of numerical computing applications is becoming even more important for their efficient execution.}
 
@@ -40,9 +36,20 @@ for (int i = 0; i < M; ++i) {
 
 A simple optimization to this code is to change split each of the three loops into two nested loops, and reorder them so that the innermost loop iterates over small blocks of the input matrices that fit within the cache of the running hardware. This optimization is known as tiling or blocking, and by itself can bring significant performance improvements. A different optimization technique is parallelization, which can be achieved by recognizing that the computation of each \lstinline{C[i][j]} is independent of the others --- on a system equipped with Graphical Processing Units (GPUs) with thousands of cores, we can compute each \lstinline{C[i][j]} in a separate thread, which can lead to orders of magnitude improvements in performance.
 
-Ideally, we would like to be able to experiment with many different optimizations combining various data layout and traversal order transformations and parallelization strategies, and find the best combination for a given application and hardware architecture. We \xxx{have achieved greatness} by developing flexible abstractions for data layout and traversals that allow developers to experiment with the aforementioned optimizations without needing to change the core algorithmic logic, and by exploring the potential of LLMs to assist with code optimization \xxx{some continuation here\dots}.
+Ideally, we would like to be able to experiment with even more different optimization techniques combining various data layout and traversal order transformations and parallelization strategies, and find the best combination for a given application and hardware architecture.
+This has been the topic of many different works that develop automatic tools for code optimization, abstractions for user-guided optimization, or a combination of these two approaches.
 
-% TODO: odkryt vraha uz tady
+We have made contributions to developing flexible abstractions for data layout and traversals that allow developers to experiment with the aforementioned optimizations without needing to change the core algorithmic logic. The novelty of our work lies within exploring functional approach to expressing both layouts and traversal as composable mappings from iteration space to physical space that allow for layout-agnostic and traversal-agnostic algorithm development that allows for changing the data layouts and traversal orders within algorithms without necessitating rewrites to the algorithmic logic. The approach in our work makes the definitions fully transparent to the interpreter (compiler), which allows for analyzing specific structural characteristics of the layouts and traversals. Our approach also unifies how layout and traversal transformations are expressed, which provides a functional-style alternative to more traditional approaches that use integer polyhedra.
+
+Our more recent contributions that explore LLM-directed code optimization
+and implications of combining their use with different layout and traversal abstractions. This is still a very new field of research with numerous open questions. LLM-directed code optimization shows remarkable results in many aspects of code optimization from code analysis to code generation, but given the stochastic and unpredictable nature of LLMs, their adoption is quite slow. Our contributions study questions that are important to find how to best use the LLMs to mitigate these issues.
+
+% In Chapter 1, we outline various hardware considerations for performance differences depending on different memory access patterns, and different parallelism
+% options. Chapter 2 then outlines the most prominent methods for automatic and
+% user-guided optimization of data layouts and traversals. In Chapters 3 and 4, we
+% present our contributions in the area of abstractions that enable users to conveniently choose the appropriate layouts and traversals without encoding those
+% choices in the algorithmic logic definition. Chapter 5 presents our work on combining these abstractions with autotuning for automatizing experimental code optimization. In Chapter 6, we discuss our contributions to LLM-directed code
+% optimizations.
 
 \section{Code optimization considerations}\label{chap:code-optimization}
 

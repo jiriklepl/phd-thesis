@@ -16,23 +16,52 @@
 % We should at least imply some research questions here\dots
 % \end{XXX}
 
-Code optimization is a \xxx{bane} of existence of many software developers, especially those working on high-performance computing applications. Our particular focus lies within the domain of scientific computing \xxx{and general numerical computing}, where performance optimizations can bring orders of magnitude improvements in execution time, runtime resources utilization, and energy efficiency.
-\xxx{With the advent of Large Language Models (LLMs) and their increasing use, code optimization of numerical computing applications is becoming even more important for their efficient execution.}
+% TODO: consider adding bits from the following text to the introduction
+% Code optimization is a \xxx{bane} of existence of many software developers, especially those working on high-performance computing applications. Our particular focus lies within the domain of scientific computing \xxx{and general numerical computing}, where performance optimizations can bring orders of magnitude improvements in execution time, runtime resources utilization, and energy efficiency.
+% \xxx{With the advent of Large Language Models (LLMs) and their increasing use, code optimization of numerical computing applications is becoming even more important for their efficient execution.}
 
-\xxx{These} computations run on a wide variety of hardware architectures, including clusters of multi-core CPUs and GPUs. Such systems are complex in terms of memory hierarchies, communication bandwidths and latencies, parallelism capabilities, and many other factors that can affect the performance of applications. Finding the right optimizations for a given application and hardware architecture is a challenging task; our work is particularly focused on optimizing data layouts and traversal orders, which alone can have a significant impact on performance. Consider a simple example of a matrix multiplication operation in \cref{lst:matrix-multiplication}, which is a fundamental building block in many scientific computing applications.
-When running this code on a modern hardware, the performance of the algorithm is \xxx{degraded} due to iterating over whole rows and columns of the input matrices in the innermost loop, which results in inefficient use of the memory hierarchy. The rows and columns of the input matrices do not fit within the cache of the running hardware, so they have to be loaded repeatedly from the main memory of the machine.
+% \xxx{These} computations run on a wide variety of hardware architectures, including clusters of multi-core CPUs and GPUs. Such systems are complex in terms of memory hierarchies, communication bandwidths and latencies, parallelism capabilities, and many other factors that can affect the performance of applications. Finding the right optimizations for a given application and hardware architecture is a challenging task; our work is particularly focused on optimizing data layouts and traversal orders, which alone can have a significant impact on performance. Consider a simple example of a matrix multiplication operation in \cref{lst:matrix-multiplication}, which is a fundamental building block in many scientific computing applications.
+% When running this code on a modern hardware, the performance of the algorithm is \xxx{degraded} due to iterating over whole rows and columns of the input matrices in the innermost loop, which results in inefficient use of the memory hierarchy. The rows and columns of the input matrices do not fit within the cache of the running hardware, so they have to be loaded repeatedly from the main memory of the machine.
+
+\begin{XXX}
+  Introduction to the background chapter.
+
+  Motivation.
+\end{XXX}
+
+We target two main architectures used in high-performance computing: multi-core CPUs and GPU accelerators. Their shared characteristic is that they support general-purpose programming (unlike, for example, field-programmable gate arrays (FPGAs) or application-specific integrated circuits (ASICs)). The main difference between them is that CPUs are mainly built for serial processing (possibly in multi-threaded scenarios), while GPUs are optimized for massively data-parallel workloads, running thousands of threads concurrently.
+
+
+
+To motivate the importance of transforming data layouts and traversals in code optimization, we will show tiling: a simple optimization technique that improves the efficiency of memory accesses.
+Let us consider a simple example of a matrix multiplication operation in \cref{lst:matrix-multiplication}, which is a fundamental building block in many scientific computing applications. It computes $i \times j$ dot products of rows of $A$ and columns of $B$ to produce the output matrix $C$:
+$$C_{ij} = \sum\limits_{k=0}^{K-1} A_{ik} \cdot B_{kj}$$
+where $A$, $B$, and $C$ are matrices of dimensions $M \times K$, $K \times N$, and $M \times N$, respectively; all stored in row-major order (elements of one row of the matrix are stored in contiguous memory).
 
 \begin{lstlisting}[language=C++, caption={Matrix multiplication}, label={lst:matrix-multiplication}]
-float C[M][N], A[M][K], B[K][N];
+float C[M][N]; // M rows, N columns
+float A[M][K]; // M rows, K columns
+float B[K][N]; // K rows, N columns
+
+// iterating over output matrix C
 for (int i = 0; i < M; ++i) {
     for (int j = 0; j < N; ++j) {
-        C[i][j] = 0;
+        // single dot product
+        float sum = 0;
         for (int k = 0; k < K; ++k) {
-            C[i][j] += A[i][k] * B[k][j];
+            sum += A[i][k] * B[k][j];
         }
+        C[i][j] = sum;
     }
 }
 \end{lstlisting}
+
+For simplicity, let us assume that the architecture executing the algorithm can hold $512$ values from the input matrices in its cache for faster accesses and that all accesses to cached values (cache hits) are negligible in terms of latency compared to accesses to the main memory (cache misses).
+
+If the code is executed as is, the architecture will perform inefficiently for $K \ge 256$ regardless of cache replacement policies, as it can remember the corresponding input vectors for only one $i, j$ pair at a time.
+However, if we break the multiplication into multiple multiplications of submatrices of size $16 \times 16$ (submatrices of $A$ and $B$ both fitting exactly within the cache), the number of required loads from the main memory is reduced by a factor of $16$ (since each cached value is reused in $16$ different dot products on the submatrices). This comes at the cost of performing additional $K / 16$ updates of $C[i][j]$ values, so the expected memory access improvement is not exactly $16\times$. \xxx{An illustration and the transformed code.}
+
+\xxx{Continue from here}
 
 A simple optimization to this code is to change split each of the three loops into two nested loops, and reorder them so that the innermost loop iterates over small blocks of the input matrices that fit within the cache of the running hardware. This optimization is known as tiling or blocking, and by itself can bring significant performance improvements. A different optimization technique is parallelization, which can be achieved by recognizing that the computation of each \lstinline{C[i][j]} is independent of the others --- on a system equipped with Graphical Processing Units (GPUs) with thousands of cores, we can compute each \lstinline{C[i][j]} in a separate thread, which can lead to orders of magnitude improvements in performance.
 

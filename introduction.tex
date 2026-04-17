@@ -3,9 +3,9 @@
 Code optimization is a fundamental aspect of software development required to run applications efficiently on modern systems. In the domain of scientific and numerical computations, careful choice of data memory layouts and traversal orders in algorithms can lead to orders of magnitude improvements in execution time, runtime resources utilization, and energy efficiency.
 
 Two most significant factors that contribute to data layout and traversal orders playing a crucial role in performance are memory accesses and data dependencies. A memory accesses (reads and writes) may be subject to different latencies and bandwidths depending on the order in which they are performed --- for example, the vast majority of architectures employ caches to improve the performance of frequent memory accesses to the same or nearby memory locations; similarly, many architectures have specialized units for operating on data that are stored in sequential memory locations.
-\xxx{On modern systems, there are many different hardware features that influence the performance based on the memory access patterns in a program.}
+% \xxx{On modern systems, there are many different hardware features that influence the performance based on the memory access patterns in a program.}
 
-\xxx{An example}
+\xxx{An example?}
 
 % While there are many formal approaches to code optimization in code compilation toolchains, ...
 While tools such as compilers can perform many optimizations automatically, optimal performance often requires specific data layouts and traversal orders that may not be discoverable by compilers due to many factors such as difficulties in proving semantic equivalence of transformations, intricacies of the effects of transformations on performance, and the number of possible transformations and their combinations.

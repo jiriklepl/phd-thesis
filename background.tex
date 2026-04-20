@@ -29,11 +29,11 @@
 
 Before turning to specific approaches to code optimization, we first outline the hardware features of modern high-performance systems that are most relevant to our focus on layout and traversal optimizations.
 
-We target the two main general-purpose architectures used in high-performance computing: multi-core CPUs and GPU accelerators. Both support general-purpose programming, unlike, for example, field-programmable gate arrays (FPGAs) or application-specific integrated circuits (ASICs). The main difference between them is that CPUs are primarily built for serial processing (possibly in multi-threaded scenarios), while GPUs are optimized for massively data-parallel workloads that run thousands of threads concurrently.
+We target the two main general-purpose architectures used in high-performance computing: multi-core CPUs and GPU accelerators. Both support general-purpose programming, unlike, for example, field-programmable gate arrays (FPGAs) or application-specific integrated circuits (ASICs). The main difference between them is that CPUs are primarily built for serial processing (possibly in multi-threaded scenarios), while GPUs are optimized for massively data-parallel workloads that run thousands of threads concurrently~\cite{hennessy2019computer,cuda_programming_guide}.
 
 
 
-To motivate the importance of transforming data layouts and traversals in code optimization, we use tiling as a simple optimization technique that improves the efficiency of memory accesses.
+To motivate the importance of transforming data layouts and traversals in code optimization, we use tiling as a simple optimization technique that improves the efficiency of memory accesses~\cite{allen2001optimizing}.
 Let us consider a simple example of a matrix multiplication operation in \cref{lst:matrix-multiplication}, which is a fundamental building block in many scientific computing applications. It computes $i \times j$ dot products of rows of $A$ and columns of $B$ to produce the output matrix $C$:
 \[C_{ij} = \sum\limits_{k=0}^{K-1} A_{ik} \cdot B_{kj}\]
 where $A$, $B$, and $C$ are matrices of dimensions $M \times K$, $K \times N$, and $M \times N$, respectively; all stored in row-major order (elements of one row of the matrix are stored in contiguous memory).
@@ -92,7 +92,7 @@ In \cref{lst:tiled-matrix-multiplication}, the three inner-most loops perform th
 
 A different approach to optimize the algorithm is to notice that the loops iterating $i$ and $j$ in \cref{lst:matrix-multiplication} produce distinct elements of the output matrix $C$, so they can be executed in parallel. Similarly, in \cref{lst:tiled-matrix-multiplication}, the outer two loops iterating over $iTile$ and $jTile$ can be executed in parallel on different threads so that each thread computes a different tile of the output matrix $C$ --- in such a strategy, the tile sizes can be adjusted to saturate the resource limits of the target parallel architecture.
 
-In practice, high-performance implementations often apply several layers of tiling to match multiple hardware levels, combine them with parallelization strategies such as threading or GPU offloading, and use specialized instructions where available. This quickly makes manual rewriting difficult and error-prone.
+In practice, high-performance implementations often apply several layers of tiling to match multiple hardware levels, combine them with parallelization strategies such as threading or GPU offloading, and use specialized instructions where available~\cite{allen2001optimizing,cuda_programming_guide}. This quickly makes manual rewriting difficult and error-prone.
 
 
 % \section{\xxx{General hardware considerations}}
@@ -139,11 +139,11 @@ In practice, high-performance implementations often apply several layers of tili
 
 % CPU architectures are typically optimized for serial processing, possibly in multi-threaded scenarios. They contain multiple levels of cache (L1, L2, L3) and on-chip registers to reduce the latency of memory accesses, with nontrivial cache coherency protocols and costly synchronization mechanisms.
 
-To optimize code such as \cref{lst:matrix-multiplication} for execution on a modern multi-core CPU, we can apply tiling as described above to improve locality within the hierarchical cache system; the largest gains are typically obtained in the innermost loops.
+To optimize code such as \cref{lst:matrix-multiplication} for execution on a modern multi-core CPU, we can apply tiling as described above to improve locality within the hierarchical cache system; the largest gains are typically obtained in the innermost loops~\cite{hennessy2019computer,drepper2007every}.
 
 % CPU architectures are typically optimized for serial processing, possibly in multi-threaded scenarios. They contain multiple levels of cache and on-chip registers to reduce the latency of memory accesses, which makes memory access patterns a crucial factor for performance. Improving the locality of memory accesses (both spatial and temporal) can significantly reduce accesses to higher levels of the memory hierarchy and thus improve performance.
 
-Since both consumer and server-grade CPUs typically have multiple cores, parallelization of the code can bring significant performance improvements as well. To avoid any synchronization overheads, the most straightforward approach is to distribute the computation such that each thread computes a different part of the output matrix $C$ (e.g., a different tile in \cref{lst:tiled-matrix-multiplication}).
+Since both consumer and server-grade CPUs typically have multiple cores, parallelization of the code can bring significant performance improvements as well. To avoid any synchronization overheads, the most straightforward approach is to distribute the computation such that each thread computes a different part of the output matrix $C$ (e.g., a different tile in \cref{lst:tiled-matrix-multiplication})~\cite{hennessy2019computer,dagum1998openmp}.
 
 % Modern CPUs also support SIMD (Single Instruction, Multiple Data) instructions to perform vectorized operations on multiple data elements concurrently, which can significantly speed up numerical computations when the data is properly aligned and can be organized so that contiguous blocks have no internal dependencies. This is typically achieved via data layout transformations and loop unrolling techniques following loop transformations such as loop interchange, tiling (blocking), or skewing.
 
@@ -175,18 +175,18 @@ If changing the layout of the input matrices is not possible, tiles of the data 
 
 \section{GPU architecture}\label{sec:gpu-architecture}
 
-GPU accelerators are among the most widely used hardware platforms in high-performance computing, especially with the rise of large language models and other deep learning workloads. GPUs are optimized for massively data-parallel workloads and feature a large number of processing units that can execute thousands of threads concurrently. They often benefit from regular and predictable memory access patterns and control flow.
+GPU accelerators are among the most widely used hardware platforms in high-performance computing~\cite{top500}. Their importance has further increased with the rise of large language models and other deep learning workloads~\xxx{(CITE)}. GPUs are optimized for massively data-parallel workloads and feature a large number of processing units that can execute thousands of threads concurrently. They often benefit from regular and predictable memory access patterns and control flow.
 
 Since NVIDIA GPU architectures currently dominate the high-performance computing landscape~\cite{top500}, we will default to their nomenclature when describing the relevant hardware features and use them as a reference point.
 
-The execution model of GPUs is based on a hierarchy of threads organized into blocks and grids. Blocks from the same grid are mapped to available streaming multiprocessors (SMs), and threads within a block run in groups of 32 called warps that execute instructions in a SIMT-style lockstep model (single instruction performed by multiple threads concurrently).
+The execution model of GPUs is based on a hierarchy of threads organized into blocks and grids. Blocks from the same grid are mapped to available streaming multiprocessors (SMs), and threads within a block run in groups of 32 called warps that execute instructions in a SIMT-style lockstep model (single instruction performed by multiple threads concurrently)~\cite{cuda_programming_guide}.
 
 The algorithm is parallelized by sending the input data to the GPU and launching a kernel that executes on the GPU\@. The kernel is a function that is executed asynchronously to the host (CPU) code, and runs in parallel across many threads on the GPU\@. Each thread has a unique position in an abstract grid of thread blocks. A block is a group of threads that are scheduled together on the same streaming multiprocessor (SM) and share its on-chip resources. Different blocks are generally not guaranteed to run on particular SMs or in any particular order --- for example, they may run serially on the same SM or in parallel on different SMs. The grid and blocks are often mapped to the data structures being processed (or some abstract view of them, such as tiles).
 % can be organized in one, two, or three dimensions to better match the structure of the data and computations.
 
 Similar to CPUs, we can map the computation of each tile of the output matrix $C$ in \cref{lst:tiled-matrix-multiplication} to a different thread block on the GPU to avoid any synchronization overheads. The number of blocks should be sufficient to saturate the SM units of the GPU\@. However, as different blocks do not share resources even if running on the same SM\@, the tile sizes should be adjusted so that each SM does not perform redundant loads of the same data.
 % Modern NVIDIA GPUs consist of multiple streaming multiprocessors (SMs), each comprising many CUDA cores that execute threads in a massively parallel manner.
-% An SM is equipped with a register file and a cache space split between user-controlled \emph{shared memory} and \emph{L1 cache}, all shared among the threads running on that SM\@. Additionally, all SMs share a larger \emph{L2 cache}. The GPU also has a separate \emph{global memory} (device memory) accessible by all SMs, significantly larger than the on-chip memory of an SM but with much higher latency~\cite{cuda_programming_guide}.
+% An SM is equipped with a register file and a cache space split between user-controlled \emph{shared memory} and \emph{L1 cache}, all shared among the threads running on that SM\@. Additionally, all SMs share a larger \emph{L2 cache}. The GPU also has a separate \emph{global memory} (device memory) accessible by all SMs, significantly larger than the on-chip memory of an SM but with much higher latency.
 % SM executes threads organized into \emph{warps} (groups of 32 threads) in a SIMT (Single Instruction, Multiple Threads) fashion. The threads within a warp execute the same instruction simultaneously in lockstep,
 % \footnote{Since the Volta architecture (compute capability 7.0), NVIDIA GPUs support \emph{Independent Thread Scheduling}, which relaxes the strict lockstep model and allows threads within a warp to diverge and re-converge more flexibly. However, for performance purposes, the lockstep mental model remains a useful approximation.}
 
@@ -248,10 +248,10 @@ All these considerations make GPU performance highly sensitive to data layouts a
 
 % All these hardware nuances make GPU performance highly sensitive to memory access patterns and parallelization strategies, which makes algorithm design and code optimization for GPUs a complex and very important task in high-performance computing.
 
-\section{Summary}\label{sec:code-optimization-summary}
+% \section{Summary}\label{sec:code-optimization-summary}
 
-We have outlined the most relevant hardware features of modern multi-core CPUs and GPU accelerators that impact the performance of numerical computations based on memory access patterns. The differences in performance between optimized and unoptimized code can be orders of magnitude due to factors such as differences in the bandwidth and latency of different memory levels, synchronization overheads, and the ability to utilize SIMD instructions or distribute the workload across multiple processing units (ranging from individual cores to different nodes in a computation cluster).
-The number of factors involved and their complex interactions, further complicated by differences between system architectures, call for ways to separate the concerns of algorithm design and code optimization --- in the next chapter, we outline different approaches to this problem.
+% We have outlined the most relevant hardware features of modern multi-core CPUs and GPU accelerators that impact the performance of numerical computations based on memory access patterns. The differences in performance between optimized and unoptimized code can be orders of magnitude due to factors such as differences in the bandwidth and latency of different memory levels, synchronization overheads, and the ability to utilize SIMD instructions or distribute the workload across multiple processing units (ranging from individual cores to different nodes in a computation cluster).
+% The number of factors involved and their complex interactions, further complicated by differences between system architectures, call for ways to separate the concerns of algorithm design and code optimization --- in the next chapter, we outline different approaches to this problem.
 
 % \section{Optimization techniques}\label{sec:optimization-techniques}
 

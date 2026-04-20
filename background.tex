@@ -1,4 +1,4 @@
-\chapter{\xxx{Background}}\label{chap:background}
+\chapter{Background}\label{chap:background}
 
 % TODO hodne vypichnout motivaci
 
@@ -23,17 +23,17 @@
 % \xxx{These} computations run on a wide variety of hardware architectures, including clusters of multi-core CPUs and GPUs. Such systems are complex in terms of memory hierarchies, communication bandwidths and latencies, parallelism capabilities, and many other factors that can affect the performance of applications. Finding the right optimizations for a given application and hardware architecture is a challenging task; our work is particularly focused on optimizing data layouts and traversal orders, which alone can have a significant impact on performance. Consider a simple example of a matrix multiplication operation in \cref{lst:matrix-multiplication}, which is a fundamental building block in many scientific computing applications.
 % When running this code on a modern hardware, the performance of the algorithm is \xxx{degraded} due to iterating over whole rows and columns of the input matrices in the innermost loop, which results in inefficient use of the memory hierarchy. The rows and columns of the input matrices do not fit within the cache of the running hardware, so they have to be loaded repeatedly from the main memory of the machine.
 
-\begin{XXX}
-  Introduction to the background chapter.
+% \begin{XXX}
+%   Introduction to the background chapter. Motivation.
+% \end{XXX}
 
-  Motivation.
-\end{XXX}
+Before turning to specific approaches to code optimization, we first outline the hardware features of modern high-performance systems that are most relevant to our focus on layout and traversal optimizations.
 
-We target two main architectures used in high-performance computing: multi-core CPUs and GPU accelerators. Their shared characteristic is that they support general-purpose programming (unlike, for example, field-programmable gate arrays (FPGAs) or application-specific integrated circuits (ASICs)). The main difference between them is that CPUs are mainly built for serial processing (possibly in multi-threaded scenarios), while GPUs are optimized for massively data-parallel workloads, running thousands of threads concurrently.
-
+We target the two main general-purpose architectures used in high-performance computing: multi-core CPUs and GPU accelerators. Both support general-purpose programming, unlike, for example, field-programmable gate arrays (FPGAs) or application-specific integrated circuits (ASICs). The main difference between them is that CPUs are primarily built for serial processing (possibly in multi-threaded scenarios), while GPUs are optimized for massively data-parallel workloads that run thousands of threads concurrently.
 
 
-To motivate the importance of transforming data layouts and traversals in code optimization, we will show tiling: a simple optimization technique that improves the efficiency of memory accesses.
+
+To motivate the importance of transforming data layouts and traversals in code optimization, we use tiling as a simple optimization technique that improves the efficiency of memory accesses.
 Let us consider a simple example of a matrix multiplication operation in \cref{lst:matrix-multiplication}, which is a fundamental building block in many scientific computing applications. It computes $i \times j$ dot products of rows of $A$ and columns of $B$ to produce the output matrix $C$:
 \[C_{ij} = \sum\limits_{k=0}^{K-1} A_{ik} \cdot B_{kj}\]
 where $A$, $B$, and $C$ are matrices of dimensions $M \times K$, $K \times N$, and $M \times N$, respectively; all stored in row-major order (elements of one row of the matrix are stored in contiguous memory).
@@ -59,7 +59,9 @@ for (int i = 0; i < M; ++i) {
 For simplicity, let us assume that the architecture executing the algorithm can hold $512$ values from the input matrices in its cache for faster accesses and that all accesses to cached values (cache hits) are negligible in terms of latency compared to accesses to the main memory (cache misses).
 
 If the code is executed as is, the architecture will perform inefficiently for $K \ge 256$ regardless of cache replacement policies, as it can remember the corresponding input vectors for only one $i, j$ pair at a time.
-However, if we break the multiplication into multiple multiplications of submatrices of size $16 \times 16$ (submatrices of $A$ and $B$ both fitting exactly within the cache), the number of required loads from the main memory is reduced by a factor of $16$ (since each cached value is reused in $16$ different dot products on the submatrices). This comes at the cost of performing additional $K / 16$ updates of $C[i][j]$ values, so the expected memory access improvement is not exactly $16\times$. \xxx{An illustration}
+However, if we break the multiplication into multiple multiplications of submatrices of size $16 \times 16$ (submatrices of $A$ and $B$ both fitting exactly within the cache), the number of required loads from the main memory is reduced by a factor of $16$ (since each cached value is reused in $16$ different dot products on the submatrices). This comes at the cost of performing additional $K / 16$ updates of $C[i][j]$ values, so the expected memory access improvement is not exactly $16\times$.
+
+\xxx{An illustration that shows that the whole rows/columns do not fit within the cache, while the tiles do.}
 
 \begin{lstlisting}[language=C++, caption={Tiled matrix multiplication}, label={lst:tiled-matrix-multiplication}]
 float C[M][N]; // M rows, N columns
@@ -90,10 +92,10 @@ In \cref{lst:tiled-matrix-multiplication}, the three inner-most loops perform th
 
 A different approach to optimize the algorithm is to notice that the loops iterating $i$ and $j$ in \cref{lst:matrix-multiplication} produce distinct elements of the output matrix $C$, so they can be executed in parallel. Similarly, in \cref{lst:tiled-matrix-multiplication}, the outer two loops iterating over $iTile$ and $jTile$ can be executed in parallel on different threads so that each thread computes a different tile of the output matrix $C$ --- in such a strategy, the tile sizes can be adjusted to saturate the resource limits of the target parallel architecture.
 
-\xxx{In practice, there could be multiple tiling layers to optimize different hardware features (e.g., hierarchical memories, parallel or distributed execution nodes, etc.), as well as different transformations and parallelization strategies (threaded execution, GPU acceleration, distributed execution, etc.), and replacing some computations with specialized instructions, making manual rewriting of the code unnecessarily difficult and error-prone. }
+In practice, high-performance implementations often apply several layers of tiling to match multiple hardware levels, combine them with parallelization strategies such as threading or GPU offloading, and use specialized instructions where available. This quickly makes manual rewriting difficult and error-prone.
 
 
-\section{\xxx{General hardware considerations}}
+% \section{\xxx{General hardware considerations}}
 
 % A simple optimization to this code is to change split each of the three loops into two nested loops, and reorder them so that the innermost loop iterates over small blocks of the input matrices that fit within the cache of the running hardware. This optimization is known as tiling or blocking, and by itself can bring significant performance improvements. A different optimization technique is parallelization, which can be achieved by recognizing that the computation of each \lstinline{C[i][j]} is independent of the others --- on a system equipped with Graphical Processing Units (GPUs) with thousands of cores, we can compute each \lstinline{C[i][j]} in a separate thread, which can lead to orders of magnitude improvements in performance.
 
@@ -137,7 +139,7 @@ A different approach to optimize the algorithm is to notice that the loops itera
 
 % CPU architectures are typically optimized for serial processing, possibly in multi-threaded scenarios. They contain multiple levels of cache (L1, L2, L3) and on-chip registers to reduce the latency of memory accesses, with nontrivial cache coherency protocols and costly synchronization mechanisms.
 
-To optimize code such as \cref{lst:matrix-multiplication} for execution on a modern multi-core CPU, we can apply the tiling optimizations as described above to improve the locality of memory accesses on their hierarchical cache systems (most significant results would be expected for the innermost loops).
+To optimize code such as \cref{lst:matrix-multiplication} for execution on a modern multi-core CPU, we can apply tiling as described above to improve locality within the hierarchical cache system; the largest gains are typically obtained in the innermost loops.
 
 % CPU architectures are typically optimized for serial processing, possibly in multi-threaded scenarios. They contain multiple levels of cache and on-chip registers to reduce the latency of memory accesses, which makes memory access patterns a crucial factor for performance. Improving the locality of memory accesses (both spatial and temporal) can significantly reduce accesses to higher levels of the memory hierarchy and thus improve performance.
 
@@ -149,7 +151,7 @@ Since both consumer and server-grade CPUs typically have multiple cores, paralle
 
 Changing memory access patterns affects the utilization of other hardware features as well. For example, modern CPUs feature SIMD (Single Instruction, Multiple Data) instructions and vector registers that can operate on multiple consecutive data elements simultaneously.
 % To take advantage of these features, data must be properly aligned and the access patterns must be organized so that contiguous blocks of data may be accessed together.
-For example, if the $B$ matrix is stored in column-major order, the innermost loop of \cref{lst:matrix-multiplication} accesses elements of $A$ and $B$ in the same contiguous manner. This allows to load the values into vector registers, which hold multiple data elements, and perform the same operation on them simultaneously using SIMD instructions, which can significantly speed up the computation.
+For example, if the $B$ matrix is stored in column-major order, the innermost loop of \cref{lst:matrix-multiplication} accesses elements of $A$ and $B$ in the same contiguous manner. This makes it possible to load the values into vector registers, which hold multiple data elements, and perform the same operation on them simultaneously using SIMD instructions, which can significantly speed up the computation.
 
 % CPUs also support out-of-order and speculative pipelined execution to hide latencies and improve instruction-level parallelism, along with cache prefetching mechanisms and branch prediction, which can further benefit from predictable and regular memory access patterns. Different memory access patterns and computation orders can also change how well the on-chip resources are utilized, including arithmetic logic units (ALUs) and other features that may differ between CPU models and generations. The overall complexity of modern CPU architectures and their sensitivity to memory access patterns and instruction-level parallelism make code optimization difficult, often requiring empirical tuning to achieve optimal performance.
 
@@ -168,16 +170,16 @@ For example, if the $B$ matrix is stored in column-major order, the innermost lo
 
 % For multi-threaded (and distributed) scenarios, synchronization and communication overheads can significantly impact performance as well, so it is crucial to change the order of computations and memory layouts of data structures in such a way that the dependencies between different threads (or nodes) are minimized, and the workload is balanced across them.
 
-If changing the layout of the input matrices is not possible, tiles of the data can be copied into temporary buffers in the desired layout before performing the computation. This is applicable if the redundant copying of the data is outweighed by the performance improvements from better memory access patterns. In this particular example, transposing the $B$ matrix into a temporary buffer improves the performance for sufficiently large input sizes, as matrix multiplication scales cubicly, while the copying of the data scales quadratically.
+If changing the layout of the input matrices is not possible, tiles of the data can be copied into temporary buffers in the desired layout before performing the computation. This is applicable if the redundant copying of the data is outweighed by the performance improvements from better memory access patterns. In this particular example, transposing the $B$ matrix into a temporary buffer improves the performance for sufficiently large input sizes, as matrix multiplication scales cubically, while the copying of the data scales quadratically.
 
 
 \section{GPU architecture}\label{sec:gpu-architecture}
 
-GPU accelerators are one of the most used hardware platforms for high-performance computing (especially since the advent of large language models and other deep learning workloads). GPUs are optimized for massively data-parallel workloads and feature a large number of processing units that can execute thousands of threads concurrently. They often benefit from regular and predictable memory access patterns and control flow.
+GPU accelerators are among the most widely used hardware platforms in high-performance computing, especially with the rise of large language models and other deep learning workloads. GPUs are optimized for massively data-parallel workloads and feature a large number of processing units that can execute thousands of threads concurrently. They often benefit from regular and predictable memory access patterns and control flow.
 
-Since GPU architectures by NVIDIA currently dominate the high-performance computing landscape~\cite{top500}, we will default to their nomenclature when describing the relevant hardware features and use them as a reference point.
+Since NVIDIA GPU architectures currently dominate the high-performance computing landscape~\cite{top500}, we will default to their nomenclature when describing the relevant hardware features and use them as a reference point.
 
-\xxx{The \emph{execution model} of GPUs is based on a hierarchy of threads that are organized into blocks and grids. Blocks from the same grid are mapped to streaming multiprocessors (SMs). Threads within a block run in groups of 32 called warps, which execute instructions in lockstep (SIMT model).}
+The execution model of GPUs is based on a hierarchy of threads organized into blocks and grids. Blocks from the same grid are mapped to available streaming multiprocessors (SMs), and threads within a block run in groups of 32 called warps that execute instructions in a SIMT-style lockstep model (single instruction performed by multiple threads concurrently).
 
 The algorithm is parallelized by sending the input data to the GPU and launching a kernel that executes on the GPU\@. The kernel is a function that is executed asynchronously to the host (CPU) code, and runs in parallel across many threads on the GPU\@. Each thread has a unique position in an abstract grid of thread blocks. A block is a group of threads that are scheduled together on the same streaming multiprocessor (SM) and share its on-chip resources. Different blocks are generally not guaranteed to run on particular SMs or in any particular order --- for example, they may run serially on the same SM or in parallel on different SMs. The grid and blocks are often mapped to the data structures being processed (or some abstract view of them, such as tiles).
 % can be organized in one, two, or three dimensions to better match the structure of the data and computations.
@@ -190,14 +192,14 @@ Similar to CPUs, we can map the computation of each tile of the output matrix $C
 
 % The lockstep execution model of warps means that divergent control flow within a warp (i.e., different threads taking different execution branches) can lead to high performance penalties. Similarly, divergent memory access patterns within a warp can degrade throughput of the executed algorithms.
 
-\emph{Memory model} of GPUs is also quite different to CPU\@. A GPU device has its own DRAM memory (global memory) that is separate from the host (CPU) memory --- thus, the computation should be organized (e.g., via tiling) in such a way that memory transfers between the host and device are balanced with the computation performance of the matrix multiplication kernel. The architecture of GPUs allows to make memory transfers and kernel executions concurrently, which can be used to hide the latency of memory transfers by overlapping them with kernel execution. Oftentimes, this can be achieved by tuning the tile sizes in a loop that sends the data between the host and device and launches the kernel on the GPU\@.
+\emph{The memory model} of GPUs is also quite different from that of CPUs. A GPU device has its own DRAM memory (global memory) that is separate from the host (CPU) memory, so the computation should be organized (e.g., via tiling) in such a way that memory transfers between the host and device are balanced with the computation performance of the matrix multiplication kernel. The architecture of GPUs allows memory transfers and kernel executions to proceed concurrently, which can be used to hide transfer latency by overlapping it with kernel execution. Oftentimes, this can be achieved by tuning the tile sizes in a loop that sends the data between the host and device and launches the kernel on the GPU\@.
 % Although the global memory has high bandwidth (compared to system memory), it serves orders of magnitude higher number of threads, so memory access patterns have a significant impact on performance.
 
 % Each SM is then equipped with a register file and a cache space split between user-controlled \emph{shared memory} and \emph{L1 cache}, all shared among the threads running on that SM\@. Additionally, all SMs share a larger \emph{L2 cache}. The register file and shared memory offer much lower latency compared to the higher memory levels, making it crucial to utilize them effectively.
 
-Each SM is equipped with a shared memory that can be used to store data that is shared among threads in the same block. In \cref{lst:tiled-matrix-multiplication}, this might be used to store the tiles of the input matrices $A$ and $B$ in beneficiary layouts for the computation of the tile of the output matrix $C$\@. The shared memory is much faster than global memory and is often used as a user-managed cache (or scratchpad memory) to reduce redundant global memory accesses. Since it is accessible by all threads in the same block, it can be also used for inter-thread communication within the block.
+Each SM is equipped with a shared memory that can be used to store data that is shared among threads in the same block. In \cref{lst:tiled-matrix-multiplication}, this might be used to store the tiles of the input matrices $A$ and $B$ in beneficial layouts for the computation of the tile of the output matrix $C$\@. The shared memory is much faster than global memory and is often used as a user-managed cache (or scratchpad memory) to reduce redundant global memory accesses. Since it is accessible by all threads in the same block, it can also be used for inter-thread communication within the block.
 
-Since SMs have many registers (divided among the threads running on the SM\@), data structures can be also temporarily stored in registers for even faster access. However, registers are private to each thread and are inaccessible to other threads. Furthermore, all accesses to registers have to access elements at static offsets (i.e., known at compile time at the given execution point). This can be often achieved by loop unrolling; however, this also significantly increases code size.
+Since SMs have many registers (divided among the threads running on the SM\@), data structures can also be temporarily stored in registers for even faster access. However, registers are private to each thread and are inaccessible to other threads. Furthermore, all accesses to registers have to access elements at static offsets (i.e., known at compile time at the given execution point). This can often be achieved by loop unrolling; however, this also significantly increases code size.
 
 % Shared memory of an SM is organized into 32 memory banks, each offering 32-bit bandwidth per clock cycle. This allows a thread warp to load a single 32-bit word from each bank to each thread in the warp simultaneously every clock cycle. However, if multiple threads in a warp access different addresses within the same memory bank, a \emph{bank conflict} occurs, and the accesses have to be serialized, leading to performance degradation.
 
@@ -211,14 +213,14 @@ Since SMs have many registers (divided among the threads running on the SM\@), d
 
 % While the register file (and cache space) is allocated automatically so that it is used efficiently, the shared memory is explicitly allocated and controlled by the programmer. It is managed by 32 memory banks mapped to 32-bit words in round-robin fashion. The banks have a bandwidth of 32 bits per clock cycle, which means that they can serve threads in a warp efficiently if they access different banks (i.e., different 32-bit words) simultaneously, but more irregular memory access patterns can lead to \emph{bank conflicts} that penalize performance by serializing the accesses.
 
-While registers are private to each thread, some communication between threads running on the same SM can be achieved by using either block-wide synchronization and shared memory, or warp-wide primitives that allow threads within a warp to exchange data without using shared memory. All these primitives are relatively cheap thanks to \emph{lockstep execution} of threads --- a group of 32 threads called a \emph{warp} executes the same instruction simultaneously, so reaching a synchronization point is essentially free.
+While registers are private to each thread, some communication between threads running on the same SM can be achieved by using either block-wide synchronization and shared memory, or warp-wide primitives that allow threads within a warp to exchange data without using shared memory. These primitives are relatively cheap because of the \emph{lockstep execution} of threads --- a group of 32 threads called a \emph{warp} executes the same instruction simultaneously, so synchronization within a warp is comparatively inexpensive.
 
 
 % Similarly, global memory accesses, which already have high latency, should be \emph{coalesced} (i.e., threads in a warp should access contiguous memory locations) to prevent even higher latencies. Furthermore, if data stored in registers does not fit into the register file, it is \emph{spilled} to local memory within the global memory by the compiler, increasing the number of global memory accesses on top of the explicit global memory accesses in the code.
 
 
 % TODO: mention padding? (eg in shared memory to avoid bank conflicts)
-There are further considerations regarding memory accesses to global memory or shared memory. One such consideration is that the shared memory is managed by 32 memory banks with limited bandwidth and so the accesses should be organized in such a way that concurrent accesses are distributed across different banks (i.e., avoiding bank conflicts). Another consideration is that global memory accesses should be coalesced, meaning that threads within a warp should ideally access contiguous memory locations and consecutive threads should access consecutive memory addresses --- then, the GPU hardware can combine these accesses into a single transaction.
+There are further considerations regarding accesses to global memory and shared memory. Shared memory is organized into 32 memory banks with limited bandwidth, so accesses should be arranged such that concurrent accesses are distributed across different banks (i.e., avoiding bank conflicts). Global memory accesses should also be coalesced, meaning that threads within a warp should ideally access contiguous memory locations and consecutive threads should access consecutive memory addresses; then the GPU hardware can combine these accesses into a single transaction.
 
 All these considerations make GPU performance highly sensitive to data layouts and memory access orders.
 
@@ -248,8 +250,8 @@ All these considerations make GPU performance highly sensitive to data layouts a
 
 \section{Summary}\label{sec:code-optimization-summary}
 
-We have outlined the most relevant hardware features of modern multi-core CPUs and GPU accelerators that impact the performance of numerical computations based on memory access patterns. The differences in performance between optimized and unoptimized code can be orders of magnitude due to factors such as differences of bandwidth and latency of different memory levels, synchronization overheads, and the ability to utilize SIMD instructions or distribute the workload across multiple processing units (ranging from individual cores to different nodes in a computation cluster).
-The amount of different factors and their complex interactions (which are further complicated by differences between various system architectures) call for ways to separate the concerns of algorithm design and code optimization --- in the next chapter, we outline different approaches to this problem.
+We have outlined the most relevant hardware features of modern multi-core CPUs and GPU accelerators that impact the performance of numerical computations based on memory access patterns. The differences in performance between optimized and unoptimized code can be orders of magnitude due to factors such as differences in the bandwidth and latency of different memory levels, synchronization overheads, and the ability to utilize SIMD instructions or distribute the workload across multiple processing units (ranging from individual cores to different nodes in a computation cluster).
+The number of factors involved and their complex interactions, further complicated by differences between system architectures, call for ways to separate the concerns of algorithm design and code optimization --- in the next chapter, we outline different approaches to this problem.
 
 % \section{Optimization techniques}\label{sec:optimization-techniques}
 

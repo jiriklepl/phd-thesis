@@ -27,6 +27,7 @@
         "NVCC",
         "OPENTUNER",
         "Optuna",
+        "parallelizability",
         "parallelizable",
         "pdfx",
         "Polygeist",

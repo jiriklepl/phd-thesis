@@ -5,9 +5,11 @@ Our work on abstractions for high-performance computing introduced layout-agnost
 
 \section{Noarr Structures}\label{sec:noarr-structures}
 
-This section outlines work on Noarr structures published in \fullcite{vsmelko2022astute}, further expanding on the concepts of layout-agnostic design and hierarchical composition of data layouts and omitting many technical details of the implementation and usage of Noarr structures, which are covered in the original paper and the documentation of the Noarr library.
+This section outlines work on Noarr structures published in \fullcite{vsmelko2022astute}.
 
-Noarr structures, are the fundamental abstraction in the Noarr library used for modeling multi-dimensional data layouts according to the principles of layout agnosticism and hierarchical composition of data layouts.
+It further expands on the concepts of layout-agnostic design and hierarchical composition of data layouts and omitting many technical details of the implementation and usage of Noarr structures, which are covered in the original paper and the documentation of the Noarr library.
+
+Noarr structures are the fundamental abstraction in the Noarr library. They are used for modeling multi-dimensional data layouts according to the principles of layout agnosticism and hierarchical composition of data layouts (see \cref{sec:native}).
 
 \subsection{Layout-agnostic design}\label{sec:layout-agnostic-design}
 
@@ -24,12 +26,12 @@ for (size_t i = 0; i < M; ++i) {
 }
 \end{lstlisting}
 
-\begin{defn}[Data layout]\label{def:data-layout} A data layout is a mapping from a (multi-dimensional) index space to an offset in a linear memory layout. Usually, a data layout has well-defined properties such as the length of each dimension,
+\begin{defn}[Data layout]\label{def:data-layout} A data layout is a mapping from a (multi-dimensional) index space to an offset in a (linear) memory layout. Usually, a data layout has well-defined properties such as the length of each dimension,
 % commonly referred to as (individually) extent or (collectively) shape,
 the total buffer size, or the type of each element.
 \end{defn}
 
-The logic of the copy algorithm does not actually rely on the individual physical layouts of the source and destination data --- it simply copies the elements from one representation of the data to another; as such, it requires the two data structures to share the same logical structure (index space; in this case, a 2D space with size $M \times N$). \Cref{lst:layout-agnostic-copy} shows a layout-agnostic version of the copy algorithm that is implemented using Noarr structures. The algorithm does not encode specific assumptions about the physical layout of the data in memory (both data structures are indexed using the same logical index), and thus it can work with any data structure that shares the $M \times N$ logical structure. The logical structure (encoding the index space) is the definition domain of the data layout, if we consider the data layout as a mapping as defined in \cref{def:data-layout}.
+The logic of the copy algorithm does not actually rely on the individual physical layouts of the source and destination data --- it simply copies the elements from one representation of the data to another; as such, it requires the two data structures to share the same logical structure (index space; in this case, a 2D space with size $M \times N$). \Cref{lst:layout-agnostic-copy} shows a layout-agnostic version of the copy algorithm that is implemented using Noarr structures. The algorithm does not encode specific assumptions about the physical layout of the data in memory (both data structures are indexed using the same logical index), and thus, it can work with any data structure that shares the $M \times N$ logical structure. The logical structure (encoding the index space) is the definition domain of the data layout, if we consider the data layout as a mapping as defined in \cref{def:data-layout}.
 
 \begin{lstlisting}[style=C++, caption={A layout-agnostic copy algorithm using Noarr structures.}, label={lst:layout-agnostic-copy}]
 // defining Noarr structures will be covered later
@@ -46,9 +48,10 @@ for (size_t i = 0; i < M; ++i) {
 }
 \end{lstlisting}
 
-Syntactically, the logical layout of the data can be expressed multiple ways --- for example, the \lstinline{std::mdspan} abstraction encodes different dimensions as positional arguments (e.g., \lstinline{my_mdspan(i, j)} passes $i$ as the index of the first dimension and $j$ as the index of the second dimension), while Noarr structures encode different dimensions as named arguments --- for example, \lstinline{idx<'M', 'N'>(i, j)} explicitly associates $i$ with the dimension \lstinline{'M'} and $j$ with the dimension \lstinline{'N'}.
+Syntactically, the logical layout of the data can be expressed multiple ways. For example, the \lstinline{std::mdspan} abstraction encodes different dimensions as positional arguments (e.g., \lstinline{my_mdspan(i, j)} passes $i$ as the index in the first dimension and $j$ as the index in the second dimension), while Noarr structures encode different dimensions as named arguments --- \lstinline{idx<'M', 'N'>(i, j)} explicitly associates $i$ with the dimension \lstinline{'M'} and $j$ with the dimension \lstinline{'N'}.
 %, with an alternative form of \lstinline{idx<'N', 'M'>(j, i)}.
-While the latter form is generally more verbose, it can prevent many indexing mistakes, as any association between an index and a dimension is explicit. Furthermore, the approach of encoding dimensions as named arguments is more intuitive in cases where different data structures have unrelated index spaces, which will be discussed in more detail in \cref{sec:composing-noarr-structures}. In \cref{sec:transforming-noarr-structures}, we will show that the points in the index space can be defined implicitly, inferring the indices from the iterated index space of an algorithm, reducing the verbosity overhead.
+
+While the latter form (\lstinline{idx<'N', 'M'>(j, i)}) is generally more verbose, it can prevent many indexing mistakes, as any association between an index and a dimension is explicit. Furthermore, the approach of encoding dimensions as named arguments is more intuitive in cases where different data structures have unrelated index spaces, which will be discussed in more detail in \cref{sec:composing-noarr-structures}. In \cref{sec:transforming-noarr-structures}, we will show that the points in the index space can be defined implicitly, inferring the indices from the iterated index space of an algorithm, reducing the verbosity overhead.
 
 % \begin{figure}[ht]
 %   \centering
@@ -149,16 +152,21 @@ While the latter form is generally more verbose, it can prevent many indexing mi
   \label{fig:data-layouts}
 \end{figure}
 
-\Cref{fig:data-layouts} illustrates multiple data layouts. \Cref{fig:row-major} and \cref{fig:column-major} show two different physical layouts for the same logical structure (a 2D array) --- row-major and column-major layouts, respectively. These two layouts can be understood hierarchically; the row-major layout can be viewed as a grid of $M$ rows of $N$ elements, while the column-major layout can be viewed as a grid of $N$ columns of $M$ elements. Thus, aligning with the principles of layout-agnostic algorithms, both compositions result in the same index space (a 2D space with dimensions \lstinline{'M'} and \lstinline{'N'}) and thus the same logical structure of the data, while the physical layout of the data in memory is different.
+\xxx{(This will be expanded after receiving green light from the supervisor)}
+\Cref{fig:data-layouts} illustrates multiple data layouts. \Cref{fig:row-major} and \cref{fig:column-major} show two different physical layouts for the same logical structure (a 2D array) --- row-major and column-major layouts, respectively. The red arrows indicate the order of elements in memory, starting from the element with the lowest offset and ending with the element with the highest offset.
 
-Both layouts can be expressed using the same basic building block: introducing a new dimension to the layout and creating a grid of the original layout (now sub-layout) along the new dimension. This building block is present in many data layout abstractions, such as C arrays (in \lstinline{float matrix[M][N]}, each bracket represents this building block), or MPI datatypes (\lstinline{MPI_Type_contiguous} exactly matches this building block). In the Noarr library, this building block is represented by \lstinline{vector<dim>(length)}.
+The two layouts can be understood as hierarchical views --- the row-major layout can be viewed as a grid of $M$ rows of $N$ elements, while the column-major layout can be viewed as a grid of $N$ columns of $M$ elements. Thus, aligning with the principles of layout-agnostic algorithms, both compositions result in the same index space (a 2D space with dimensions \lstinline{'M'} and \lstinline{'N'}) and, thus, the same logical structure of the data, while the physical layout of the data in memory is different.
 
-In most general terms, these building blocks are functions $\mathcal{L}^n \to \mathcal{L}$, where $\mathcal{L}$ represents a data layout and $n$ is the number of sub-layouts that the building block takes as input. For the above example, $n = 1$. But there are also building blocks with $n > 1$ --- for example, \lstinline{std::tuple} in \cpp (or \lstinline{MPI_Type_struct} in MPI) takes multiple sub-layouts and combines them into a single layout. Most such transformations simply perform a transformation of the index parameters (from the new index space to the original index space) and use the offset calculation of the original sub-layout as a component of the offset calculation of the resulting layout.
+Both layouts can be expressed using the same basic building block: introducing a new dimension to the layout and creating a grid of the original layout (now sub-layout) along the new dimension. This building block is present in many data layout abstractions, such as C arrays (in \lstinline{float matrix[M][N]}, each bracket represents this building block), or MPI datatypes (\lstinline{MPI_Type_contiguous} exactly matches this building block). In the Noarr library, this building block is denoted \lstinline{vector<dim>(length)}.
+
+In most general terms, these building blocks are functions $\mathcal{L}^n \to \mathcal{L}$, where $\mathcal{L}$ represents a data layout (\cref{def:data-layout}) and $n$ is the number of sub-layouts that the building block takes as input. For the above example, $n = 1$. But there are also building blocks with $n > 1$ --- for example, \lstinline{std::tuple} in \cpp (or \lstinline{MPI_Type_struct} in MPI) takes multiple sub-layouts and combines them into a single layout.
+
+Most such transformations simply perform a transformation of the index parameters (from the new index space to the original index space) and use the offset calculation of the original sub-layout as a component of the offset calculation of the resulting layout. For example, the \lstinline{vector<dim>(length)} building block passes indices other than \lstinline{dim} to its sub-layout, calculating the \lstinline{sub_offset}. Then, it calculates the offset of the resulting layout as \lstinline{i * sub_size + sub_offset}, where \lstinline{i} is the index in dimension \lstinline{dim} and \lstinline{sub_size} is the total size of the sub-layout. In C arrays, the process is similar --- the offset of element \lstinline{[i][j]} in \lstinline{float matrix[M][N]} is obtained by combining $i$ sizes of \lstinline{float[N]} (the sub-layout) and the offset of element \lstinline{[j]} in \lstinline{float[N]} (the sub-offset) as $i \cdot N \cdot \text{\lstinline{sizeof(float)}} + j \cdot \text{\lstinline{sizeof(float)}}$.
 
 
 \subsection{Composing Noarr Structures}\label{sec:composing-noarr-structures}
 
-Similarly to C types or MPI datatypes, Noarr structures are designed to be composed hierarchically. The individual building blocks of Noarr structures are called \emph{proto-structures}. We use \lstinline{scalar<T>()} to denote a Noarr structure representing a dimensionless data layout comprising a single element of type \texttt{T}. A more complex Noarr structure can be constructed by using the \lstinline{operator^} and proto-structures such as \lstinline{vector<'M'>(N)} as shown in \cref{lst:composing-noarr-structures}.
+Similarly to C types and MPI datatypes, Noarr structures are designed to be hierarchically composable. The individual building blocks of Noarr structures are called \emph{proto-structures}, used primarily as layout constructors. We use \lstinline{scalar<T>()} to denote a Noarr structure representing a dimensionless data layout comprising a single element of type \texttt{T}. A more complex Noarr structure can be constructed by using the \lstinline{operator^} and a proto-structure, such as \lstinline{vector<'M'>(N)} shown in \cref{lst:composing-noarr-structures}.
 
 \begin{lstlisting}[style=C++, caption={Composing Noarr structures using proto-structures.}, label={lst:composing-noarr-structures}]
 auto scalar = noarr::scalar<float>();
@@ -166,11 +174,13 @@ auto row = scalar ^ noarr::vector<'N'>(N);
 auto matrix = row ^ noarr::vector<'M'>(M);
 \end{lstlisting}
 
-The resulting \texttt{matrix} Noarr structure in \cref{lst:composing-noarr-structures} represents a 2D array with dimensions \lstinline{'M'} and \lstinline{'N'} in the row-major layout as shown in \cref{fig:row-major}. Naturally, the composition \lstinline{scalar ^ noarr::vector<'M'>(M) ^ noarr::vector<'N'>(N)} results in the corresponding column-major layout.
+The resulting \texttt{matrix} Noarr structure in \cref{lst:composing-noarr-structures} represents a 2D array with dimensions \lstinline{'M'} and \lstinline{'N'} in the row-major layout as shown in \cref{fig:row-major}. Naturally, the composition \lstinline{scalar ^ noarr::vector<'M'>(M) ^ noarr::vector<'N'>(N)} results in the corresponding column-major layout (both sharing the same index space).
 
 % This approach to composition allows for a clear separation between the logical layout of the data (the index space defined by the dimension names) and the physical layout of the data in memory, since the both row-major and column-major layouts can be indexed using the same points in the index space (e.g., \lstinline{idx<'M', 'N'>(i, j)}).
 
-The Noarr library implements this composition using powerful template metaprogramming techniques, encoding layout information in the type system to enable compile-time optimizations and zero-overhead interpretation of the Noarr structures. Only runtime parameters (e.g., the lengths of the dimensions) are stored as physical data members of the Noarr structures. Each Noarr structure is a first-class citizen in the \cpp type system, and its properties are fully transparent to the compiler, which allows for aggressive optimizations of their interpretation.
+The Noarr library implements this composition using template metaprogramming techniques, encoding layout information in the type system to enable compile-time optimizations and zero-overhead interpretation of the Noarr structures. Only runtime parameters (e.g., the lengths of the dimensions) are stored as physical data members of the Noarr structures.
+
+Each Noarr structure is a first-class citizen in the \cpp type system, and its properties are fully transparent to the compiler, which allows for aggressive optimizations of their interpretation.
 
 % Furthermore, since each dimension is associated with a semantically meaningful name, the composition can also perform compile-time checks to ensure that the resulting Noarr structure is valid (e.g., it does not contain duplicate dimension names).
 
@@ -181,12 +191,12 @@ auto column_major = noarr::vector<'M'>(M) ^ noarr::vector<'N'>(N);
 auto matrix = noarr::scalar<float>() ^ column_major;
 \end{lstlisting}
 
-In \cref{lst:associative-composition}, we define a new reusable building block \texttt{column\_major} that can be used to construct different layouts as grids of $M$ rows and $N$ columns of a given sub-layout (e.g., \lstinline{scalar<float>()} in case of defining a matrix layout). \lstinline{column_major} itself is considered a proto-structure.
+In \cref{lst:associative-composition}, we define a new reusable building block \texttt{column\_major} that can be used to construct different layouts as grids of $M$ rows and $N$ columns of a given sub-layout (e.g., \lstinline{scalar<float>()} in case of defining a matrix layout). \lstinline{column_major} itself is still considered a (composite) proto-structure.
 
 
 \subsection{Transforming Noarr Structures}\label{sec:transforming-noarr-structures}
 
-The composition of Noarr structures using proto-structures allows for defining transformations of Noarr structures using the same mechanism. For example, consider a sub-matrix. A sub-matrix layout results from any 2D (matrix) layout by restricting the index space to a contiguous sub-region (2D interval) of the original space. This is yet another example of a layout transformation of the form $\mathcal{L} \to \mathcal{L}$; or, equivalently, two transformations, for each dimension separately. In the Noarr library, this transformation is represented by the \lstinline{span<dim>(start, end)} proto-structure shown in \cref{lst:transforming-noarr-structures}.
+The composition of Noarr structures using proto-structures allows for defining transformations of Noarr structures using the same mechanism. For example, consider a sub-matrix. A sub-matrix layout results from any 2D matrix layout by restricting the index space to a contiguous sub-region (2D interval) of the original space. This is yet another example of a layout transformation of the form $\mathcal{L} \to \mathcal{L}$; or, equivalently, composition of two transformations, for each dimension separately. In the Noarr library, the one-dimensional transformation is represented by the \lstinline{span<dim>(start, end)} proto-structure shown in \cref{lst:transforming-noarr-structures}.
 
 \begin{lstlisting}[style=C++, caption={Transforming Noarr structures using proto-structures.}, label={lst:transforming-noarr-structures}]
 auto sub_matrix = matrix
@@ -194,7 +204,7 @@ auto sub_matrix = matrix
     ^ noarr::span<'N'>(start_j, end_j);
 \end{lstlisting}
 
-Notice that this transformation satisfies the principle of layout agnosticism: it is applicable to a matrix of any physical layout (e.g., row-major or column-major) as long as the index space contains the dimensions \lstinline{'M'} and \lstinline{'N'}. Since we do not use positional syntax, the transformation can be actually applied to any layout with the appropriate dimensions.
+Notice that this transformation satisfies the principle of layout agnosticism: it is applicable to a matrix of any physical layout (e.g., row-major or column-major) as long as the index space contains the dimensions \lstinline{'M'} and \lstinline{'N'}. Since we do not use positional syntax, the transformation can be actually applied to any layout that has the appropriate dimensions.
 
 % In \cref{lst:transforming-noarr-structures}, we define new dimension variables (e.g., \texttt{i\_outer} and \texttt{i\_inner}) to show that the set of dimension names can be arbitrarily extended and that it also allows for more readable names (instead of just one-letter constants). The resulting \texttt{tiled\_matrix} Noarr structure represents the tiled layout shown in \cref{fig:tiled} --- it has $\lfloor M / tile\_size\_i \rfloor \times \lfloor N / tile\_size\_j \rfloor$ tiles (the product of the inferred lengths for \texttt{i\_outer} and \texttt{j\_outer}). This time, contrasting the previous example of composition, the transformation changes the logical layout of the data (the index space defined by the dimension names) while keeping the physical layout of the data in memory unchanged.
 
@@ -206,9 +216,9 @@ In \cref{sec:layout-agnostic-design}, we have asserted that naming dimensions is
 
 
 \begin{lstlisting}[style=C++, caption={A layout-agnostic matrix multiplication algorithm using Noarr structures.}, label={lst:layout-agnostic-matmul}]
-auto matrixC = /*...*/; // an M by N array
-auto matrixA = /*...*/; // an M by K array
-auto matrixB = /*...*/; // a K by N array
+auto matrixC = /*...*/; // an M by N array of any physical layout
+auto matrixA = /*...*/; // an M by K array of any physical layout
+auto matrixB = /*...*/; // a K by N array of any physical layout
 
 for (size_t i = 0; i < M; ++i) {
  for (size_t j = 0; j < N; ++j) {
@@ -223,7 +233,11 @@ for (size_t i = 0; i < M; ++i) {
 }
 \end{lstlisting}
 
-The algorithm is, again, layout-agnostic because it does not rely on the specific physical layouts of the data in memory --- each data structure can be stored in any physical layout. Since each matrix is indexed using its own set of dimensions and \lstinline{mnk_point} contains the union of all dimensions, the matrices implicitly extract the relevant dimensions with no need for explicit indexing logic, which eliminates some opportunities for mistakes and makes the algorithm simpler to maintain. However, there seemingly appears to be a noticeable issue: the algorithm relies on the fact that the three data structures have been defined with the dimensions \lstinline{'M'}, \lstinline{'N'}, and \lstinline{'K'} in a specific way that directly corresponds to the semantics of the matrix multiplication algorithm, which is not always the case in practice. This issue can be easily solved using yet another transformation of a layout, which is represented by the \lstinline{rename<old_dim, new_dim>} proto-structure --- this proto-structure simply renames a dimension in the layout without introducing any changes to the physical layout or the computation of an offset from a point in the index space.
+The algorithm is, again, layout-agnostic because it does not rely on the specific physical layouts of the data in memory --- each data structure can be stored in any physical layout.
+
+Since each matrix has its own set of dimensions and \lstinline{mnk_point} contains the union of all dimensions, the matrices implicitly extract the relevant dimensions with no need for explicit indexing logic, which eliminates some opportunities for mistakes and makes the algorithm simpler to maintain. However, there seemingly appears to be a noticeable issue: the algorithm relies on the fact that the three data structures have been defined with the dimensions \lstinline{'M'}, \lstinline{'N'}, and \lstinline{'K'} in a specific way that directly corresponds to the semantics of the matrix multiplication algorithm, which is not always the case in practice. This issue can be easily solved using yet another transformation of a layout, which is represented by the \lstinline{rename<old_dim, new_dim>} proto-structure --- this proto-structure simply renames a dimension in the layout without introducing any changes to the physical layout or the computation of an offset from a point in the index space, providing an adapter for matrices with different dimension names.
+
+% TODO: CONTINUE FROM HERE
 
 
 \subsection{Noarr bags}\label{sec:noarr-bags}

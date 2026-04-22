@@ -220,12 +220,12 @@ auto matrixC = /*...*/; // an M by N array of any physical layout
 auto matrixA = /*...*/; // an M by K array of any physical layout
 auto matrixB = /*...*/; // a K by N array of any physical layout
 
-for (size_t i = 0; i < M; ++i) {
- for (size_t j = 0; j < N; ++j) {
+for (size_t i = __0; i < M; ++i) {
+ for (size_t j = __0; j < N; ++j) {
   auto mn_point = idx<'M', 'N'>(i, j);
-  matrixC[mn_point] = 0;
+  matrixC[mn_point] = __0;
 
-  for (size_t k = 0; k < K; ++k) {
+  for (size_t k = __0; k < K; ++k) {
    auto mnk_point = mn_point + idx<'K'>(k);
    matrixC[mnk_point] += matrixA[mnk_point] * matrixB[mnk_point];
   }

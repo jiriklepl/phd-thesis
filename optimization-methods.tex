@@ -165,7 +165,7 @@ Using LLMs to generate optimization directives for a framework (such as those di
 For example, HPC-Coder~\cite{nichols2024hpc} shows that fine-tuning LLMs on HPC code can enable them to generate expected OpenMP directives for parallelization with high accuracy as well as generate parallel code snippets for MPI-based distributed parallelization; while ComPilot~\cite{merouani2025agentic} uses an LLM agent as a search driver when exploring the search space of transformation directives --- practically performing LLM-accelerated autotuning.
 
 
-\subsection{LLM code generation and transformation}\label{sec:llm-code-generation}
+\subsubsection{LLM code generation and transformation}\label{sec:llm-code-generation}
 
 Direct generation of optimized code goes further and allows the model to make more fundamental changes to the code. This was not a viable option until recently, as the proficiency of LLMs in generating optimized code was not sufficient for this task. Since LLMs are generally trained on large codebases, and only a handful of generally available code falls into the HPC domain, the performance of off-the-shelf LLMs on generating optimized HPC code has started to become competitive only very recently, perhaps with the introduction of Codex~\cite{chen2021evaluating}.
 

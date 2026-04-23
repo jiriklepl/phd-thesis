@@ -13,7 +13,7 @@ Noarr structures are the fundamental abstraction in the Noarr library. They are 
 
 \subsection{Layout-agnostic design}\label{sec:layout-agnostic-design}
 
-Layout-agnostic design separates the logical structure of the data (the index space defined by the dimension names) from the physical layout of the data in memory. Consider \cref{lst:non-agnostic-copy} as an example of a non-layout-agnostic copy algorithm for 2D arrays in \cpp. This implementation of the algorithm assumes a specific layout of the data in memory, and special care must be taken to ensure that the indexing logic correctly reflects the layout of the data. This is usually not desirable and, in general, the explicit indexing expressions (e.g., \texttt{i*N + j} and \texttt{j*M + i}) are replaced with abstractions of the data layouts (e.g., \lstinline{source(i, j)} and \lstinline{destination(i, j)}).
+Layout-agnostic design separates the logical structure of the data (the index space defined by the dimension names) from the physical layout of the data in memory. Consider \cref{lst:non-agnostic-copy} as an example of a non-layout-agnostic copy algorithm for 2D arrays in \cpp.
 
 \begin{lstlisting}[style=C++, caption={A non-layout-agnostic copy algorithm in \cpp.}, label={lst:non-agnostic-copy}]
 float* source = /*...*/; // an M by N array in column-major layout
@@ -26,12 +26,16 @@ for (size_t i = __0; i < __M; ++i) {
 }
 \end{lstlisting}
 
+This implementation of the algorithm assumes a specific layout of the data in memory, and special care must be taken to ensure that the indexing logic correctly reflects the layout of the data. This is usually not desirable and, in general, the explicit indexing expressions (e.g., \texttt{i*N + j} and \texttt{j*M + i}) are replaced with abstractions of the data layouts (e.g., \lstinline{source(i, j)} and \lstinline{destination(i, j)}).
+
 \begin{defn}[Data layout]\label{def:data-layout} A data layout is a mapping from a (multi-dimensional) index space to an offset in a (linear) memory layout. Usually, a data layout has well-defined properties such as the length of each dimension,
 % commonly referred to as (individually) extent or (collectively) shape,
 the total buffer size, or the type of each element.
 \end{defn}
 
-The logic of the copy algorithm does not actually rely on the individual physical layouts of the source and destination data --- it simply copies the elements from one representation of the data to another; as such, it requires the two data structures to share the same logical structure (index space; in this case, a 2D space with size $M \times N$). \Cref{lst:layout-agnostic-copy} shows a layout-agnostic version of the copy algorithm that is implemented using Noarr structures. The algorithm does not encode specific assumptions about the physical layout of the data in memory (both data structures are indexed using the same logical index), and thus, it can work with any data structure that shares the $M \times N$ logical structure. The logical structure (encoding the index space) is the definition domain of the data layout, if we consider the data layout as a mapping as defined in \cref{def:data-layout}.
+The logic of the copy algorithm does not actually rely on the individual physical layouts of the source and destination data --- it simply copies the elements from one representation of the data to another; as such, it requires the two data structures to share the same logical structure (index space; in this case, a 2D space with size $M \times N$).
+
+\Cref{lst:layout-agnostic-copy} shows a layout-agnostic version of the copy algorithm that is implemented using Noarr structures. The algorithm does not encode specific assumptions about the physical layout of the data in memory (both data structures are indexed using the same logical index), and thus, it can work with any data structure that shares the $M \times N$ logical structure. The logical structure (encoding the index space) is the definition domain of the data layout, if we consider the data layout as a mapping as defined in \cref{def:data-layout}.
 
 \begin{lstlisting}[style=C++, caption={A layout-agnostic copy algorithm using Noarr structures.}, label={lst:layout-agnostic-copy}]
 // defining Noarr structures will be covered later

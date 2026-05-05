@@ -1,3 +1,93 @@
 \chapter{Layout-agnostic and traversal-agnostic abstractions}\label{chap:abstractions}
 
 % IDEA of this chapter: This is the main chapter of the thesis, where we present our work on abstractions (Noarr and Cellato papers). We will start by introducing the concept of layout-agnostic and traversal-agnostic abstractions, and then we will present our work on each paper; highlighting the main contributions and results, as well as motivations behind the work.
+
+\xxx{some introduction to the chapter}
+
+\section{Layout-agnostic design}\label{sec:layout-agnostic-design}
+
+Layout-agnostic design separates the logical structure of the data (the index space defined by the dimension names) from the physical layout of the data in memory. Consider \cref{lst:non-agnostic-copy} as an example of a non-layout-agnostic copy algorithm for 2D arrays in \cpp.
+
+\begin{lstlisting}[style=C++, caption={A non-layout-agnostic copy algorithm in \cpp}, label={lst:non-agnostic-copy}]
+float* source = new float[__M * __N]; // an M by N array in column-major layout
+float* destination = new float[__M * __N]; // an M by N array in row-major layout
+
+for (size_t i = __0; i < __M; ++i) {
+  for (size_t j = __0; j < __N; ++j) {
+    destination[i*__N + j] = source[j*__M + i];
+  }
+}
+\end{lstlisting}
+
+This implementation of the algorithm assumes a specific layout of the data in memory, and special care must be taken to ensure that the indexing logic correctly reflects the layout of the data. This is usually not desirable and, in general, the explicit indexing expressions (e.g., \texttt{i*N + j} and \texttt{j*M + i}) are replaced with abstractions of the data layouts (e.g., \lstinline{source(i, j)} and \lstinline{destination(i, j)}).
+
+The logic of the copy algorithm does not actually rely on the individual physical layouts of the source and destination data --- it simply copies the elements from one representation of the data to another; as such, it requires the two data structures to share the same logical structure (index space; in this case, a 2D space with size $M \times N$).
+
+\Cref{lst:layout-agnostic-copy} shows a layout-agnostic version of the copy algorithm that is implemented using an abstraction based on our approach. The algorithm does not encode specific assumptions about the physical layout of the data in memory (both data structures are indexed using the same logical index), and thus, it can work with any data structure that shares the $M \times N$ logical structure. The logical structure (encoding the index space) is the definition domain of the data layout, if we consider the data layout as a mapping as defined in \cref{def:data-layout}.
+
+\begin{lstlisting}[style=C++, caption={A layout-agnostic copy algorithm}, label={lst:layout-agnostic-copy}]
+auto source = make_matrix<float, 'N', 'M'>(__N, __M); // column-major layout
+auto destination = make_matrix<float, 'M', 'N'>(__M, __N); // row-major layout
+
+for (size_t i = __0; i < __M; ++i) {
+  for (size_t j = __0; j < __N; ++j) {
+    // a point in the M by N index space
+    auto point = idx<'M', 'N'>(i, j);
+
+    destination[point] = source[point]; // automatic layout translation
+  }
+}
+\end{lstlisting}
+
+Syntactically, the logical layout of the data can be expressed multiple ways. For example, the \lstinline{std::mdspan} abstraction encodes different dimensions as positional arguments (e.g., \lstinline{my_mdspan(i, j)} passes $i$ as the index in the first dimension and $j$ as the index in the second dimension), while our approach encodes different dimensions as named arguments --- \lstinline{idx<'M', 'N'>(i, j)} explicitly associates $i$ with the dimension \lstinline{'M'} and $j$ with the dimension \lstinline{'N'}.
+
+While the latter form (\lstinline{idx<'N', 'M'>(j, i)}) is generally more verbose, it can prevent many indexing mistakes, as any association between an index and a dimension is explicit. Furthermore, the approach of encoding dimensions as named arguments is more intuitive in cases where different data structures have unrelated index spaces, which will be discussed in more detail in~\xxx{(TODO)}. In~\xxx{(TODO)}, we will show that the points in the index space can be defined implicitly, inferring the indices from the iterated index space of an algorithm, reducing the verbosity overhead.
+
+\section{Traversal-agnostic design}\label{sec:traversal-agnostic-design}
+
+Traversal-agnostic design builds on top of layout-agnostic design, abstracting away the traversal logic of algorithms from the layout of the data. This concept is similar to the concept of \cpp ranges, their views, and associated algorithms. An algorithm is, in this sense, a traversal-agnostic abstraction that only assumes generic characteristics of the traversed range (or view); for example, a sorting algorithm only assumes that the traversed range is a random-access range.
+
+In our work, we express traversal-agnostic design using the concept of \emph{index spaces} with encoded traversal logic. In our proposed abstraction following this paradigm, we represent the index spaces with traversal logic via objects called \emph{traversers}.
+
+A traverser is a view of one or more traversed data structures, and its index space is defined as a closure of the index spaces of the traversed data structures --- for simple cases, the closure is the Cartesian product of the unique occurrences of the dimensions of the traversed data structures. This traverser can be then used to generate index points in the index space that are applicable to the traversed data structures.
+
+This approach offers expressiveness and flexibility, starting from a simple initialization algorithm, we can define the algorithm as follows.
+
+\begin{lstlisting}[style=C++, caption={A traversal-agnostic initialization algorithm}, label={lst:traversal-agnostic-initialization}]
+auto data_structure = make_matrix<float, 'M', 'N'>(__M, __N); // an M by N array
+auto traverser = make_traverser(data_structure); // a traverser with the M by N index space
+
+traverser.for_each([&](auto point) {
+  data_structure[point] = compute_value(point);
+});
+\end{lstlisting}
+
+This algorithm makes no assumptions about the layout of the data structure nor the traversal logic of the algorithm --- it simply specifies an assignment for each element in the data structure. The actual traversal logic is encoded in the traverser, which may be given as a parameter to the algorithm.
+
+Similarly, we can define a traversal-agnostic copy algorithm as follows.
+
+\begin{lstlisting}[style=C++, caption={A traversal-agnostic copy algorithm}, label={lst:traversal-agnostic-copy}]
+auto source = make_matrix<float, 'N', 'M'>(__N, __M); // column-major layout
+auto destination = make_matrix<float, 'M', 'N'>(__M, __N); // row-major layout
+auto traverser = make_traverser(source, destination); // a traverser with the M by N index space
+
+traverser.for_each([&](auto point) {
+  destination[point] = source[point]; // automatic layout translation
+});
+\end{lstlisting}
+
+Compared to the layout-agnostic version of the copy algorithm in \cref{lst:layout-agnostic-copy}, this algorithm, again, assumes no specific traversal logic. It only relies on the fact that the two data structures share the same logical structure (index space), which is inherited by the traverser.
+
+\section{\xxx{Contribution 1}}\label{sec:astute-approach}
+
+In the first iteration of our work, we proposed abstractions for layout-agnostic data structures as the first milestone towards the goal of layout-agnostic and traversal-agnostic algorithms for high-performance computing. We have presented this work in~\xxx{\fullcite{vsmelko2022astute}}.
+
+% The abstractions combined the concepts of layout-agnostic design with hierarchical composition, allowing the construction of complex data structures from simpler ones.
+
+The main goal of this work was to demonstrate the feasibility of designing composable layouts for layout-agnostic algorithms usable in high-performance computing. This requires that the abstractions do not introduce significant overhead compared to hand-optimized code. This is a non-trivial requirement that requires the abstractions to utilize metaprogramming techniques to achieve zero-overhead abstractions and to also allow compile-time constant expressions in the indexing logic of the data structures so that the compiler can make more aggressive optimizations.
+
+Moreover, since we target CPU and GPU architectures, the abstractions must be designed to be portable across different architectures, which instills additional constraints on the design of the abstractions.
+
+The experimental evaluation of the proposed abstractions in the paper showed that the abstractions achieve performance comparable to hand-optimized code, improving the flexibility of algorithms without sacrificing performance.
+
+Major benefits of the proposed abstractions include the ability to easily change the layout of data structures without modifying the algorithms that operate on them, using layouts as building blocks for constructing more complex data structures, and improving code readability and maintainability by indexing data structures using named dimensions instead of explicit indexing expressions.

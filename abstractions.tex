@@ -78,6 +78,7 @@ traverser.for_each([&](auto point) {
 
 Compared to the layout-agnostic version of the copy algorithm in \cref{lst:layout-agnostic-copy}, this algorithm, again, assumes no specific traversal logic. It only relies on the fact that the two data structures share the same logical structure (index space), which is inherited by the traverser.
 
+
 \section{\xxx{Contribution 1}}\label{sec:astute-approach}
 
 In the first iteration of our work, we proposed abstractions for layout-agnostic data structures as the first milestone towards the goal of layout-agnostic and traversal-agnostic algorithms for high-performance computing. We have presented this work in~\xxx{\fullcite{vsmelko2022astute}}.
@@ -91,3 +92,35 @@ Moreover, since we target CPU and GPU architectures, the abstractions must be de
 The experimental evaluation of the proposed abstractions in the paper showed that the abstractions achieve performance comparable to hand-optimized code, improving the flexibility of algorithms without sacrificing performance.
 
 Major benefits of the proposed abstractions include the ability to easily change the layout of data structures without modifying the algorithms that operate on them, using layouts as building blocks for constructing more complex data structures, and improving code readability and maintainability by indexing data structures using named dimensions instead of explicit indexing expressions.
+
+
+\section{\xxx{Contribution 2}}\label{sec:pure-cpp-approach}
+
+After demonstrating the feasibility of layout-agnostic design in high-performance computing, we have focused on extending the concept to traversal-agnostic design, improving the expressivness  beyond layout optimization to also include traversal optimization and parallelizability. We have presented this work in~\xxx{\fullcite{klepl2024pure}}.
+
+The key concepts we introduced in this work were \emph{traversers} and transformations applicable to layouts and traversers alike. We have observed that both can be achieved by extending the concept of data layout composition, with traversers being a thin abstraction on top of data layouts.
+
+This has required extending the design of the abstractions to encode the traversal logic, which we have achieved by introducing \emph{signatures} --- compile-time constants that specify the hierarchy of the dimensions for traversal purposes. In simple terms, the signature can be viewed as a tree structure that encodes the loop nesting structure of the corresponding traversal of a given data structure (or a traverser).
+
+To express traversal transformations and derived views of data structures, we have introduced building blocks that, instead of being just for data layout construction, can be used for defining various sub-layouts (such as submatrices), renaming dimensions, and reordering the logical hierarchies of the dimensions. This principle can be further extended to support other transformations as well.
+
+We have also assessed the usefulness of this approach for expressing parallel algorithms. We have shown that the dimension hierarchies encoded in the data structures and traversers provide a natural way to express parallelism on different parallel models, including thread-based parallelism and GPU parallelism.
+
+For GPU parallelism in particular, we have shown that the dimensions of the traversals can be easily mapped onto the dimensions of the GPU execution model (blocks and threads), allowing for a straightforward expression of GPU parallelism. We have also shown that the proposed abstractions can be extended to support building blocks specific for defining layouts benefiting the nuances of GPU memories.
+
+Our experimental evaluation showed that the proposed abstractions can be efficiently used in multiple use cases, including design of various algorithms from areas such as linear algebra and stencil computations, parallelizing such algorithms on both CPU and GPU architectures, and transforming the layouts and traversals of the algorithms to achieve better performance.
+
+The performance of the algorithms implemented using the proposed abstractions was comparable to semantically equivalent abstraction-less implementations across many different algorithms for both single-threaded, and parallel implementations on both CPU and GPU architectures.
+
+
+\section{\xxx{Contribution 3}}\label{sec:cpp-abstractions}
+
+We have continued the work on layout-agnostic and traversal-agnostic abstractions in our first journal publication dedicated to this line of research, which we have presented in~\xxx{\fullcite{klepl2024abstractions}}.
+
+This work continues the efforts laid out in the previous two contributions (\cref{sec:astute-approach,sec:pure-cpp-approach}). This work focuses on more practical aspects of the proposed abstractions, including its effects on the verbosity and complexity of the developed algorithms, and its integration with autotuning techniques for performance optimization.
+
+For a code with no traversal and layout optimizations, we have shown that the proposed abstractions provide a reduction in the complexity of indexing logic of algorithms, as well as a reduction in the control flow complexity of the algorithms. This is counter-balanced by a slight increase in the verbosity of the code.
+
+The main benefit of the proposed abstractions is that algorithms can be expressed in such a way that the developer may easily modify the layouts of data structures and the traversal logic without making further modifications to the algorithms. The resulting layout and traversal agnostic design makes the complexity and verbosity of the algorithms constant regardless of the applied layout and traversal transformations, while the complexity and verbosity of the algorithms without the proposed abstractions would increase depending on the applied transformations.
+
+We have also shown that the proposed abstractions can be easily integrated with autotuning techniques in such a way that the configuration of the autotuning resides in the same codebase as the algorithm itself. We have shown this by integrating our abstractions with multiple autotuning frameworks with different interfaces.

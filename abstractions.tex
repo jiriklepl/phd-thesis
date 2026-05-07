@@ -124,3 +124,14 @@ For a code with no traversal and layout optimizations, we have shown that the pr
 The main benefit of the proposed abstractions is that algorithms can be expressed in such a way that the developer may easily modify the layouts of data structures and the traversal logic without making further modifications to the algorithms. The resulting layout and traversal agnostic design makes the complexity and verbosity of the algorithms constant regardless of the applied layout and traversal transformations, while the complexity and verbosity of the algorithms without the proposed abstractions would increase depending on the applied transformations.
 
 We have also shown that the proposed abstractions can be easily integrated with autotuning techniques in such a way that the configuration of the autotuning resides in the same codebase as the algorithm itself. We have shown this by integrating our abstractions with multiple autotuning frameworks with different interfaces.
+
+Combined with the previous contributions, this work demonstrates that the proposed abstractions can be used to design layout-agnostic and traversal-agnostic algorithms for parallel computing on both CPU and GPU architectures
+
+
+\section{\xxx{Contribution 4}}\label{sec:layout-agnostic}
+
+% To fully demonstrate the benefits of layout-agnostic and traversal-agnostic design in high-performance computing, we have studied whether the proposed abstractions can be integrated with the MPI distributed parallel programming model to address the final area of parallelism in high-performance computing --- distributed parallelism.
+
+Since high-performance computing often relies on distributed parallelism, which allows for scaling computations across multiple nodes, we have studied whether the proposed abstractions for layout-agnostic and traversal-agnostic design can be efficiently integrated with the MPI distributed parallel programming model.
+
+We have presented this work in~\xxx{\fullcite{klepl2025layout}, co-located with an MPI Forum meeting}.

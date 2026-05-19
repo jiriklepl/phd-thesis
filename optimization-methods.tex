@@ -3,12 +3,21 @@
 As discussed in~\cref{chap:background}, code optimization is crucial for achieving efficient execution of programs on modern hardware architectures such as multi-core CPUs and GPUs.
 In this chapter, we outline several prominent optimization methods and frameworks that have been developed to facilitate (automated) code optimization in high-performance computing applications, putting particular emphasis on those that are relevant to our work --- targeting data layout and traversal optimizations in parallel workloads.
 
-The first \xxx{one} that we discuss is compiler optimizations, which are crucial for efficient runtime of programs with high-level constructs such as decomposition into functions, loops, and data structures.
+% The first \xxx{one} that we discuss is compiler optimizations, which are crucial for efficient runtime of programs with high-level constructs such as decomposition into functions, loops, and data structures.
 
-The second group of optimization methods important are various abstractions designed to allow users to express transformations of data layouts and traversal orders in such a way that the core algorithmic logic stays unchanged, allowing users to decouple the design of the algorithm from specific layouts and traversal orders.
+% The second group of optimization methods \xxx{important are} various abstractions designed to allow users to express transformations of data layouts and traversal orders in such a way that the core algorithmic logic stays unchanged, allowing users to decouple the design of the algorithm from specific layouts and traversal orders.
 
-% TODO: improve wording
-Finally, we discuss relevant \xxx{soft-computing approaches}, starting with autotuning techniques that automatically search for optimal parameters for data layout and traversal transformations (for example, tile sizes for tiling transformations), as well as parameters such as compiler optimization flags; then, we discuss ML-based cost models that can be used to predict the performance of code based on its features and guide the search for optimal parameters. Lastly, we discuss the emerging area of LLM-directed optimization, \xxx{starting} with generating optimization directives and \xxx{ending} with direct generation of optimized code.
+% Finally, we discuss relevant \xxx{soft-computing approaches}, starting with autotuning techniques that automatically search for optimal parameters for data layout and traversal transformations (for example, tile sizes for tiling transformations), as well as parameters such as compiler optimization flags; then, we discuss ML-based cost models that can be used to predict the performance of code based on its features and guide the search for optimal parameters. Lastly, we discuss the emerging area of LLM-directed optimization, \xxx{starting} with generating optimization directives and \xxx{ending} with direct generation of optimized code.
+
+% TODO: The above sounds too much like an outline, we need some actual introductory and insightful text here
+
+The shared theme among all the optimization methods is enabling developers to use higher-level \xxx{designs} without sacrificing performance.
+
+For example, compiler optimizations allow users to write well-structured code separated into functions and expressed using high-level constructs such as loops and data structures. Then, the structured code is analyzed by the compiler and, following some heuristic rules (such as replacing repeated computations with temporary variables), transformed into lower-level code that is more efficient to execute. Compiler optimizations and similar methods are often bound by strict rules that ensure that the semantics of the original code are preserved, thus they are often important components of other optimization methods, either enabling them or being used in conjunction with them to verify the optimizations.
+
+Other methods, such as abstractions, allow users to express the algorithm in a way that specific design choices, such as underlying data layouts of data structures can be easily changed without modifying the logic of the algorithm. Such methods are often designed to allow users to direct the optimizations by using various directives or policies, improve the expressiveness and readability of the code, or to enable techniques such as automatic tuning (autotuning), which searches for optimal parameters based on empirical performance measurements.
+
+More advanced methods, such as LLM-based optimization, even allow users to express the desired optimizations in natural language, which provides even more flexibility and accessibility for users who may not be experts in code optimization techniques. This area of optimization methods is by far the most recent and open, but also potentially the most powerful, as, unlike more traditional methods, LLMs can learn and generalize more complex patterns from data.
 
 
 \section{Compiler optimizations}
@@ -20,15 +29,15 @@ Compiler optimizations also allow using higher-level abstractions (e.g., \cpp te
 In practice, compilers replace the more readable abstractions with lower-level code with further optimizations such as eliminating redundant computations.
 
 % TODO: more citations (not just PGO and autotuning)
-However, compilers have limitations in their ability to optimize code --- they are often limited by the information available at compile time, so they have to perform optimizations under strict assumptions about the program's behavior, following heuristic rules, and only if the transformation is guaranteed to preserve the semantics of the original code.
-Examples of mitigating these limitations include profile-guided optimizations (PGO)~\xxx{(cite)}, autotuning techniques~\xxx{(cite)}, user-directed optimizations and custom compilation and optimization pipelines, cost models based on machine learning.
-
-A particularly powerful optimization method that can be part of a compilation pipeline is the polyhedral model, which we discuss in more detail in~\cref{sec:polyhedral-model}. It directly addresses the problem of optimizing iteration spaces of loop nests.
+However, compilers have limitations in their ability to optimize code --- they are often bound by the incomplete information available at compile time, so they have to perform optimizations under strict assumptions about the program's behavior, following heuristic rules, and only if the transformation is guaranteed to preserve the semantics of the original code for any feasible execution.
+Examples of mitigating these limitations include profile-guided optimizations (PGO)~\xxx{(cite)}, autotuning techniques~\xxx{(cite)}, user-directed optimizations and custom compilation and optimization pipelines, or cost models based on machine learning.
 
 
 \subsection{Polyhedral model}\label{sec:polyhedral-model}
 
-Polyhedral model is a mathematical framework for representing and optimizing loop nests in programs. It is particularly effective for scientific computing applications, where performance-critical code often consists of nested loops operating on multi-dimensional arrays in a regular pattern. The approach is based on representing the iteration spaces of loops, as well as all data accesses and dependencies, as polyhedra in a high-dimensional space~\xxx{(obrazek?)}. All relations are represented as affine functions (i.e., linear functions with a constant term) of loop indices and any parameters constant during the runtime of the optimized code parts (e.g., sizes of arrays). The optimization process draws on concepts from linear algebra and integer linear programming to find transformed iteration spaces that optimize certain performance metrics (e.g., data locality and parallelizability).
+A particularly powerful tool that can be part of a compilation pipeline is the polyhedral model~\xxx{(cite)}. Polyhedral model is a mathematical framework for representing and optimizing loop nests in programs. It is particularly effective for scientific computing applications, where performance-critical code often consists of nested loops operating on multi-dimensional arrays in a regular pattern.
+
+The approach is based on representing the iteration spaces of loops, as well as all data accesses and dependencies, as polyhedra in a high-dimensional space~\xxx{(obrazek?)}. All relations are represented as affine functions (i.e., linear functions with a constant term) of loop indices and any parameters constant during the runtime of the optimized code parts (e.g., sizes of arrays). The optimization process draws on concepts from linear algebra and integer linear programming to find transformed iteration spaces that optimize certain performance metrics (e.g., data locality and parallelizability).
 
 An example of parallelization using the polyhedral model is finding a hyperplane in the space of loop indices that is orthogonal to the data dependencies in the original code. A loop nest iterating along that hyperplane can then be freely parallelized.
 
@@ -48,11 +57,11 @@ We can broadly categorize these abstractions into the following groups that we w
 \begin{description}
   \item[Domain-specific languages (DSLs):]\label{des:dsl} These are specialized programming languages designed for specific computing domains, such as deep learning, stencil computations, or image processing. Their design is optimized for offering more concise syntax compared to general-purpose programming (e.g., \cpp) and for enabling powerful optimizations based on domain-specific knowledge and restrictions on the code structure.
   \item[Annotation-based approaches:]\label{des:annotation} These approaches involve annotating the code in the source language (e.g., \cpp) with special directives or pragmas that provide hints to the compiler or optimization framework about how to optimize the code. An example of this approach is Loopy~\cite{namjoshi2016loopy}, which allows users to do affine transformations of loop nests using natural math-like syntax.
-  \item[Native abstractions:]\label{des:native} These are abstractions implemented directly in the source language (e.g., \cpp) that allow users to express data layout and traversal optimizations without needing to use a custom tooling.
+  \item[Native abstractions:]\label{des:native} These are abstractions implemented directly in the source language (e.g., \cpp) that allow users to express data layout and traversal optimizations without needing to use a \xxx{custom tooling}.
   Of special interest to our work are \emph{zero-cost abstractions}~\cite{stroustrup2012foundations} enabled by compiler optimizations, which allow users to write high-level constructs and use template metaprogramming techniques without introducing performance overhead.
 \end{description}
 
-These three categories are not mutually exclusive --- for example, some native abstractions can be expressive enough to be used as a DSL, and many annotation-based approaches and DSLs overlap in how they enable users to express optimizations. The main difference between the categories is the degree of custom tooling and knowledge required to use the abstraction --- DSLs typically require the most custom tooling and specialized knowledge, while native abstractions can be used with the existing toolchain and without needing to learn a new language or maintain a separate compilation pipeline.
+These three categories are not mutually exclusive --- for example, some native abstractions can be expressive enough to be used as a DSL, and many annotation-based approaches and DSLs overlap in how they enable users to express optimizations. The main difference between the categories is the degree of \xxx{custom tooling} and knowledge required to use the abstraction --- DSLs typically require the most \xxx{custom tooling} and specialized knowledge, while native abstractions can be used with the existing toolchain and without needing to learn a new language or maintain a separate compilation pipeline.
 
 
 \subsection{Domain-specific languages (DSLs)}\label{sec:dsl}
@@ -73,13 +82,13 @@ DSLs can be also designed to be easily user-extended to support new optimization
 
 \subsection{Annotation-based approaches}\label{sec:annotation}
 
-Annotation-based approaches allow users to express optimizations by writing optimization directives appended to the original code written in a general-purpose programming language (e.g., \cpp). Some of such directives are supported even by compilers (e.g., OpenMP pragmas for parallelization, unroll pragmas for loop unrolling in CUDA and \cpp).
+Annotation-based approaches allow users to express optimizations by writing optimization directives appended to the original code written in a general-purpose programming language (e.g., \cpp). Some of such directives are supported even by compilers (e.g., OpenMP pragmas for parallelization, unroll pragmas for loop unrolling in \xxx{CUDA and} \cpp).
 
 In a typical annotation-based approach, users
 % can decorate statements in the original code with labels and then
 write optimization directives that refer to code elements (e.g., loops, statements, data structures) and perform their transformations. These transformations are often based on the polyhedral model~\cite{namjoshi2016loopy,chen2008chill,hartono2009annotation}. In annotation-based approaches, the polyhedral model provides a powerful and verifiable framework for users to express optimizations.
 
-Tools such as CHiLL opt for semantic directives such as \lstinline{tile} or \lstinline{permute} that directly express the intended transformation, while tools such as Loopy use more flexible mathematical syntax.
+Tools such as CHiLL \xxx{opt} for semantic directives such as \lstinline{tile} or \lstinline{permute} that directly express the intended transformation, while tools such as Loopy use more flexible mathematical syntax.
 For example, in Loopy~\cite{namjoshi2016loopy}, users can write a directive to interchange two loops in a loop nest as \lstinline{affine(LoopLabel, [i, j, k] -> [i, k, j])}, where \lstinline{LoopLabel} is the label written before the transformed loop nest, and \lstinline{i}, \lstinline{j}, and \lstinline{k} represent iteration variables of the loop nest.
 
 While the design space for annotation-based approaches is more limited than for DSLs, annotation-based framework are often tightly integrated with the existing toolchains for the source language (such as OpenMP pragmas in \cpp), which allows users to easily integrate them into their existing codebases; and the annotated code is still interpretable by users and tools built for the source language.
@@ -87,18 +96,18 @@ While the design space for annotation-based approaches is more limited than for 
 
 \subsection{Native abstractions}\label{sec:native}
 
-Native abstractions are implemented directly in the source language (\cpp) and do not rely on any custom tooling or compilation pipeline. They are most relevant to our work, as the majority of our contributions fall into this group.
+Native abstractions are implemented directly in the source language (\cpp) and do not rely on any \xxx{custom tooling} or compilation pipeline. They are most relevant to our work, as the majority of our contributions fall into this group.
 
 We broadly separate the abstractions into three categories: layout-agnostic multidimensional arrays, hierarchical views, and abstractions for separating computation logic from traversals. These categories are not mutually exclusive --- for example, our contributions combine the principles of layout-agnostic multidimensional arrays and hierarchical views, while also separating the core algorithmic logic from the layout and traversal optimizations.
 
 
 \paragraph{Layout-agnostic multidimensional arrays.} The most basic abstraction for data layout and traversal optimizations is a layout-flexible multidimensional array. Prominent examples of this abstraction include the \texttt{mdspan} abstraction~\cite{trott2022mdspan} in standard \cpp, and Kokkos and RAJA Views~\cite{trott2021kokkos,beckingsale2019raja}. These abstractions separate the logical structure of the data (e.g., the number of dimensions and their sizes) from the physical layout in memory, enabling users to change the layout without modifying the core algorithmic logic. Commonly, the physical layout is defined by an affine mapping from the logical indices to the physical memory addresses, parametrized by the strides and sizes of the dimensions.
 
-The strides and sizes can be encoded as compile-time constants to allowing for more aggressive optimizations. The different implementations combine this principle with policies for memory management or other concerns of accessing the data (e.g., policies for special load and store instructions).
+The strides and sizes can be encoded as compile-time constants \xxx{}{to allowing} for more aggressive optimizations. The different implementations combine this principle with policies for memory management or other concerns of accessing the data (e.g., policies for special load and store instructions).
 
 The crucial feature shared by all the implementations is expressing submatrices by slicing the original array, \xxx{which is useful for expressing traversal optimizations such as tiling.}
 
-\xxx{A particular example} of multidimensional array abstractions is the CuTe DSL in the Cutlass library~\cite{thakkar2023cutlass}. It differs from the other implementations in that it defines a kind of layout algebra based on interpreting the layouts as mathematical functions. It defines how the indices of a layout are linearized into a single index and, thus, each layout corresponds to a function $f: \mathbb{N} \to \mathbb{N}$.
+\xxx{A particular example} of multidimensional array abstractions is the CuTe \xxx{DSL} in the Cutlass library~\cite{thakkar2023cutlass}. It differs from the other implementations in that it defines a kind of layout algebra based on interpreting the layouts as mathematical functions. It defines how the indices of a layout are linearized into a single index and, thus, each layout corresponds to a function $f: \mathbb{N} \to \mathbb{N}$.
 
 \paragraph{Hierarchical views.} Another powerful abstraction for data layout and traversal optimizations is the notion of hierarchically defined views. A good and intuitive example of such an abstraction for traversals is the \texttt{range} library~\xxx{(cite)} in standard \cpp, which allows users to express various traversal transformations (e.g., tiling, reversing).
 
@@ -117,16 +126,16 @@ For example, standard \cpp algorithms \xxx{(cite)} are designed to be agnostic t
 
 % Recently, machine learning (ML) techniques, including large language models (LLMs), have been increasingly applied to various aspects of code optimization. The main motivation for using these techniques is their flexibility and ability to learn and generalize complex patterns from data, which can overcome limitations of traditional optimization methods that rely on hand-crafted heuristics or analytical models.
 
-In this section, we discuss various soft-computing approaches that have been applied to code optimization in high-performance computing applications. Relevant works in this area include autotuning techniques, ML-based cost models, and LLM-directed optimization.
+In this section, we discuss various soft-computing approaches that have been applied to code optimization in high-performance computing applications. Relevant works in this area include autotuning techniques, ML-based cost models, and \xxx {LLM-directed optimization}.
 
 
 \subsection{Autotuning}\label{sec:autotuning}
 
-Autotuning is a powerful technique for optimizing, which is not limited to code optimization, but is particularly relevant in this context. It involves automatically searching for optimal parameters for a given objective function (e.g., code performance) by iteratively evaluating different configurations and using the results to guide the search for better configurations. The set of possible configurations is typically called the search space and can include various parameters such as tile sizes for tiling transformations, loop orderings, compiler optimization flags, and more.
+Autotuning is a powerful technique for \xxx{optimizing}, which is not limited to code \xxx{optimization}, but is particularly relevant in this context. It \xxx{involves} automatically searching for optimal parameters for a given objective function (e.g., code performance) by iteratively evaluating different configurations and using the results to guide the search for better configurations. The set of possible configurations is typically called the search space and can include various parameters such as tile sizes for tiling transformations, loop orderings, compiler optimization flags, and more.
 
 Simple autotuning techniques include random search and grid search that are good for exhaustive exploration of small search spaces. They fall within the category of global optimization methods, which are designed to find the global optimum of a function. If the objective function (performance) is not very noisy, local optimization methods (e.g., hill climbing, nelder-mead method, and simulated annealing) may perform much better, as they can quickly converge to a local optimum.
 
-For expensive-to-evaluate functions, surrogate-based optimization methods (e.g., Bayesian optimization) are often used, which build a surrogate model of the objective function based on previous evaluations and use this model to guide the search for optimal parameters. The more advanced autotuning techniques explore the search space based on the observed performance of the configurations, which can lead to much faster convergence to optimal parameters compared to simple techniques such as random search or grid search.
+For expensive-to-evaluate functions, \xxx{surrogate}-based optimization methods (e.g., Bayesian optimization) are often used, which build a \xxx{surrogate} model of the objective function based on previous evaluations and use this model to guide the search for optimal parameters. The more advanced autotuning techniques explore the search space based on the observed performance of the configurations, which can lead to much faster convergence to optimal parameters compared to simple techniques such as random search or grid search.
 
 % Perhaps one of the most prominent applications of ML techniques in code optimization is autotuning. Autotuning techniques are powerful and versatile methods for (among many other uses) optimizing performance of applications based on empirical performance measurements or cost models. While methods such as linear programming can find optimal parameters for certain objective functions, situation is much more complex in more difficult-to-model optimization problems. Many autotuning techniques are specifically designed to address black-box optimization problems or functions that may be expensive to evaluate, non-continuous, and stochastic (among other characteristics making them unfit for analytical approach) --- performance of code is one such function.
 
@@ -140,12 +149,12 @@ Autotuning techniques are great in conjunction with other optimization methods, 
 \subsection{ML-based cost models}\label{sec:ml-based-cost-models}
 
 Measuring the performance of code is often expensive and noisy, which makes it infeasible to evaluate the performance of an algorithm for a sufficiently large sample of configurations in the search space.
-% We have already mentioned that Bayesian optimization uses a surrogate model to guide the search for optimal parameters. It typically uses a Gaussian process as the surrogate model, which performs online learning based on the performance measurements obtained during the optimization process. However, this still relies on the assumption that the performance function is relatively smooth and not particularly noisy while also not assuming any particular structure of the function prior to the optimization process. This may lead to unnecessarily long optimization sessions (especially if the performance function is predictable based on the code features).
+
 At the same time, performance characteristics of code often follow, to some extent, predictable patterns based on the code features (e.g., the number of accesses to memory in a loop can predict cache utilization).
 
-To address this issue, many works have proposed using ML techniques to build cost models that predict the performance of code based on its features.
-They are based on predicting the performance based on how it interacts with some code features extracted from the code.
-The scope of this approach is quite broad --- for example, some works have proposed encoding code instructions into a vector representation and use neighborhood-based methods to predict the performance of code based on the performance of similar code~\xxx{(cite the blbost)}.
+To address this issue, many works have proposed using ML techniques to build cost models that \xxx{predict the performance} of code based on its features.
+They are based on \xxx{predicting the performance} based on how it interacts with some code features extracted from the code.
+The scope of this approach is quite broad --- for example, some works have proposed encoding code instructions into a vector representation and use neighborhood-based methods to \xxx{predict the performance} of code based on the performance of similar code~\xxx{(cite the blbost)}.
 % Recent additions in the area of HPC include works, such as \citeauthor{baghdadi2021deep}~\cite{baghdadi2021deep}, who use deep learning methods as cost models in a polyhedral optimization framework (the Tiramisu compiler), or \citeauthor{adams2019learning}~\cite{adams2019learning}, who use a learned cost model to guide the search in the Halide autotuning framework.
 More recently, some works have proposed using deep learning methods to build cost models that can guide exploration of the search space for autotuning based on analyzing the abstract syntax tree of the code~\cite{baghdadi2021deep,adams2019learning}.
 
@@ -167,6 +176,6 @@ For example, HPC-Coder~\cite{nichols2024hpc} shows that fine-tuning LLMs on HPC 
 
 \subsubsection{LLM code generation and transformation}\label{sec:llm-code-generation}
 
-Direct generation of optimized code goes further and allows the model to make more fundamental changes to the code. This was not a viable option until recently, as the proficiency of LLMs in generating optimized code was not sufficient for this task. Since LLMs are generally trained on large codebases, and only a handful of generally available code falls into the HPC domain, the performance of off-the-shelf LLMs on generating optimized HPC code has started to become competitive only very recently, perhaps with the introduction of Codex~\cite{chen2021evaluating}.
+Direct \xxx{generation of optimized code} goes further and allows the model to make more fundamental changes to the code. This was not a viable option until recently, as the proficiency of LLMs in \xxx{generating optimized code} was not sufficient for this task. Since LLMs are generally trained on large codebases, and only a handful of generally available code falls into the HPC domain, the performance of off-the-shelf LLMs on \xxx{generating optimized HPC code} has started to become competitive only very recently, perhaps with the introduction of Codex~\cite{chen2021evaluating}.
 
-Since the proficiency of LLMs as of the beginning of 2026 is still not sufficient for generating optimized code without supervision or verification, most works rely on using LLMs for translating between a more interpretable language and a programming model such as CUDA~\cite{palkowski2024gpt,dearing2024lassi}. One of these works, LASSI, defines a self-correcting pipeline where the LLM proposes a solution similarly to an autotuning solution, with the added benefit of being able to respond to feedback from the compiler or the verifier. This direction is used in various state-of-the-art solutions such as ComPilot~\cite{merouani2025agentic}.
+Since the proficiency of LLMs as of the beginning of 2026 is still not sufficient for \xxx{generating optimized code} without supervision or verification, most works rely on using LLMs for translating  between a more interpretable language and a programming model such as CUDA~\cite{palkowski2024gpt,dearing2024lassi}. One of these works, LASSI, defines a self-correcting pipeline where the LLM proposes a solution similarly to an autotuning solution, with the added benefit of being able to respond to feedback from the compiler or the verifier. This direction is used in various state-of-the-art solutions such as ComPilot~\cite{merouani2025agentic}.

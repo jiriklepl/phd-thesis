@@ -157,36 +157,50 @@ However, such methods are limited either by strict rules and heuristics, or by t
 
 \subsection{Autotuning}\label{sec:autotuning}
 
-Autotuning is a powerful technique for \xxx{optimizing}, which is not limited to code \xxx{optimization}, but is particularly relevant in this context. It \xxx{involves} automatically searching for optimal parameters for a given objective function (e.g., code performance) by iteratively evaluating different configurations and using the results to guide the search for better configurations. The set of possible configurations is typically called the search space and can include various parameters such as tile sizes for tiling transformations, loop orderings, compiler optimization flags, and more.
+Autotuning is a powerful technique for parameter optimization even outside the context of high-performance computing, but is particularly relevant in this context.
+% It \xxx{involves} automatically searching for optimal parameters for a given objective function (e.g., code performance) by iteratively evaluating different configurations and using the results to guide the search for better configurations. The set of possible configurations is typically called the search space and can include various parameters such as tile sizes for tiling transformations, loop orderings, compiler optimization flags, and more.
+It searches for optimal parameters (the \emph{search space}) for a given objective function (e.g., code performance) by iteratively evaluating different configurations and using the results to guide the search for better configurations. The search space can include various parameters such as tile sizes for tiling transformations, loop orderings, choices between different algorithms, or even compiler flags.
 
 Simple autotuning techniques include random search and grid search that are good for exhaustive exploration of small search spaces. They fall within the category of global optimization methods, which are designed to find the global optimum of a function. If the objective function (performance) is not very noisy, local optimization methods (e.g., hill climbing, nelder-mead method, and simulated annealing) may perform much better, as they can quickly converge to a local optimum.
 
-For expensive-to-evaluate functions, \xxx{surrogate}-based optimization methods (e.g., Bayesian optimization) are often used, which build a \xxx{surrogate} model of the objective function based on previous evaluations and use this model to guide the search for optimal parameters. The more advanced autotuning techniques explore the search space based on the observed performance of the configurations, which can lead to much faster convergence to optimal parameters compared to simple techniques such as random search or grid search.
+For expensive-to-evaluate functions (which characterizes evaluation of some algorithms), surrogate-based optimization methods (e.g., Bayesian optimization) are often used, which build an approximate (surrogate) model of the objective function based on previous evaluations and use this model to guide the search for optimal parameters.
+% The more advanced autotuning techniques explore the search space based on the observed performance of the configurations, which can lead to much faster convergence to optimal parameters compared to simple techniques such as random search or grid search.
+This can help avoid evaluating configurations that are likely to perform poorly, thus reducing the number of evaluations needed to find optimal parameters.
 
 % Perhaps one of the most prominent applications of ML techniques in code optimization is autotuning. Autotuning techniques are powerful and versatile methods for (among many other uses) optimizing performance of applications based on empirical performance measurements or cost models. While methods such as linear programming can find optimal parameters for certain objective functions, situation is much more complex in more difficult-to-model optimization problems. Many autotuning techniques are specifically designed to address black-box optimization problems or functions that may be expensive to evaluate, non-continuous, and stochastic (among other characteristics making them unfit for analytical approach) --- performance of code is one such function.
 
-In a scenario of optimizing data layout and traversal, the search space comprises categorical parameters (e.g., the order of loops in a loop nest, the choice of data layout) and numerical parameters (e.g., tile sizes). Categorical parameters typically do not follow any obvious ordering, while the ranges of numerical parameters can be very large.
+In a scenario of optimizing data layouts and traversals, the search space comprises categorical parameters (e.g., the order of loops in a loop nest, the choice of data layout) and numerical parameters (e.g., tile sizes). Categorical parameters typically do not follow any obvious ordering, while the ranges of numerical parameters can be very large, both benefiting from different exploration techniques.
 
-Since the search space usually contains combinations of categorical and numerical parameters, and the performance function follows complex patterns \xxx{(and its evaluation can be expensive and stochastic)}, many works combine different optimization techniques to achieve better results. One prominent example of this is the OpenTuner framework~\cite{ansel2014opentuner}, which was designed to tune compiler optimization flags, but can be applied to a wide range of optimization problems.
+Since the search space usually contains combinations of categorical and numerical parameters, and the performance function follows complex patterns (and its evaluation typically is stochastic), many works combine different exploration techniques using various meta-strategies to achieve better results. One prominent example of this is the OpenTuner framework~\cite{ansel2014opentuner}, which was designed to tune compiler optimization flags, but can be applied to a wide range of optimization problems.
 
 Autotuning techniques are great in conjunction with other optimization methods, such as the polyhedral model~\xxx{(cite)}, DSLs, and annotation-based approaches, if their compilation pipeline verifies that the optimizations do not change the semantics of the original code. This has been shown to be effective in works such as \xxx{the work that autotunes halide}.
 
 
-\subsection{ML-based cost models}\label{sec:ml-based-cost-models}
+% \subsection{ML-based cost models}\label{sec:ml-based-cost-models}
 
-Measuring the performance of code is often expensive and noisy, which makes it infeasible to evaluate the performance of an algorithm for a sufficiently large sample of configurations in the search space.
+% Measuring the performance of code is often expensive and noisy, which makes it infeasible to evaluate the performance of an algorithm for a sufficiently large sample of configurations in the search space.
 
-At the same time, performance characteristics of code often follow, to some extent, predictable patterns based on the code features (e.g., the number of accesses to memory in a loop can predict cache utilization).
+% At the same time, performance characteristics of code often follow, to some extent, predictable patterns based on the code features (e.g., the number of accesses to memory in a loop can predict cache utilization).
 
-To address this issue, many works have proposed using ML techniques to build cost models that \xxx{predict the performance} of code based on its features.
-They are based on \xxx{predicting the performance} based on how it interacts with some code features extracted from the code.
-The scope of this approach is quite broad --- for example, some works have proposed encoding code instructions into a vector representation and use neighborhood-based methods to \xxx{predict the performance} of code based on the performance of similar code~\xxx{(cite the blbost)}.
-% Recent additions in the area of HPC include works, such as \citeauthor{baghdadi2021deep}~\cite{baghdadi2021deep}, who use deep learning methods as cost models in a polyhedral optimization framework (the Tiramisu compiler), or \citeauthor{adams2019learning}~\cite{adams2019learning}, who use a learned cost model to guide the search in the Halide autotuning framework.
-More recently, some works have proposed using deep learning methods to build cost models that can guide exploration of the search space for autotuning based on analyzing the abstract syntax tree of the code~\cite{baghdadi2021deep,adams2019learning}.
+% To address this issue, many works have proposed using ML techniques to build cost models that \xxx{predict the performance} of code based on its features.
+% They are based on \xxx{predicting the performance} based on how it interacts with some code features extracted from the code.
+% The scope of this approach is quite broad --- for example, some works have proposed encoding code instructions into a vector representation and use neighborhood-based methods to \xxx{predict the performance} of code based on the performance of similar code~\xxx{(cite the blbost)}.
+% % Recent additions in the area of HPC include works, such as \citeauthor{baghdadi2021deep}~\cite{baghdadi2021deep}, who use deep learning methods as cost models in a polyhedral optimization framework (the Tiramisu compiler), or \citeauthor{adams2019learning}~\cite{adams2019learning}, who use a learned cost model to guide the search in the Halide autotuning framework.
+% More recently, some works have proposed using deep learning methods to build cost models that can guide exploration of the search space for autotuning based on analyzing the abstract syntax tree of the code~\cite{baghdadi2021deep,adams2019learning}.
+
+\subsection{ML-based code optimization}\label{sec:ml-based-code-optimization}
+
+There have been many different approaches to using ML techniques for code optimization, such as using reinforcement learning for making optimization decisions (e.g., inlining decisions and register allocation)~\xxx{(cite)}, or using supervised learning to predict the performance of code based on its features (e.g., the number of accesses to memory in a loop can predict cache utilization)~\xxx{(cite)}.
+
+Some works have proposed encoding code instructions into a vector representation and use vector similarity to predict the performance of code based on the performance of similar code~\xxx{(cite the blbost)}.
+
+Deep learning methods have also been used to build cost models that can guide exploration of the search space for autotuning or scheduling transformations based on analyzing the structure of the code~\xxx{\cite{baghdadi2021deep,adams2019learning}}. Similarly, ML-based cost models have been used to improve the performance of compiler optimizations and polyhedral optimization techniques~\xxx{(cite)}.
+
+The whole area of ML-based code optimization is quite broad and includes works such as using ML-based models as surrogate models in compiler optimizations to avoid expensive performance evaluations or profiling~\xxx{(cite)}, or using reinforcement learning to order the optimization passes in a compiler~\xxx{(cite)}.
 
 \subsection{LLM-directed optimization}\label{sec:llm-directed-optimization}
 
-Recently, LLMs have emerged as a powerful tool for code optimization, with the ability to learn from large codebases and generate optimizing directives or  code based on natural language descriptions or code snippets.
+Recently, LLMs have emerged as a powerful tool for both code optimization and code generation, with the ability to learn from large codebases and generate optimizing directives or code based on natural language descriptions or code snippets. As we have made some contributions in this particular area of ML-based code optimization, we discuss it in more detail in the following sections.
 
 \subsubsection{Generating optimization directives}\label{sec:llm-generating-directives}
 

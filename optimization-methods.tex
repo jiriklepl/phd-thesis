@@ -135,16 +135,24 @@ For example, we can define a type that enumerates the first column of a matrix i
 
 \subsubsection{Separating computational logic}
 
-The \cpp template system allows for powerful abstractions that can be used to separate the core algorithmic logic from other aspects of the design, including data layout and traversal.
+% The \cpp template system allows for powerful abstractions that can be used to separate the core algorithmic logic from other aspects of the design, including data layout and traversal.
 
-For example, standard \cpp algorithms \xxx{(cite)} are designed to be agnostic to both data layout and traversal --- parametrized by abstract ranges and execution policies. Another, more advanced example of this principle are stencil computations in the GridTools library~\cite{afanasyev2021gridtools}, or kernel definitions in the RAJA library~\cite{beckingsale2019raja}. GridTools stencils are defined using abstract computation stages that are oblivious to the data layout and traversal; and RAJA kernels are nested templates representing loop nests that can be instantiated with different execution policies that define the traversal order and parallelization strategy.
+\cpp has generic programming capabilities that allow defining algorithms in such a way that they are agnostic to the data layouts and traversal orders. The most powerful language feature allowing for this principle without sacrificing performance is the template system, which allows for algorithms to be parametrized by types and values that are interpreted at compile time, enabling the compiler to optimize the code for specific arguments and, thus, allowing for zero-cost abstractions~\cite{stroustrup2012foundations}.
+
+It is a common practice, when using these abstractions, to define some design choices such as traversal orders and parallelization strategies via policies passed via the template parameters. For example, standard \cpp algorithms \xxx{(cite)} are designed to be agnostic to both data layout and traversal --- parametrized by abstract ranges and execution policies.
+
+Another, more advanced example of this approach are stencil computations in the GridTools library~\cite{afanasyev2021gridtools}, or kernel definitions in the RAJA library~\cite{beckingsale2019raja}. GridTools stencils are defined using abstract computation stages that are oblivious to the data layout and traversal; and RAJA kernels are nested templates representing loop nests that can be instantiated with different execution policies that define the traversal order and parallelization strategy.
 
 
 \section{\xxx{Soft-computing approaches}}\label{sec:soft-computing-approaches}
 
 % Recently, machine learning (ML) techniques, including large language models (LLMs), have been increasingly applied to various aspects of code optimization. The main motivation for using these techniques is their flexibility and ability to learn and generalize complex patterns from data, which can overcome limitations of traditional optimization methods that rely on hand-crafted heuristics or analytical models.
 
-In this section, we discuss various soft-computing approaches that have been applied to code optimization in high-performance computing applications. Relevant works in this area include autotuning techniques, ML-based cost models, and \xxx{LLM-directed optimization}.
+% In this section, we discuss various soft-computing approaches that have been applied to code optimization in high-performance computing applications. Relevant works in this area include autotuning techniques, ML-based cost models, and \xxx{LLM-directed optimization}.
+
+So far, we have discussed various formal methods for optimization and methods that allow users to direct optimizations or express algorithms in such a way that the different design choices can be more easily optimized.
+
+However, such methods are limited either by strict rules and heuristics, or by the user effort. In this section, we discuss various data-driven approaches that can be used to optimize code based on empirical performance measurements or generalize patterns from learned data (either for predicting various performance characteristics or even for generating optimized code).
 
 
 \subsection{Autotuning}\label{sec:autotuning}

@@ -11,7 +11,7 @@ It further expands on the concepts of layout-agnostic design and hierarchical co
 
 Noarr structures are the fundamental abstraction in the Noarr library. They are used for modeling multi-dimensional data layouts according to the principles of layout agnosticism and hierarchical composition of data layouts (see \cref{sec:native}).
 
-\subsection{Layout-agnostic design}\label{sec:layout-agnostic-design}
+\subsection{Layout-agnostic design}\label{sec:noarr-layout-agnostic-design}
 
 Layout-agnostic design separates the logical structure of the data (the index space defined by the dimension names) from the physical layout of the data in memory. Consider \cref{lst:non-agnostic-copy} as an example of a non-layout-agnostic copy algorithm for 2D arrays in \cpp.
 
@@ -216,7 +216,7 @@ The \lstinline{span} proto-structure is an example of a transformation that chan
 
 % There are many other proto-structures with the property of preserving the physical layout of the data, such as \lstinline{rename<old_dim, new_dim>()} for renaming dimensions, which can be used to translate between different semantic conventions (e.g., from \lstinline{'M'} and \lstinline{'N'} to \lstinline{'x'} and \lstinline{'y'}), and \lstinline{span<dim>(start, end)} for slicing dimensions, which can be used to define sub-layouts of the original layout.
 
-In \cref{sec:layout-agnostic-design}, we have asserted that naming dimensions is more intuitive in cases where different data structures have unrelated index spaces. This situation is shown in \cref{lst:layout-agnostic-matmul}, which exemplifies a layout-agnostic implementation of the na\"{\i}ve matrix multiplication algorithm.
+In \cref{sec:noarr-layout-agnostic-design}, we have asserted that naming dimensions is more intuitive in cases where different data structures have unrelated index spaces. This situation is shown in \cref{lst:layout-agnostic-matmul}, which exemplifies a layout-agnostic implementation of the na\"{\i}ve matrix multiplication algorithm.
 
 
 \begin{lstlisting}[style=C++, caption={A layout-agnostic matrix multiplication algorithm using Noarr structures.}, label={lst:layout-agnostic-matmul}]

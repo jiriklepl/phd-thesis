@@ -102,6 +102,7 @@ To parallelize the algorithm, we can use a similar approach that we used for imp
 
 % Changing the data layout of $B$ can also improve spatial locality, as the innermost loop will access contiguous memory locations in both input matrices and caches commonly fetch data in blocks of contiguous memory (cache lines). This shows that one change in memory access patterns can affect multiple hardware features and thus have a complex interaction with the benefits of other optimizations.
 
+\begin{XXX}
 
 \section{GPU considerations}\label{sec:gpu-considerations}
 
@@ -133,3 +134,5 @@ Another important consideration is that the GPU has its own global memory that i
 We have outlined the hardware features of modern high-performance systems that are most relevant in the context of layout and traversal optimizations. Each architecture has further features and implementation details that we have not covered here, but the amount of different features and their complex interactions often make it difficult to predict the performance of an algorithm without collecting empirical data from representative runs.
 
 Thus, it is important to have tools that help apply optimizations that either heuristically or empirically improve the performance of an algorithm. Our work addresses this need via two routes easily accessible and interpretable by users. First, we explore and develop abstractions that allow users to express their algorithms and data structures in a way that applying transformations to data layouts and traversal orders does not require changing the algorithmic code itself. Second, we explore use of large language models to automatically optimize the code of algorithms for better performance on modern hardware, which can be used as a complementary tool to the first route as well as a standalone tool.
+
+\end{XXX}

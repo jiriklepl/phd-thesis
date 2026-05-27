@@ -27,27 +27,8 @@ The differences between the two architectures present different challenges and o
 
 % In general, caching happens automatically and is transparent to users. However, a difference in memory access patterns between a na\"{\i}ve implementation and a more cache-friendly one can lead to significant improvements in execution time~--- as the runtime spends less time waiting for data to be fetched from memory.
 
-A simple example that will help us illustrate the impact of data layouts and traversal orders on performance of execution on the two architectures is the matrix multiplication algorithm, which computes each element of the output matrix ($C$) as a dot product of a row from the first input matrix ($A$) and a column from the second input matrix ($B$), where all matrices are stored in the standard row-major order (row by row). The algorithm can be implemented in \cpp as follows:
 
-\begin{lstlisting}[language=C++, caption={Matrix multiplication}, label={lst:matrix-multiplication}]
-float C[M][N]; // M rows, N columns
-float A[M][K]; // M rows, K columns
-float B[K][N]; // K rows, N columns
 
-// iterating over output matrix C
-for (int i = 0; i < M; ++i) {
-    for (int j = 0; j < N; ++j) {
-        // single dot product
-        float sum = 0;
-        for (int k = 0; k < K; ++k) {
-            sum += A[i][k] * B[k][j];
-        }
-        C[i][j] = sum;
-    }
-}
-\end{lstlisting}
-
-We will use this example in the following sections as a running example to illustrate the impact of different algorithm design choices on the performance on CPUs and GPUs.
 
 % In \cref{lst:matrix-multiplication}, three characteristic features can be immediately observed:
 % \begin{enumerate}
@@ -66,6 +47,26 @@ We will use this example in the following sections as a running example to illus
 % In \cref{chap:optimization-methods}, we will discuss various tools and frameworks that help with applying these, and many other, optimizations automatically, or allow users to express the algorithms and data structures in such a way that makes it easier to apply these optimizations.
 
 \section{CPU considerations}\label{sec:cpu-considerations}
+
+A simple example that will help us illustrate the impact of data layouts and traversal orders on performance of execution on CPUs is the matrix multiplication algorithm, which computes each element of the output matrix ($C$) as a dot product of a row from the first input matrix ($A$) and a column from the second input matrix ($B$), where all matrices are stored in the standard row-major order (row by row). The algorithm can be implemented in \cpp as follows:
+
+\begin{lstlisting}[language=C++, caption={Matrix multiplication}, label={lst:matrix-multiplication}]
+float C[M][N]; // M rows, N columns
+float A[M][K]; // M rows, K columns
+float B[K][N]; // K rows, N columns
+
+// iterating over output matrix C
+for (int i = 0; i < M; ++i) {
+    for (int j = 0; j < N; ++j) {
+        // single dot product
+        float sum = 0;
+        for (int k = 0; k < K; ++k) {
+            sum += A[i][k] * B[k][j];
+        }
+        C[i][j] = sum;
+    }
+}
+\end{lstlisting}
 
 When optimizing an algorithm such as the matrix multiplication example in \cref{lst:matrix-multiplication} for execution on a CPU, we primarily need to consider caching. Caches are memory units that transparently store data that is likely to be accessed in the near future under the principle of locality, which states that programs tend to access data repeatedly in a short period of time (temporal locality) and access data stored in nearby memory locations (spatial locality)~\xxx{(cite)}.
 

@@ -168,12 +168,13 @@
 \addcontentsline{toc}{chapter}{Contribution \arabic{contribution}\\ #1}
 }
 
-\crefname{contribution}{contribution}{contributions}
+\crefname{contribution}{Contribution}{Contributions}
 \Crefname{contribution}{Contribution}{Contributions}
+
+\newcommand{\contribref}[1]{\citetitle{#1}~\cite{#1} (\cref{contrib:#1})}
 
 %%% TODO items: remove before submitting :)
 \newcommand{\xxx}[1]{\textcolor{red!}{#1}}
-
 \newenvironment{XXX}
   {\par\color{red}}
   {\par}

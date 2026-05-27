@@ -35,9 +35,9 @@ the total buffer size, or the type of each element.
 
 The logic of the copy algorithm does not actually rely on the individual physical layouts of the source and destination data --- it simply copies the elements from one representation of the data to another; as such, it requires the two data structures to share the same logical structure (index space; in this case, a 2D space with size $M \times N$).
 
-\Cref{lst:layout-agnostic-copy} shows a layout-agnostic version of the copy algorithm that is implemented using Noarr structures. The algorithm does not encode specific assumptions about the physical layout of the data in memory (both data structures are indexed using the same logical index), and thus, it can work with any data structure that shares the $M \times N$ logical structure. The logical structure (encoding the index space) is the definition domain of the data layout, if we consider the data layout as a mapping as defined in \cref{def:data-layout}.
+\Cref{lst:noarr-layout-agnostic-copy} shows a layout-agnostic version of the copy algorithm that is implemented using Noarr structures. The algorithm does not encode specific assumptions about the physical layout of the data in memory (both data structures are indexed using the same logical index), and thus, it can work with any data structure that shares the $M \times N$ logical structure. The logical structure (encoding the index space) is the definition domain of the data layout, if we consider the data layout as a mapping as defined in \cref{def:data-layout}.
 
-\begin{lstlisting}[style=C++, caption={A layout-agnostic copy algorithm using Noarr structures.}, label={lst:layout-agnostic-copy}]
+\begin{lstlisting}[style=C++, caption={A layout-agnostic copy algorithm using Noarr structures.}, label={lst:noarr-layout-agnostic-copy}]
 // defining Noarr structures will be covered later
 auto source = /*...*/;
 auto destination = /*...*/;

@@ -1,11 +1,12 @@
-\chapter{Application of LLMs to algorithm design}\label{chap:llms}
+% \chapter{Application of LLMs to algorithm design}\label{chap:llms}
+\chapter{LLMs in algorithm design}\label{chap:llms}
 
 Since LLMs have been shown to be increasingly capable of software development, we have investigated some previously underexplored approaches of their application to algorithm design in HPC\@. In particular, our goal was to explore the potential of LLMs to optimize code using transformations and redesigns that would be difficult to achieve with abstractions, which we have explored in \cref{chap:abstractions}.
 
 
 \section{Human-directed code optimization with LLMs}\label{sec:human-directed-code-optimization}
 
-In our first contribution in the area of application of LLMs to algorithm design, we have explored the potential of LLMs under human direction to design efficient code for GPUs using the CUDA programming model. We have presented this work in \xxx{\fullcite{brabec2025tutoring}}.
+In our first contribution in the area of application of LLMs to algorithm design, we have explored the potential of LLMs under human direction to design efficient code for GPUs using the CUDA programming model. We have presented this work in \contribref{brabec2025tutoring}.
 
 The work was motivated by the then current ability of LLMs to generate simple code snippets, including code for GPUs, but their inability to make more complex design decisions, such as choosing appropriate data structures, layouts, and synchronization strategies in parallel contexts. We have made a case study on three algorithms representing different areas of scientific computing~--- histogram computation representing a reduction problem, Game of Life simulation representing a discrete stencil computation, and $k$-Nearest Neighbors ($k$NN) search representing a search problem. The three algorithms represent different levels of complexity, and different design decisions need to be made to achieve efficient GPU execution for each.
 

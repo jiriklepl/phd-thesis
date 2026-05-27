@@ -1,61 +1,64 @@
 \chapter{Noarr Library}\label{chap:noarr}
 
-Our work on abstractions for high-performance computing introduced layout-agnostic and traversal-agnostic abstractions that enable separation of concerns between data representation, data traversal, and algorithm implementation. We have developed the Noarr library as a practical implementation of these abstractions in \cpp and so we will use its terminology and concepts in the discussion of the layout-agnostic and traversal-agnostic approaches. The Noarr library is an open-source project available at \url{https://github.com/paracotoul/noarr-structures}.
+% Our work on abstractions for high-performance computing introduced layout-agnostic and traversal-agnostic abstractions that enable separation of concerns between data representation, data traversal, and algorithm implementation. We have developed the Noarr library as a practical implementation of these abstractions in \cpp and so we will use its terminology and concepts in the discussion of the layout-agnostic and traversal-agnostic approaches. The Noarr library is an open-source project available at \url{https://github.com/paracotoul/noarr-structures}.
 
+During our work on layout-agnostic and traversal-agnostic abstractions for high-performance computing, we have developed the Noarr library as a practical implementation of these abstractions in \cpp. The Noarr library is an open-source project available at \url{https://github.com/paracotoul/noarr-structures}.
+
+The Noarr library has undergone significant development throughout the course of our research. Since the included publications do not use the library consistently due to its evolution, here we provide an overview of the Noarr library at the current stage of its development.
 
 \section{Noarr Structures}\label{sec:noarr-structures}
 
-This section outlines work on Noarr structures published in \fullcite{vsmelko2022astute}.
+% This section outlines work on Noarr structures published in \fullcite{vsmelko2022astute}.
 
-It further expands on the concepts of layout-agnostic design and hierarchical composition of data layouts, omitting many technical details of the implementation and usage of Noarr structures, which are covered in the original paper and the documentation of the Noarr library.
+% It further expands on the concepts of layout-agnostic design and hierarchical composition of data layouts, omitting many technical details of the implementation and usage of Noarr structures, which are covered in the original paper and the documentation of the Noarr library.
 
 Noarr structures are the fundamental abstraction in the Noarr library. They are used for modeling multi-dimensional data layouts according to the principles of layout agnosticism and hierarchical composition of data layouts (see \cref{sec:native}).
 
-\subsection{Layout-agnostic design}\label{sec:noarr-layout-agnostic-design}
+% \subsection{Layout-agnostic design}\label{sec:noarr-layout-agnostic-design}
 
-Layout-agnostic design separates the logical structure of the data (the index space defined by the dimension names) from the physical layout of the data in memory. Consider \cref{lst:non-agnostic-copy} as an example of a non-layout-agnostic copy algorithm for 2D arrays in \cpp.
+% Layout-agnostic design separates the logical structure of the data (the index space defined by the dimension names) from the physical layout of the data in memory. Consider \cref{lst:non-agnostic-copy} as an example of a non-layout-agnostic copy algorithm for 2D arrays in \cpp.
 
-\begin{lstlisting}[style=C++, caption={A non-layout-agnostic copy algorithm in \cpp.}, label={lst:non-agnostic-copy}]
-float* source = /*...*/; // an M by N array in column-major layout
-float* destination = /*...*/; // an M by N array in row-major layout
+% \begin{lstlisting}[style=C++, caption={A non-layout-agnostic copy algorithm in \cpp.}, label={lst:non-agnostic-copy}]
+% float* source = /*...*/; // an M by N array in column-major layout
+% float* destination = /*...*/; // an M by N array in row-major layout
 
-for (size_t i = __0; i < __M; ++i) {
-  for (size_t j = __0; j < __N; ++j) {
-    destination[i*__N + j] = source[j*__M + i];
-  }
-}
-\end{lstlisting}
+% for (size_t i = __0; i < __M; ++i) {
+%   for (size_t j = __0; j < __N; ++j) {
+%     destination[i*__N + j] = source[j*__M + i];
+%   }
+% }
+% \end{lstlisting}
 
-This implementation of the algorithm assumes a specific layout of the data in memory, and special care must be taken to ensure that the indexing logic correctly reflects the layout of the data. This is usually not desirable and, in general, the explicit indexing expressions (e.g., \texttt{i*N + j} and \texttt{j*M + i}) are replaced with abstractions of the data layouts (e.g., \lstinline{source(i, j)} and \lstinline{destination(i, j)}).
+% This implementation of the algorithm assumes a specific layout of the data in memory, and special care must be taken to ensure that the indexing logic correctly reflects the layout of the data. This is usually not desirable and, in general, the explicit indexing expressions (e.g., \texttt{i*N + j} and \texttt{j*M + i}) are replaced with abstractions of the data layouts (e.g., \lstinline{source(i, j)} and \lstinline{destination(i, j)}).
 
-\begin{defn}[Data layout]\label{def:data-layout} A data layout is a mapping from a (multi-dimensional) index space to an offset in a (linear) memory layout. Usually, a data layout has well-defined properties such as the length of each dimension,
-% commonly referred to as (individually) extent or (collectively) shape,
-the total buffer size, or the type of each element.
-\end{defn}
+% \begin{defn}[Data layout]\label{def:data-layout} A data layout is a mapping from a (multi-dimensional) index space to an offset in a (linear) memory layout. Usually, a data layout has well-defined properties such as the length of each dimension,
+% % commonly referred to as (individually) extent or (collectively) shape,
+% the total buffer size, or the type of each element.
+% \end{defn}
 
-The logic of the copy algorithm does not actually rely on the individual physical layouts of the source and destination data --- it simply copies the elements from one representation of the data to another; as such, it requires the two data structures to share the same logical structure (index space; in this case, a 2D space with size $M \times N$).
+% The logic of the copy algorithm does not actually rely on the individual physical layouts of the source and destination data --- it simply copies the elements from one representation of the data to another; as such, it requires the two data structures to share the same logical structure (index space; in this case, a 2D space with size $M \times N$).
 
-\Cref{lst:noarr-layout-agnostic-copy} shows a layout-agnostic version of the copy algorithm that is implemented using Noarr structures. The algorithm does not encode specific assumptions about the physical layout of the data in memory (both data structures are indexed using the same logical index), and thus, it can work with any data structure that shares the $M \times N$ logical structure. The logical structure (encoding the index space) is the definition domain of the data layout, if we consider the data layout as a mapping as defined in \cref{def:data-layout}.
+% \Cref{lst:noarr-layout-agnostic-copy} shows a layout-agnostic version of the copy algorithm that is implemented using Noarr structures. The algorithm does not encode specific assumptions about the physical layout of the data in memory (both data structures are indexed using the same logical index), and thus, it can work with any data structure that shares the $M \times N$ logical structure. The logical structure (encoding the index space) is the definition domain of the data layout, if we consider the data layout as a mapping as defined in \cref{def:data-layout}.
 
-\begin{lstlisting}[style=C++, caption={A layout-agnostic copy algorithm using Noarr structures.}, label={lst:noarr-layout-agnostic-copy}]
-// defining Noarr structures will be covered later
-auto source = /*...*/;
-auto destination = /*...*/;
+% \begin{lstlisting}[style=C++, caption={A layout-agnostic copy algorithm using Noarr structures.}, label={lst:noarr-layout-agnostic-copy}]
+% // defining Noarr structures will be covered later
+% auto source = /*...*/;
+% auto destination = /*...*/;
 
-for (size_t i = __0; i < __M; ++i) {
-  for (size_t j = __0; j < __N; ++j) {
-    // a point in the M by N index space
-    auto point = idx<'M', 'N'>(i, j);
+% for (size_t i = __0; i < __M; ++i) {
+%   for (size_t j = __0; j < __N; ++j) {
+%     // a point in the M by N index space
+%     auto point = idx<'M', 'N'>(i, j);
 
-    destination[point] = source[point];
-  }
-}
-\end{lstlisting}
+%     destination[point] = source[point];
+%   }
+% }
+% \end{lstlisting}
 
-Syntactically, the logical layout of the data can be expressed multiple ways. For example, the \lstinline{std::mdspan} abstraction encodes different dimensions as positional arguments (e.g., \lstinline{my_mdspan(i, j)} passes $i$ as the index in the first dimension and $j$ as the index in the second dimension), while Noarr structures encode different dimensions as named arguments --- \lstinline{idx<'M', 'N'>(i, j)} explicitly associates $i$ with the dimension \lstinline{'M'} and $j$ with the dimension \lstinline{'N'}.
-%, with an alternative form of \lstinline{idx<'N', 'M'>(j, i)}.
+% Syntactically, the logical layout of the data can be expressed multiple ways. For example, the \lstinline{std::mdspan} abstraction encodes different dimensions as positional arguments (e.g., \lstinline{my_mdspan(i, j)} passes $i$ as the index in the first dimension and $j$ as the index in the second dimension), while Noarr structures encode different dimensions as named arguments --- \lstinline{idx<'M', 'N'>(i, j)} explicitly associates $i$ with the dimension \lstinline{'M'} and $j$ with the dimension \lstinline{'N'}.
+% %, with an alternative form of \lstinline{idx<'N', 'M'>(j, i)}.
 
-While the latter form (\lstinline{idx<'N', 'M'>(j, i)}) is generally more verbose, it can prevent many indexing mistakes, as any association between an index and a dimension is explicit. Furthermore, the approach of encoding dimensions as named arguments is more intuitive in cases where different data structures have unrelated index spaces, which will be discussed in more detail in \cref{sec:composing-noarr-structures}. In \cref{sec:transforming-noarr-structures}, we will show that the points in the index space can be defined implicitly, inferring the indices from the iterated index space of an algorithm, reducing the verbosity overhead.
+% While the latter form (\lstinline{idx<'N', 'M'>(j, i)}) is generally more verbose, it can prevent many indexing mistakes, as any association between an index and a dimension is explicit. Furthermore, the approach of encoding dimensions as named arguments is more intuitive in cases where different data structures have unrelated index spaces, which will be discussed in more detail in \cref{sec:composing-noarr-structures}. In \cref{sec:transforming-noarr-structures}, we will show that the points in the index space can be defined implicitly, inferring the indices from the iterated index space of an algorithm, reducing the verbosity overhead.
 
 % \begin{figure}[ht]
 %   \centering

@@ -80,12 +80,18 @@ The second way to improve caching is to improve the temporal locality of the alg
 In practice, this transformation can be, in high-level, expressed as splitting the loops into smaller blocks, iterating over the blocks in the outer loops and iterating over the elements of the blocks in the inner loops, as shown in \cref{lst:matrix-multiplication-tiled}.
 
 \begin{lstlisting}[language=C++, caption={Tiled matrix multiplication}, label={lst:matrix-multiplication-tiled}]
-for (int ii = 0; ii < M; ii += i_block)
-  for (int jj = 0; jj < N; jj += j_block)
-    for (int kk = 0; kk < K; kk += k_block)
+for (int ii = 0; ii < M; ii += i_block) {
+  for (int jj = 0; jj < N; jj += j_block) {
+    for (int kk = 0; kk < K; kk += k_block) {
       // multiply tile of A and tile of B,
       //  accumulate into tile of C
 \end{lstlisting}
+
+\if 0
+\begin{lstlisting}
+    }}}
+\end{lstlisting}
+\fi
 
 In addition to caching, we also need to consider the parallelization and vectorization capabilities of the CPU\@.
 

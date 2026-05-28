@@ -1,1 +1,65 @@
 \chapter{Noarr Library}\label{chap:noarr}
+During our work on layout-agnostic and traversal-agnostic abstractions for high-performance computing, we have developed the Noarr library as a practical implementation of these abstractions in \cpp. The Noarr library is an open-source project available at \url{https://github.com/paracotoul/noarr-structures}.
+
+The Noarr library has undergone significant development throughout the course of our research. Since the included publications do not use the library consistently due to its evolution, here we provide an overview of the Noarr library at the current stage of its development.
+
+\section{Noarr Structures}\label{sec:noarr-structures}
+
+Noarr structures are the fundamental abstraction in the Noarr library. They are used for modeling multi-dimensional data layouts according to the principles of layout agnosticism and hierarchical composition of data layouts (see \cref{sec:native}).
+
+A Noarr structure is primarily a mapping from a multi-dimensional index space to a one-dimensional offset space, similarly to standard multi-dimensional arrays. The main differences from these more traditional arrays (such as \lstinline{std::mdspan}, \lstinline{Kokkos::View}, or CUTe Layouts) are that Noarr structures are hierarchically composed from smaller building blocks, and that their interface relies on named dimensions instead of positional dimensions.
+
+\begin{lstlisting}[caption={Example of a Noarr structure usage}, label={lst:noarr-usage}, basicstyle=\ttfamily\scriptsize]
+namespace nr = noarr;
+
+// define row-major layout of an M by N matrix of floating-point numbers
+auto matrix = nr::scalar<float>() ^ nr::vector<'N'>(N) ^ nr::vector<'M'>(M);
+
+// querying the structure for various properties
+auto offset = matrix | nr::offset(nr::idx<'M', 'N'>(i, j));
+auto size = matrix | nr::get_size();
+auto N_length = matrix | nr::get_length<'N'>();
+
+// accessing an element of the matrix at a given buffer
+float& element = matrix | nr::get_at(buffer, nr::idx<'M', 'N'>(i, j));
+\end{lstlisting}
+
+In \cref{lst:noarr-usage}, we define a Noarr structure representing a row-major layout of an $M$ by $N$ matrix of floating-point numbers, which is specified as a composition of a (base) scalar structure and two \lstinline{vector} transformations (called \emph{proto-structures}) that extend the given left-hand-side base structure with a new dimension. All named dimensions are usually represented by character literals, but they can also be represented by a \lstinline{noarr::dim<V>()} value, where \lstinline{V} is an arbitrary literal value. For composition of Noarr structures, we use the \lstinline{^} operator.
+
+We then query the structure for various properties, such as the offset corresponding to a given multi-dimensional index \lstinline{nr::idx<'M', 'N'>(i, j)} (in bytes), the total size of the structure (in bytes), or the length of the dimension \lstinline{'N'} (the number of valid indices). For querying the structure, we use the \lstinline{|} operator, which takes a Noarr structure on the left-hand side and a query on the right-hand side.
+
+Finally, we access an element of the matrix at a given buffer. The Noarr structure encodes the type of the element (in this case, \lstinline{float}), so the type of the accessed element is automatically deduced.
+
+All dimension name resolutions, type deductions, and interpretations of the different queries are performed at compile time using \cpp template meta-programming techniques, which allows for zero-overhead abstractions. By replacing a numeric argument (e.g., in \lstinline{vector} or \lstinline{idx}) with \lstinline{noarr::lit<V>}, where \lstinline{V} is an arbitrary compile-time size value, we can propagate compile-time information to a Noarr structure or a given query, which may allow for more aggressive optimizations by the compiler.
+
+\subsection{Transforming Noarr Structures}\label{sec:transforming-noarr-structures}
+
+The composition syntax of Noarr structures showcased in \cref{lst:noarr-usage} can also be used for transforming Noarr structures.
+
+\subsection{Hierarchical Composition of Noarr Structures}\label{sec:noarr-hierarchical-composition}
+
+\begin{figure}[ht]
+  \centering
+  \begin{subfigure}{.5\linewidth}
+    \centering
+    \includegraphics[width=.9\linewidth]{img/row-major.eps}
+    \caption{Row-major layout}%
+    \label{fig:row-major}
+  \end{subfigure}%
+  \hfill%
+  \begin{subfigure}{.5\linewidth}
+    \centering
+    \includegraphics[width=.9\linewidth]{img/column-major.eps}
+    \caption{Column-major layout}%
+    \label{fig:column-major}
+  \end{subfigure}%
+  % \hfill%
+  % \begin{subfigure}{.3\linewidth}
+  %   \centering
+  %   \includegraphics[width=.9\linewidth]{img/tiled.eps}
+  %   \caption{Tiled layout}%
+  %   \label{fig:tiled}
+  % \end{subfigure}%
+  \caption{Examples of different data layouts for a 2D array.}%
+  \label{fig:data-layouts}
+\end{figure}

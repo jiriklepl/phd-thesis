@@ -1,9 +1,9 @@
-\chapter{Noarr library}\label{chap:noarr}
+\section{Noarr library}\label{chap:noarr}
 During our work on layout-agnostic and traversal-agnostic abstractions for high-performance computing, we have developed the Noarr library as a practical implementation of these abstractions in \cpp. The Noarr library is an open-source project available at \url{https://github.com/paracotoul/noarr-structures}.
 
 The Noarr library has undergone significant development throughout the course of our research. Since the included publications do not use the library consistently due to its evolution, here we provide an overview of the Noarr library at the current stage of its development.
 
-\section{Noarr structures}\label{sec:noarr-structures}
+\subsection{Noarr structures}\label{sec:noarr-structures}
 
 Noarr structures are the fundamental abstraction in the Noarr library. They are used for modeling multi-dimensional data layouts according to the principles of layout agnosticism and hierarchical composition of data layouts (see \cref{sec:native}).
 
@@ -34,7 +34,7 @@ Finally, we access an element of the matrix at a given buffer. The Noarr structu
 
 All dimension name resolutions, type deductions, and interpretations of the different queries are performed at compile time using \cpp template meta-programming techniques, which allows for zero-overhead abstractions. By replacing a numeric argument (e.g., in \lstinline{vector} or \lstinline{idx}) with \lstinline{noarr::lit<V>}, where \lstinline{V} is an arbitrary compile-time size value, we can propagate compile-time information to a Noarr structure or a given query, which may allow for more aggressive optimizations by the compiler.
 
-\subsection{Transforming Noarr structures}\label{sec:transforming-noarr-structures}
+\subsubsection{Transforming Noarr structures}\label{sec:transforming-noarr-structures}
 
 The composition syntax of Noarr structures showcased in \cref{lst:noarr-usage} can also be used for expressing transformed views of the same data layout. Few examples of transformations are proto-structures such as \lstinline{noarr::span<'D'>(start, length)}, which restricts the index space of the dimension \lstinline{'D'} to a given subspace, and \lstinline{noarr::shift<'D'>(offset)}, which shifts the start of the index space of the dimension by a given offset.
 
@@ -42,7 +42,7 @@ Due to having all dimensions named, these transformations follow the principle o
 
 There are also proto-structures that change some properties of the layout, such as \lstinline{noarr::rename<'D', 'E'>()}, which renames the dimension \lstinline{'D'} to \lstinline{'E'}, and \lstinline{noarr::set_length<'D'>(length)}, which sets the length of an unbound dimension \lstinline{'D'} to a given value. In \cref{lst:noarr-usage}, we defined a matrix using two \lstinline{vector} proto-structures, which are actually shortcuts for a composition of a \lstinline{noarr::vector<'D'>()} proto-structure, which adds a new dimension \lstinline{'D'} of unbound length, and a \lstinline{noarr::set_length<'D'>(length)} proto-structure, which sets the length of the dimension to a given value. This separation might not seem useful at first, but it allows for more flexible uses of the same proto-structures.
 
-\paragraph*{Trivial tiling example}
+\subparagraph*{Trivial tiling example}
 Consider a situation where we want to parallelize a computation on a matrix on a cluster organized in a 2D grid of nodes so that each node computes a tile of the output matrix.
 % (a similar situation can be imagined for a GPU with a 2D grid of thread blocks).
 % This is an application of data parallelism, requiring no communication between the nodes during the computation.
@@ -55,12 +55,12 @@ If we look at the example of tiling of the computation from the perspective of t
 % (defined by the original dimensions and the manually computed tile sizes),
 the number of tiles of the output matrix is implicitly determined by dividing the lengths of the original dimensions and the tile sizes --- thus, we have made a redundant work, as the resulting number of tiles is exactly equal to the number of nodes in the cluster. It would be much more convenient to automatically infer the size of the tiles from the number of nodes directly.
 
-\paragraph*{Better tiling example}
+\subparagraph*{Better tiling example}
 In Noarr, tiling the computation on a cluster without the redundant work of computing the tile sizes can be achieved by breaking the above-mentioned \lstinline{into_blocks} proto-structure into two separate proto-structures: \lstinline{into_blocks<old_dim, grid_dim, tile_dim>()} and \lstinline{set_length<tile_dim>(tile_size)}. By replacing the latter proto-structure with \lstinline{set_length<grid_dim>(num_nodes)}, we can spare ourselves from the redundant work.
 Replacing the \lstinline{set_length<tile_dim>} proto-structure with \lstinline{set_length<grid_dim>} is possible because there is a known relationship between the two parameters (assuming known \lstinline{old_dim}), mathematically expressed as $length_{\text{\texttt{old\_dim}}} = length_{\text{\texttt{tile\_dim}}} \times length_{\text{\texttt{grid\_dim}}}$.
 
 
-\subsection{Binding Noarr Structures to data buffers}\label{sec:binding-noarr-structures}
+\subsubsection{Binding Noarr Structures to data buffers}\label{sec:binding-noarr-structures}
 
 Since Noarr structures are layout abstractions, they need to be bound to actual data buffers in order to be used as regular data structures. For this purpose, the Noarr library provides the \lstinline{noarr::bag} abstraction, which is a simple wrapper around a Noarr structure and a pointer to a data buffer, carrying all the properties of the Noarr structure and allowing for accessing the elements using the traditional \lstinline{[]} (subscript) operator. Mirroring \cref{lst:noarr-usage}, we can define a bag from the same matrix layout as follows.
 
@@ -104,7 +104,7 @@ The \lstinline{matrix_bag} in \cref{lst:cuda-noarr-bag} is functionally equivale
 If we want the same freedom of copying and moving with bags that manage their own data buffer, we can pass a view of the bag \lstinline{matrix_bag.get_ref()}. The resulting view is a trivial wrapper same as the bag in \cref{lst:cuda-noarr-bag}, which can be freely copied and moved without any side effects.
 
 
-\section{Noarr Traversers}\label{sec:noarr-traversers}
+\subsection{Noarr Traversers}\label{sec:noarr-traversers}
 
 In \cref{sec:traversal-agnostic-design}, we have already introduced the concept of traversers as an abstraction for traversal-agnostic algorithms and showed its possible use in an initialization algorithm and a copy algorithm as a generalization of \lstinline{for_each}.
 
@@ -128,7 +128,7 @@ In this example, the index spaces of the input data structures do not match exac
 
 Since the loop nest is imperfect (the two assignment statements have different iteration patterns), a different method of traversal is used --- the \lstinline{for_sections} method is used to iterate over the given list of dimensions (in this case, \lstinline{'M'} and \lstinline{'N'}) and for each such section of the index space, the provided callable is invoked with a new (inner) traverser that represents the inner loop nest. The \lstinline{inner} traverser is then used to finalize the traversal on each section through the \lstinline{'K'} dimension.
 
-\subsection{Noarr signatures}\label{sec:noarr-signatures}
+\subsubsection{Noarr signatures}\label{sec:noarr-signatures}
 
 Since Noarr structures are designed to allow
 
@@ -137,7 +137,7 @@ Since Noarr structures are designed to allow
 
 \if 0
 
-\subsection{Hierarchical Composition of Noarr Structures}\label{sec:noarr-hierarchical-composition}
+\subsubsection{Hierarchical Composition of Noarr Structures}\label{sec:noarr-hierarchical-composition}
 
 
 \begin{figure}[ht]

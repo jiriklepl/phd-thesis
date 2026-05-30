@@ -1,7 +1,5 @@
 \chapter{Hardware background}\label{chap:background}
 
-% Before discussing specific approaches to code optimization, we first outline the hardware features of modern high-performance systems that are most relevant to our focus on layout and traversal optimizations.
-
 To better understand the motivation behind layout and traversal optimizations, which collectively change the memory access patterns in a program, we first outline the hardware features of modern high-performance systems that are most relevant to our focus on these optimizations.
 
 We target the two main general-purpose architectures used in high-performance computing: multi-core CPUs and GPU accelerators.
@@ -15,36 +13,6 @@ The main difference between code execution on the two architectures is that in C
 
 The differences between the two architectures present different challenges and opportunities for optimizing the performance of algorithms, which we will discuss in more detail in the following sections.
 
-% Both CPUs and GPUs have hierarchies of memory units with different latencies and bandwidths. In both architectures, a computation directly operates on a limited amount of register memory, which is the fastest, but also the most limited memory unit --- for example, it does not allow for indirect accesses to data. On the opposite end of the hierarchy, both architectures have access to a large global memory that can be accessed by all active threads, but with high latency (compared to other memory units).
-
-% In between these two extremes, both CPUs and GPUs have multiple levels (layers) of cache memory that offer better latency and bandwidth depending on how close the caches are to the computation units the computation is running on --- generally, there is at least one cache level dedicated to each core, and one shared cache level for all cores. The main goal of caches is the same regardless of the architecture or their levels: to store data that is likely to be accessed in the near future, so that such accesses are served faster and, for the closest cache levels, with less interference with other threads.
-
-% These caches are designed on basis of the principle of locality, which states that programs tend to access data repeatedly in a short period of time (temporal locality) and access data stored in nearby memory locations (spatial locality)~\xxx{(CITE)}. Many algorithms either naturally exhibit good locality (e.g., traversing a row-major matrix by rows) or can be transformed to have better locality (e.g., by reordering computations in such a way that repeated accesses to the same data are closer in time). This principle, thus, directly motivates layout and traversal optimizations.
-
-% Since many algorithms make repeated accesses to the same (or nearby) data and loads from global memories have high latency, both CPUs and GPUs feature faster caches that store a limited amount of data that is likely to be accessed in the near future. These caches are designed on basis of the principle of locality, which states that programs tend to access data repeatedly in a short period of time (temporal locality) and access data stored in nearby memory locations (spatial locality)~\xxx{(CITE)}. Many algorithms either naturally exhibit good locality (e.g., traversing a row-major matrix by rows) or can be transformed to have better locality (e.g., by reordering computations in such a way that repeated accesses to the same data are closer in time). This principle, thus, directly motivates layout and traversal optimizations.
-
-% In general, caching is transparent to users. However, even without using such instructions, a difference between a na\"{\i}ve implementation and a more cache-friendly one can lead to significant improvements in execution time --- as the runtime spends less time waiting for data to be fetched from memory.
-
-% In general, caching happens automatically and is transparent to users. However, a difference in memory access patterns between a na\"{\i}ve implementation and a more cache-friendly one can lead to significant improvements in execution time~--- as the runtime spends less time waiting for data to be fetched from memory.
-
-
-
-
-% In \cref{lst:matrix-multiplication}, three characteristic features can be immediately observed:
-% \begin{enumerate}
-%     \item Each element of the output matrix $C$ can be computed independently in a separate thread, making the algorithm highly parallelizable.
-%     \item The innermost loop accesses unique elements of the input matrices $A$ and $B$ in each iteration with no reuse of data across iterations, making the algorithm memory-inefficient due to poor temporal locality (and probably memory-bound --- meaning that its performance is limited by memory access latency and bandwidth rather than computation cost).
-%     \item The elements of input matrix $B$ are accessed in a non-contiguous way, making the algorithm memory-inefficient due to poor spatial locality.
-% \end{enumerate}
-
-% On both CPUs and GPUs, we might easily take advantage of the first feature by parallelizing the outer loops ($i$ and $j$ loops), assigning each parallel thread to compute a different (or a group of) element(s) of the output matrix $C$. This, on its own, can lead to a massive improvement in execution time, depending on the number of threads we can run in parallel, since there are no data dependencies between the computations of different elements of $C$.
-
-% Taking advantage of the second feature is slightly more complex. A common way to do this is to break the computation into partitions of the input and output matrices that can fit in the target cache level. If we partition the matrices into tiles of $T \times T$ elements (choosing $T$ such that the data of the tiles can fit in the target cache memory) and update the corresponding elements of the output matrix by computing the dot products of the corresponding rows and columns of the tiles, then each value in the input matrices can be reused up to $T$ times during the computation of each tile of the output matrix.
-
-% The third feature can be addressed by changing the data layout of the input matrix $B$ to column-major (transposing it). This way, the innermost loop will access contiguous memory locations in both input matrices, improving spatial locality and thus performance. In CPUs, this can also allow the use of vector units that operate on multiple contiguous data elements at the same time, and in GPUs, such a transformation can make loads from threads accessing subsequent elements of $B$ coalesced (allowing the GPU to serve them together in fewer memory transactions).
-
-% These three optimizations showcase parallelization, traversal order, and data layout optimizations, respectively. All of them can be applied to the same algorithm; however, their combination may be non-trivial, and the benefits of each optimization may have complex interactions with the benefits of the other optimizations.
-% In \cref{chap:optimization-methods}, we will discuss various tools and frameworks that help with applying these, and many other, optimizations automatically, or allow users to express the algorithms and data structures in such a way that makes it easier to apply these optimizations.
 
 \section{CPU considerations}\label{sec:cpu-considerations}
 

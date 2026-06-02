@@ -1,1 +1,22 @@
 \chapter{Software artifacts}\label{chap:software}
+
+During our research in the area of abstractions for layout- and traversal-agnostic algorithm design in the context of high-performance computing, we have developed two prototype libraries that implement the proposed approaches.
+
+\section{Noarr}\label{sec:sw-noarr}
+
+Noarr\footnote{\url{https://github.com/ParaCoToUl/noarr-structures}} is an open-source \cpptwenty header-only library that provides abstractions for defining and manipulating memory layouts of multidimensional data structures and their traversal patterns, including support for parallel execution. It is the main software artifact for the contributions described in \cref{sec:astute-approach,sec:pure-cpp-approach,sec:cpp-abstractions,sec:layout-agnostic}.
+
+The development of Noarr is continuously tested on Linux, Windows, and macOS platforms using the \texttt{gcc}, \texttt{clang}, and \texttt{msvc} compilers of various versions, and it is available under the MIT license with no external dependencies.
+
+Integration of Noarr into an application requires only including the \texttt{noarr/traversers.hpp} header file.
+
+The library has two external components: Noarr-tuning\footnote{\url{https://github.com/jiriklepl/noarr-tuning}} and Noarr-MPI\footnote{\url{https://github.com/jiriklepl/noarr-mpi}} that provide additional functionality discussed in \cref{sec:cpp-abstractions,sec:layout-agnostic}, respectively.
+
+Since Noarr has evolved over the course of our research, the specific syntax and API of the library have changed from the forms presented in the earlier contributions. Therefore, we describe the current syntax and semantics of the library in \cref{chap:noarr}.
+
+
+\section{Cellato}\label{sec:sw-cellato}
+
+Cellato\footnote{\url{https://github.com/matyas-brabec/2026-cellato-journal}} is an open-source \cpptwenty header-only library that defines an embedded domain-specific language for describing the computation of a single cell in a Cellular Automaton, and a subsequent evaluation using a combination of an \emph{evaluator}, \emph{memory layout}, and \emph{traverser}. It supports CPU and GPU execution. The library is available under the MIT license with no external dependencies.
+
+The repository contains the artifacts for an unpublished (as of the time of writing) extension of the work described in \cref{sec:stencil-computations}, which implements \emph{bit-planes} encoding as an alternative to the \emph{bit-packing} encoding described in the original contribution.

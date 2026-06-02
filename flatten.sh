@@ -14,7 +14,7 @@ STYLE_FILES=("metadata.tex" "xmp.tex" "papers/")
 
 BIBLIOGRAPHY_COMMAND="biber"
 
-pip install latex-flatten
+python3 -m pip install latex-flatten
 
 rm -rf "${NEW_DIR}"
 
@@ -30,7 +30,7 @@ sleep 1
 
 popd >/dev/null
 
-latex-flatten --outdir "${NEW_DIR}" "${OLD_DIR}/${PDF_NAME}.tex"
+python3 -m latex_flatten --outdir "${NEW_DIR}" "${OLD_DIR}/${PDF_NAME}.tex"
 cp -rt "${NEW_DIR}" "${BIBLIOGRAPHY_FILE}" "${STYLE_FILES[@]}"
 
 pushd "${NEW_DIR}" >/dev/null

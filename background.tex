@@ -5,7 +5,7 @@ To better understand the motivation behind layout and traversal optimizations, w
 We target the two main general-purpose architectures used in high-performance computing: multi-core CPUs and GPU accelerators.
 CPUs are primarily designed for task processing, executing each active thread on an independent core, while GPUs are optimized for massively data-parallel workloads that run thousands of threads concurrently in SIMT (Single Instruction, Multiple Threads) fashion~\cite{hennessy2019computer,cuda_programming_guide}. A single thread of execution runs a sequence of instructions (a task) using a set of registers and other resources (such as caches or arithmetic units).
 
-GPUs are devices \xxx{separated} from the host system, with their own memory and task scheduling. Thus, a computation running on a GPU typically requires input data to be transferred from the system memory to the GPU device memory, and then the results back to the system memory, after the computation is done. The data-parallel task is typically expressed as a \emph{kernel} function (in CUDA, denoted as a function with the \lstinline|__global__| modifier). Upon \emph{kernel launch} (a modified function call), the kernel function is scheduled to run on the GPU independently of the host system. CPU workloads, on the other hand, typically run directly on the host system using the system memory without necessitating any data transfer, unless the computation is distributed across multiple machines.
+GPUs are devices \xxx{separated} from the host system, with their own memory and task scheduling. Thus, a computation running on a GPU typically requires transferring input data from system memory to the GPU device memory, and then transferring the results back to system memory after the computation is done. The data-parallel task is typically expressed as a \emph{kernel} function (in CUDA, a function with the \lstinline|__global__| modifier). Upon \emph{kernel launch} (a modified function call), the kernel function is scheduled to run on the GPU independently of the host system. CPU workloads, on the other hand, typically run directly on the host system using the system memory without necessitating any data transfer, unless the computation is distributed across multiple machines.
 
 The main difference between code execution on the two architectures is that in CPUs, a single core runs just one thread at a time (or a few threads in the case of hyper-threading), while in GPUs, many threads run concurrently on the same core in lockstep, executing the same instruction at the same time on different data. The distinction between them, however, is not strict, as modern CPU cores also support data parallelism through using specialized \emph{vector} units that can, in a single instruction, operate on multiple data elements (SIMD) at the same time.
 
@@ -14,7 +14,7 @@ The differences between the two architectures present different challenges and o
 
 \section{CPU considerations}\label{sec:cpu-considerations}
 
-A simple example of an algorithm that will help us illustrate the impact of data layouts and traversal orders on performance of execution on CPUs is the matrix multiplication algorithm. It computes each element of the output matrix ($C$) as a dot product of a row from the first input matrix ($A$) and a column from the second input matrix ($B$), where all matrices are stored in the standard row-major order (row by row). The algorithm can be implemented in \cpp as follows:
+A simple example of an algorithm that will help us illustrate the impact of data layouts and traversal orders on the performance of execution on CPUs is the matrix multiplication algorithm. It computes each element of the output matrix ($C$) as a dot product of a row from the first input matrix ($A$) and a column from the second input matrix ($B$), where all matrices are stored in the standard row-major order (row by row). The algorithm can be implemented in \cpp as follows:
 
 \begin{lstlisting}[language=C++, caption={Matrix multiplication}, label={lst:matrix-multiplication}]
 float C[M][N]; // M rows, N columns
@@ -45,7 +45,7 @@ The second way to improve caching is to improve the temporal locality of the alg
 
 In practice, this transformation can be
 %, in high-level,
-expressed as splitting the iteration ranges of the corresponding loops into smaller blocks, iterating over the blocks in the outer loops and iterating over the elements of blocks in the inner loops, as shown in \cref{lst:matrix-multiplication-tiled}.
+expressed as splitting the iteration ranges of the corresponding loops into smaller blocks, iterating over the blocks in the outer loops, and iterating over the elements of blocks in the inner loops, as shown in \cref{lst:matrix-multiplication-tiled}.
 
 \begin{lstlisting}[language=C++, caption={Tiled matrix multiplication}, label={lst:matrix-multiplication-tiled}]
 // outer loops (iterating over tiles)
@@ -61,7 +61,7 @@ for (int ii = 0; ii < M; ii += i_block) {
 
 \if 0
 \begin{lstlisting}
-    }}}
+    }}}}}}
 \end{lstlisting}
 \fi
 
@@ -88,7 +88,7 @@ GPU accelerators are among the most widely used hardware platforms in high-perfo
 
 % Another important consideration is that the GPU has its own global memory that is separate from the system memory available to the CPU\@. This memory may be too small to hold all the data processed by the algorithm, so another important consideration is to organize the data in such a way that the algorithm can overlap GPU-accelerated computation with memory transfers between the system memory and the GPU device memory. In particular, the data should be partitioned into blocks and then processed sequentially in such a way that the transfer latency of each block can fully overlap with the computation of the previously transferred block. In the case of matrix multiplication, this is easily achievable as the computation workload scales cubically (with all three dimensions of the matrices), while the data size scales quadratically (with pairs of dimensions).
 
-As described in the introductory section of this chapter, executing an algorithm on a GPU involves scheduling a \emph{kernel} function that is specifically designed to run on the GPU device and processes data stored in the GPU device memory (usually referred to as \emph{global memory}). A single invocation of the function typically processes a small portion of the data (as it is designed to be run in parallel by many threads). During a kernel launch, each new execution thread gets its own unique thread ID, which is used to determine which portion of the data the thread should process. The threads are organized into \emph{thread blocks} and thus the unique thread ID is typically expressed as a combination of the block ID and the thread ID within the block. The number of thread blocks and the block size are specified by the programmer when launching the kernel --- this grid typically replaces one or multiple parallelized loops in the traversal of the sequential version of the algorithm.
+As described in the introductory section of this chapter, executing an algorithm on a GPU involves scheduling a \emph{kernel} function that is specifically designed to run on the GPU device and processes data stored in the GPU device memory (usually referred to as \emph{global memory}). A single invocation of the function typically processes a small portion of the data (as it is designed to be run in parallel by many threads). During a kernel launch, each new execution thread gets its own unique thread ID, which is used to determine which portion of the data the thread should process. The threads are organized into \emph{thread blocks}, and thus the unique thread ID is typically expressed as a combination of the block ID and the thread ID within the block. The number of thread blocks and the block size are specified by the programmer when launching the kernel --- this grid typically replaces one or multiple parallelized loops in the traversal of the sequential version of the algorithm.
 
 The organization of threads into blocks is meaningful because each block is automatically scheduled on an available streaming multiprocessor (SM) of the GPU\@. Thus, to fully utilize the GPU, the number of thread blocks should be large enough to saturate all available SMs with work. Since all threads in the same thread block run on the same SM, they can also use a user-managed cache called \emph{shared memory} --- it can be used to store data that is reused by multiple threads in the same block, or even to communicate data between them. As the threads in the same block run on the same SM, synchronization between them has very low overhead, and thus many efficient algorithms make use of the shared memory and block-wide synchronization primitives during the computation.
 

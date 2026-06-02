@@ -14,7 +14,7 @@ The differences between the two architectures present different challenges and o
 
 \section{CPU considerations}\label{sec:cpu-considerations}
 
-A simple example of an algorithm that will help us illustrate the impact of data layouts and traversal orders on the performance of execution on CPUs is the matrix multiplication algorithm. It computes each element of the output matrix ($C$) as a dot product of a row from the first input matrix ($A$) and a column from the second input matrix ($B$), where all matrices are stored in the standard row-major order (row by row). The algorithm can be implemented in \cpp as follows:
+A simple example that helps illustrate the impact of data layouts and traversal orders on CPU performance is the matrix multiplication algorithm. It computes each element of the output matrix ($C$) as a dot product of a row from the first input matrix ($A$) and a column from the second input matrix ($B$), where all matrices are stored in the standard row-major order (row by row). The algorithm can be implemented in \cpp as follows:
 
 \begin{lstlisting}[language=C++, caption={Matrix multiplication}, label={lst:matrix-multiplication}]
 float C[M][N]; // M rows, N columns
@@ -43,9 +43,7 @@ The current implementation of the matrix multiplication algorithm could be made 
 
 The second way to improve caching is to improve the temporal locality of the algorithm by partitioning the computation into smaller chunks that can fit into the cache. In the current implementation (regardless of transposing $B$), the innermost loop accesses unique elements of the input matrices $A$ and $B$ in each iteration. For an input of sufficient size, this access pattern leads to repeated cache misses (necessity to update the cache with new data from memory). If we partition the matrices into tiles (sub-matrices) that can fit in the cache, then updating the corresponding elements of the output matrix by computing the dot products of the corresponding rows and columns of the tiles allows for efficient reuse of the data in the input matrices. The reuse scales linearly with the tile dimensions, as long as the tiles fit in the cache.
 
-In practice, this transformation can be
-%, in high-level,
-expressed as splitting the iteration ranges of the corresponding loops into smaller blocks, iterating over the blocks in the outer loops, and iterating over the elements of blocks in the inner loops, as shown in \cref{lst:matrix-multiplication-tiled}.
+In practice, this transformation can be expressed as splitting the iteration ranges of the corresponding loops into smaller blocks, iterating over the blocks in the outer loops, and iterating over the elements of blocks in the inner loops, as shown in \cref{lst:matrix-multiplication-tiled}.
 
 \begin{lstlisting}[language=C++, caption={Tiled matrix multiplication}, label={lst:matrix-multiplication-tiled}]
 // outer loops (iterating over tiles)
@@ -74,19 +72,7 @@ To parallelize the algorithm, we can use an approach similar to the tiling trans
 
 \section{GPU considerations}\label{sec:gpu-considerations}
 
-% The grid is specified by the programmer when launching a GPU kernel (a function that runs on the GPU) and then each thread block is automatically scheduled on available streaming multiprocessors (SMs) of the GPU\@ until all blocks are fully executed. Each SM then runs the threads of the block in consecutive groups of 32 (called warps) in lockstep (executing same instructions). Since all threads in a warp execute on the same computation unit, it is important to ensure that they do not diverge in their execution paths as well as to ensure that they access memory in regular patterns --- while GPUs can handle some divergence and irregular memory access patterns, they can lead to significant performance degradation.
-
-% This makes the choice of data layout and traversal order even more important on GPUs, as its execution model is tightly coupled with the traversal loops replaced by the thread grid dimensions.
-
-% Grouping threads into blocks also enables programmers to use shared memory, which is a user-managed cache shared by all threads in the same block (running on the same SM core), as well as fast synchronization primitives between the threads. For the threads in the same warps, gpus also provide warp-wide communication primitives that allow threads to exchange data even faster.
-
 GPU accelerators are among the most widely used hardware platforms in high-performance computing~\cite{top500}. Since NVIDIA GPU architectures currently dominate the high-performance computing landscape~\cite{top500}, we will default to their nomenclature when describing the relevant hardware features and use them as a reference point.
-
-% When GPU-accelerating an algorithm, we need to consider its execution model, which is based on a hierarchy of threads organized into grids of thread blocks. Each block is then automatically scheduled on hundreds or thousands of streaming multiprocessors (SMs) until all blocks are fully executed. This grid is specified by the programmer when launching a GPU kernel (a function that is to be run on the GPU) and typically replaces the parallelized loops in the algorithm. As such, the number of thread blocks should be large enough so all SMs are saturated with work.
-
-% Each SM then runs consecutive groups of 32 threads (called warps) from the assigned block in lockstep, meaning that the threads execute the same instructions at the same time. This detail has few important implications for the choice of data layout and traversal order. First, the computation should be organized in such a way that there are no divergences in the execution paths of threads in the same warp. Second, accesses to memory should be organized in regular patterns (ideally so that the same memory access instruction executed by the warp threads leads to consecutive addresses) --- the GPU hardware can then \emph{coalesce} such accesses and serve them with significantly lower latency.
-
-% Another important consideration is that the GPU has its own global memory that is separate from the system memory available to the CPU\@. This memory may be too small to hold all the data processed by the algorithm, so another important consideration is to organize the data in such a way that the algorithm can overlap GPU-accelerated computation with memory transfers between the system memory and the GPU device memory. In particular, the data should be partitioned into blocks and then processed sequentially in such a way that the transfer latency of each block can fully overlap with the computation of the previously transferred block. In the case of matrix multiplication, this is easily achievable as the computation workload scales cubically (with all three dimensions of the matrices), while the data size scales quadratically (with pairs of dimensions).
 
 As described in the introductory section of this chapter, executing an algorithm on a GPU involves scheduling a \emph{kernel} function that is specifically designed to run on the GPU device and processes data stored in the GPU device memory (usually referred to as \emph{global memory}). A single invocation of the function typically processes a small portion of the data (as it is designed to be run in parallel by many threads). During a kernel launch, each new execution thread gets its own unique thread ID, which is used to determine which portion of the data the thread should process. The threads are organized into \emph{thread blocks}, and thus the unique thread ID is typically expressed as a combination of the block ID and the thread ID within the block. The number of thread blocks and the block size are specified by the programmer when launching the kernel --- this grid typically replaces one or multiple parallelized loops in the traversal of the sequential version of the algorithm.
 

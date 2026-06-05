@@ -12,7 +12,7 @@ The Noarr library has undergone significant development throughout the course of
 
 % It further expands on the concepts of layout-agnostic design and hierarchical composition of data layouts, omitting many technical details of the implementation and usage of Noarr structures, which are covered in the original paper and the documentation of the Noarr library.
 
-Noarr structures are the fundamental abstraction in the Noarr library. They are used for modeling multi-dimensional data layouts according to the principles of layout agnosticism and hierarchical composition of data layouts (see \cref{sec:native}).
+Noarr structures are the fundamental abstraction in the Noarr library. They are used for modeling multidimensional data layouts according to the principles of layout agnosticism and hierarchical composition of data layouts (see \cref{sec:native}).
 
 % \subsection{Layout-agnostic design}\label{sec:noarr-layout-agnostic-design}
 
@@ -31,7 +31,7 @@ Noarr structures are the fundamental abstraction in the Noarr library. They are 
 
 % This implementation of the algorithm assumes a specific layout of the data in memory, and special care must be taken to ensure that the indexing logic correctly reflects the layout of the data. This is usually not desirable and, in general, the explicit indexing expressions (e.g., \texttt{i*N + j} and \texttt{j*M + i}) are replaced with abstractions of the data layouts (e.g., \lstinline{source(i, j)} and \lstinline{destination(i, j)}).
 
-% \begin{defn}[Data layout]\label{def:data-layout} A data layout is a mapping from a (multi-dimensional) index space to an offset in a (linear) memory layout. Usually, a data layout has well-defined properties such as the length of each dimension,
+% \begin{defn}[Data layout]\label{def:data-layout} A data layout is a mapping from a (multidimensional) index space to an offset in a (linear) memory layout. Usually, a data layout has well-defined properties such as the length of each dimension,
 % % commonly referred to as (individually) extent or (collectively) shape,
 % the total buffer size, or the type of each element.
 % \end{defn}
@@ -90,7 +90,7 @@ Noarr structures are the fundamental abstraction in the Noarr library. They are 
 
 % \Cref{fig:row-major} and \cref{fig:column-major} have the same logical structure (a 2D array) but different physical layouts in memory, while \cref{fig:tiled} has a different logical structure (a 4D array with two dimensions indexing the tiles and two dimensions indexing the elements within the tiles) but the same physical layout in memory as \cref{fig:column-major}.
 
-% A Noarr structure is, at its core, a compile-time interpreted description that maps a multi-dimensional index space to a linear memory layout --- this makes them related to abstractions such as \lstinline{std::mdspan}~\cite{trott2022mdspan}, Kokkos Views~\cite{trott2021kokkos}, or CuTe Layouts~\cite{thakkar2023cutlass}. To enable layout agnosticism, each dimension of its index space is associated with a \emph{dimension name}. This allows the algorithm to access the data using semantically meaningful index names instead of relying on the order of dimensions in the layout.
+% A Noarr structure is, at its core, a compile-time interpreted description that maps a multidimensional index space to a linear memory layout --- this makes them related to abstractions such as \lstinline{std::mdspan}~\cite{trott2022mdspan}, Kokkos Views~\cite{trott2021kokkos}, or CuTe Layouts~\cite{thakkar2023cutlass}. To enable layout agnosticism, each dimension of its index space is associated with a \emph{dimension name}. This allows the algorithm to access the data using semantically meaningful index names instead of relying on the order of dimensions in the layout.
 
 % A simple example of a layout-agnostic algorithm for matrix multiplication using Noarr structures is shown in \cref{lst:layout-agnostic-matmul}. For this example, we assume three data structures defined using Noarr: \texttt{matrixA}, \texttt{matrixB}, and \texttt{matrixC}, which represent the two input matrices and the output matrix, respectively. What makes the algorithm layout-agnostic is that it indexes the data structures using points in the index space (e.g., \lstinline{idx<'M', 'N', 'K'>(i, j, k)}) instead of relying on the order (and presence) of individual dimensions in the layout of each data structure --- for example, \texttt{matrixA} is indexed using the dimensions \lstinline{'M'}, and \lstinline{'K'}, while \texttt{matrixB} is indexed using the dimensions \lstinline{'K'} and \lstinline{'N'}, and the order typically matters in non-agnostic algorithms. This contrasts with the typical non-agnostic implementation of matrix multiplication in \cpp shown in \cref{lst:layout-non-agnostic-matmul}, which relies on the order of dimensions in the layout (e.g., \texttt{i * N + j} assumes a specific layout of the data in memory) and thus is not layout-agnostic. Since the layout-agnostic algorithm in \cref{lst:layout-agnostic-matmul} does not use any explicit offset calculations, it makes the approach simpler and cleaner, avoiding many opportunities for mistakes in the indexing logic (e.g., using \texttt{i * N + k} instead of \texttt{i * K + k} in the non-agnostic version).
 
@@ -289,7 +289,7 @@ If we want the same freedom of copying and moving with bags that manage their ow
 
 \subsection{Generalizing the separation of concerns}\label{sec:generalizing-separation-of-concerns}
 
-% In \cref{def:data-layout}, we have defined a layout as a mapping from a multi-dimensional index space to a linear memory layout. This definition is usually sufficient for most use cases and for describing layout agnosticism. If $\mathcal{L}$ represents a data layout, each proto-structure can be viewed as a function $\mathcal{L}^n \to \mathcal{L}$ (transformation of layouts), as discussed in \cref{sec:hierarchical-view}.
+% In \cref{def:data-layout}, we have defined a layout as a mapping from a multidimensional index space to a linear memory layout. This definition is usually sufficient for most use cases and for describing layout agnosticism. If $\mathcal{L}$ represents a data layout, each proto-structure can be viewed as a function $\mathcal{L}^n \to \mathcal{L}$ (transformation of layouts), as discussed in \cref{sec:hierarchical-view}.
 
 \paragraph*{Trivial tiling example}
 Consider a situation where we want to parallelize the matrix multiplication algorithm (\cref{lst:layout-agnostic-matmul}) on a cluster organized in a 2D grid of nodes so that each node computes a tile of the output matrix.

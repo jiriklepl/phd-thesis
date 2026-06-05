@@ -5,9 +5,9 @@ The Noarr library has undergone significant development throughout the course of
 
 \subsection{Noarr structures}\label{sec:noarr-structures}
 
-Noarr structures are the fundamental abstraction in the Noarr library. They are used for modeling multi-dimensional data layouts according to the principles of layout agnosticism and hierarchical composition of data layouts (see \cref{sec:native}).
+Noarr structures are the fundamental abstraction in the Noarr library. They are used for modeling multidimensional data layouts according to the principles of layout agnosticism and hierarchical composition of data layouts (see \cref{sec:native}).
 
-A Noarr structure is a layout abstraction, primarily a mapping from a multi-dimensional index space to a one-dimensional offset space, similarly to standard multi-dimensional arrays. The main differences from these more traditional arrays (such as \lstinline{std::mdspan}, \lstinline{Kokkos::View}, or CUTe Layouts) are that Noarr structures are hierarchically composed from smaller building blocks, and that their interface relies on named dimensions instead of positional dimensions.
+A Noarr structure is a layout abstraction, primarily a mapping from a multidimensional index space to a one-dimensional offset space, similarly to standard multidimensional arrays. The main differences from these more traditional arrays (such as \lstinline{std::mdspan}, \lstinline{Kokkos::View}, or CUTe Layouts) are that Noarr structures are hierarchically composed from smaller building blocks, and that their interface relies on named dimensions instead of positional dimensions.
 
 \begin{lstlisting}[caption={Example of a Noarr structure usage}, label={lst:noarr-usage}, basicstyle=\ttfamily\scriptsize]
 namespace nr = noarr;
@@ -28,7 +28,7 @@ In \cref{lst:noarr-usage}, we define a Noarr structure representing a row-major 
 
 For composition of Noarr structures, we use the left-associative \lstinline{^} operator, which naturally reflects the hierarchical composition of data layouts, starting from the base scalar structure at the leftmost position. However, composition is associative and thus we can define a \lstinline{noarr::vector<'N'>(N) ^ noarr::vector<'M'>(M)} composite proto-structure and apply it to a base structure later on.
 
-We then query the structure for various properties, such as the offset corresponding to a given multi-dimensional index \lstinline{nr::idx<'M', 'N'>(i, j)} (in bytes), the total size of the structure (in bytes), or the length of the dimension \lstinline{'N'} (the number of valid indices). For querying the structure, we use the \lstinline{|} operator, which takes a Noarr structure on the left-hand side and a query on the right-hand side.
+We then query the structure for various properties, such as the offset corresponding to a given multidimensional index \lstinline{nr::idx<'M', 'N'>(i, j)} (in bytes), the total size of the structure (in bytes), or the length of the dimension \lstinline{'N'} (the number of valid indices). For querying the structure, we use the \lstinline{|} operator, which takes a Noarr structure on the left-hand side and a query on the right-hand side.
 
 Finally, we access an element of the matrix at a given buffer. The Noarr structure encodes the type of the element (in this case, \lstinline{float}), so the type of the accessed element is automatically deduced.
 

@@ -5,7 +5,7 @@ The Noarr library has undergone significant development throughout the course of
 
 \subsection{Noarr structures}\label{sec:noarr-structures}
 
-Noarr structures are the fundamental abstraction in the Noarr library. They are used for modeling multidimensional data layouts according to the principles of layout agnosticism and hierarchical composition of data layouts (see \cref{sec:native}).
+Noarr structures are the fundamental abstraction in the Noarr library. They are used for modeling multidimensional data layouts according to the principles of layout agnosticism and hierarchical composition of data layouts (see \cref{sec:native-abstractions}).
 
 A Noarr structure is a layout abstraction, primarily a mapping from a multidimensional index space to a one-dimensional offset space, similarly to standard multidimensional arrays. The main differences from these more traditional arrays (such as \lstinline{std::mdspan}, \lstinline{Kokkos::View}, or CUTe Layouts) are that Noarr structures are hierarchically composed from smaller building blocks, and that their interface relies on named dimensions instead of positional dimensions.
 

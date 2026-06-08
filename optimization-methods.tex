@@ -84,7 +84,7 @@ In Loopy~\cite{namjoshi2016loopy}, users can write a directive to interchange tw
 % The design space for annotation-based approaches is more limited than for DSLs, annotation-based framework are often tightly integrated with the existing toolchains for the source language (such as OpenMP pragmas in \cpp), which allows users to easily integrate them into their existing codebases; and the annotated code is still interpretable by users and tools built for the source language.
 
 
-\subsection{Native abstractions}\label{sec:native}
+\subsection{Native abstractions}\label{sec:native-abstractions}
 
 Native abstractions are implemented directly in the source language and do not require any custom compilation pipelines. They are most relevant to our work, as the majority of our contributions fall into this group.
 
@@ -94,7 +94,7 @@ We can broadly categorize native abstractions into three non-exclusive groups de
 These categories are not exhaustive, but they cover the most prominent approaches that can be used to enable layout and traversal optimizations in a way that is decoupled from the core algorithmic logic. Most notably, we do not discuss approaches for specific data management strategies and other concerns that do not directly relate to data layouts and traversals.
 
 
-\subsubsection{Layout-agnostic multidimensional arrays}
+\subsubsection{Layout-agnostic multidimensional arrays}\label{sec:layout-agnostic-multidim-arrays}
 
 The most prominent abstraction for data layout and traversal optimizations is a multidimensional array view that abstracts the data layout. Implementation examples of this abstraction include the \texttt{mdspan} abstraction~\cite{trott2022mdspan} in standard \cpp, and Kokkos and RAJA Views~\cite{trott2021kokkos,beckingsale2019raja}. These abstractions separate the logical structure of the data (e.g., the number of dimensions and their sizes) from the physical layout in memory, enabling users to change the layout without modifying the array indexing in algorithms. Commonly, the physical layout is defined by an affine mapping from the logical indices to the physical memory addresses, parametrized by the strides and sizes of the dimensions.
 
@@ -105,7 +105,7 @@ A crucial feature shared by most of the implementations is the ability to expres
 A notable example of multidimensional array abstractions is the CuTe layouts in the Cutlass library~\cite{thakkar2023cutlass}. CuTe differs from other implementations in that it defines a layout algebra based on interpreting the layouts as mathematical functions from linearized indices to element offsets. CuTe defines how indices of layouts are linearized into a single index and, thus, each layout may be used as a function mapping some integer intervals $f: \left[0, N\right) \to \left[0, M\right)$. These functions are composable as long as the domain of one and the range of the other are compatible, allowing users to express more complex layouts by combining simpler ones, or to express transformations of layouts. This composition principle will be further explored in the next section on hierarchical views.
 
 
-\subsubsection{Hierarchical views}
+\subsubsection{Hierarchical views}\label{sec:hierarchical-views}
 
 Another powerful abstraction for data layout and traversal optimizations is the notion of hierarchically defined views, where a complex layout is built from simpler ones via hierarchical composition. A good and intuitive example of such an abstraction for traversals is the \texttt{range} library~\cite{niebler2018one} in \cpp standard, which allows users to express various traversal transformations (e.g., tiling, reversing) on linear ranges, such as \lstinline/std::vector<int>{1, 2, 3, 4} | views::reverse | views::chunk(2)/, which creates a view of the original vector with reversed order and tiled into chunks of size 2, which can be used as a regular range of two-element sub-ranges (i.e., \lstinline/{{4, 3}, {2, 1}}/).
 
@@ -119,7 +119,7 @@ as they separate the logical structure from the physical layout. Any two datatyp
 For example, we can define an MPI datatype that enumerates the first column of a matrix in row-major layout and another datatype that enumerates the corresponding (contiguous) column in column-major layout. A send-receive operation using these datatypes on opposite endpoints can communicate the same logical sequence of elements while reading from and writing to different physical layouts. If we perform this operation for each corresponding pair of columns, we can effectively transpose one matrix to the other using MPI communication. Thanks to the hierarchical composition of datatypes, we can extend each of the two datatypes to enumerate the whole matrix column by column in their respective layouts, and perform the transposition using a single communication operation.
 
 
-\subsubsection{Separating computational logic}
+\subsubsection{Separating computational logic}\label{sec:separating-computational-logic}
 
 % The \cpp template system allows for powerful abstractions that can be used to separate the core algorithmic logic from other aspects of the design, including data layout and traversal.
 

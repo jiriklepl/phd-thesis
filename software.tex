@@ -8,14 +8,20 @@ Noarr\footnote{\url{https://github.com/ParaCoToUl/noarr-structures}} is an open-
 
 \xxx{The development of Noarr is continuously tested on Linux, Windows, and macOS platforms using the \texttt{gcc}, \texttt{clang}, and \texttt{msvc} compilers of various versions, and it is available under the MIT license with no external dependencies.}
 
-% TODO: continue from here
+Integration of Noarr into an application requires only including the header file \texttt{noarr/traversers.hpp}. This includes all the necessary components of the library for the functionality described in the aforementioned sections.
 
-Integration of Noarr into an application requires only including the \texttt{noarr/traversers.hpp} header file.
+The library has two external components: Noarr-tuning\footnote{\url{https://github.com/ParaCoToUl/noarr-tuning}} and Noarr-MPI\footnote{\url{https://github.com/ParaCoToUl/noarr-mpi}} that provide additional functionality discussed in \cref{sec:cpp-abstractions,sec:layout-agnostic}, respectively.
 
-The library has two external components: Noarr-tuning\footnote{\url{https://github.com/jiriklepl/noarr-tuning}} and Noarr-MPI\footnote{\url{https://github.com/jiriklepl/noarr-mpi}} that provide additional functionality discussed in \cref{sec:cpp-abstractions,sec:layout-agnostic}, respectively.
+\xxx{Since Noarr has evolved over the course of our research, the specific syntax and API of the library have changed from the forms presented in the earlier contributions. Therefore, we describe the current syntax and semantics of the library in \cref{chap:noarr}.}
 
-Since Noarr has evolved over the course of our research, the specific syntax and API of the library have changed from the forms presented in the earlier contributions. Therefore, we describe the current syntax and semantics of the library in \cref{chap:noarr}.
+The library is centered around \emph{Noarr structures}, abstractions for memory layouts that are built by composing simpler building blocks called \emph{proto-structures}. In \cref{sec:native-abstractions}, we would categorize Noarr structures (and proto-structures) as an example of hierarchical views. Both of these concepts use dimensions named using character literals (e.g., \lstinline{'x'}, \lstinline{'y'}, \lstinline{'z'}), and their whole functionality is resolved at compile time using template metaprogramming to ensure zero runtime overhead.
 
+On top of Noarr structures, the library defines \emph{traversers}, which are abstractions for traversals of layouts defined by Noarr structures. They are used to define various algorithms similarly to how iterators are used to define algorithms on standard containers in the \cpp standard library.
+The library provides a set of proto-structures that can be applied to Noarr structures or traversers to define various transformations of the given layout or traversal, potentially optimizing them for specific hardware architectures.
+
+Traversers are then used to parallelize a given algorithm using various parallel models, such as OpenMP, \cpp threads, threading building blocks, and CUDA\@; or to distribute data across multiple nodes using MPI (using the Noarr-MPI component).
+
+Details of Noarr structures, traversers, and the various transformations that can be applied to them are described in \cref{chap:noarr}.
 
 \section{Cellato}\label{sec:sw-cellato}
 

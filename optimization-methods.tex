@@ -176,19 +176,19 @@ Autotuning techniques are particularly effective in conjunction with other optim
 
 \subsection{ML-based code optimization}\label{sec:ml-based-code-optimization}
 
-% TODO: continue from here
+There have been many different approaches to using ML techniques for code optimization, such as using genetic programming to evolve compiler heuristics~\cite{stephenson2003meta} or using various supervised learning techniques to predict the performance of code based on its features~\cite{ashouri2017micomp,adams2019learning,fursin2011milepost}, which can speed up iterative compilation pipelines (similar to autotuning, controlling optimization passes) by avoiding expensive performance valuations for unpromising configurations.
 
-There have been many different approaches to using ML techniques for code optimization, such as using reinforcement learning for making optimization decisions (e.g., inlining decisions and register allocation)~\xxx{(cite)}, or using supervised learning to predict the performance of code based on its features~\xxx{(cite)}.
+Some works have proposed encoding program representations at various abstraction levels (machine instructions, intermediate representations, or abstract syntax trees) into vector embeddings and use deep learning methods to predict the performance of code based on the performance of similar code~\cite{venkatakeerthy2020ir2vec,mou2016convolutional,ben2018neural}.
 
-Some works have proposed encoding code instructions into a vector representation and use vector similarity to predict the performance of code based on the performance of similar code~\xxx{(cite the blbost)}.
+Deep learning methods have also been used to build cost models that can guide exploration of the search space for autotuning or scheduling transformations based on analyzing the structure of the code~\cite{baghdadi2021deep,adams2019learning}. Similarly, ML-based cost models have been used to improve the performance of polyhedral optimization techniques~\cite{park2013predictive}.
 
-Deep learning methods have also been used to build cost models that can guide exploration of the search space for autotuning or scheduling transformations based on analyzing the structure of the code~\cite{baghdadi2021deep,adams2019learning}. Similarly, ML-based cost models have been used to improve the performance of compiler optimizations and polyhedral optimization techniques~\xxx{(cite)}.
+The area of ML-based code optimization is quite broad, so the rest of this section focuses on the use of LLMs for code optimization, which is a more recent area with many open questions, and which has been the subject of some of our contributions.
 
-The area of ML-based code optimization is quite broad and includes works such as using ML-based models as surrogate models in compiler optimizations to avoid expensive performance evaluations or profiling~\xxx{(cite)}, or using reinforcement learning to order the optimization passes in a compiler~\xxx{(cite)}.
 
 \subsection{LLM-directed optimization}\label{sec:llm-directed-optimization}
 
-Recently, LLMs have emerged as a powerful tool for both directing code optimization and generating optimized code. The main motivation for using LLMs for code optimization is their ability to learn and generalize complex patterns from large codebases, which may surpass the scope of more traditional optimization methods that rely on hand-crafted heuristics, analytical models, or pre-built building blocks.
+Recently, LLMs have emerged as a powerful tool for both directing code optimization and generating optimized code. The main motivation for using LLMs for these tasks is their ability to learn and generalize complex patterns from large codebases without requiring explicit feature engineering, as well as their ability to understand and generate natural language, which enables more intuitive specification of the optimization goals and any constraints. Their capabilities may surpass the scope of more traditional optimization methods that rely on hand-crafted heuristics, analytical models, or pre-built building blocks for transformations.
+
 
 \subsubsection{Generating optimization directives}\label{sec:llm-generating-directives}
 

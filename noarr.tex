@@ -10,7 +10,7 @@ Since Noarr has evolved over the course of our research, the specific syntax and
 
 Noarr structures are the fundamental abstraction in the Noarr library. They are used for modeling multidimensional data layouts according to the principles of layout agnosticism and hierarchical composition of data layouts (see \cref{sec:native-abstractions}).
 
-A Noarr structure, as a layout abstraction, is primarily a mapping from a multidimensional index space to a one-dimensional memory space, similarly to standard multidimensional arrays such as \lstinline{std::mdspan}, \lstinline{Kokkos::View}, or CUTe Layouts. The main differences from these more traditional arrays are that Noarr structures are hierarchically composed of smaller building blocks, and that their interface uses named dimensions instead of relying on positional indexing of dimensions that can be easily mixed up, especially when multiple data structures with different layouts are used together.
+A Noarr structure, as a layout abstraction, is primarily a mapping from a multidimensional index space to a one-dimensional memory space, similarly to established multidimensional array abstractions such as \lstinline{std::mdspan}, \lstinline{Kokkos::View}, or CuTe layouts. The main differences from these more traditional arrays are that Noarr structures are hierarchically composed of smaller building blocks, and that their interface uses named dimensions instead of relying on positional indexing of dimensions that can be easily mixed up, especially when multiple data structures with different layouts are used together.
 
 \begin{lstlisting}[caption={Example of a Noarr structure usage}, label={lst:noarr-usage}, basicstyle=\ttfamily\scriptsize]
 namespace nr = noarr;
@@ -27,7 +27,7 @@ auto N_length = matrix | nr::get_length<'N'>();
 float& element = matrix | nr::get_at(buffer, nr::idx<'M', 'N'>(i, j));
 \end{lstlisting}
 
-In \cref{lst:noarr-usage}, we define a Noarr structure representing a row-major layout of an $M$ by $N$ matrix of floating-point numbers, which is specified as a composition of a (base) scalar structure and two \lstinline{vector} transformations (called \emph{proto-structures}) that extend the given left-hand-side base structure with a new dimension by repeating the given structure a specified number of times (i.e., $M$ and $N$ times, respectively). All named dimensions are usually represented by character literals, but they can also be represented by a \lstinline{noarr::dim<V>()} value, where \lstinline{V} is an arbitrary literal value.
+In \cref{lst:noarr-usage}, we define a Noarr structure representing a row-major layout of an $M$ by $N$ matrix of floating-point numbers, which is specified as a composition of a (base) scalar structure and two \lstinline{vector} transformations (called \emph{proto-structures}) that extend the given left-hand-side base structure with a new dimension by repeating the given structure a specified number of times. Dimension names are usually represented by character literals, but they can also be represented by a \lstinline{noarr::dim<V>()} value, where \lstinline{V} is an arbitrary literal value.
 
 For the composition of Noarr structures, we use the left-associative \lstinline{^} operator. Starting from the base scalar structure at the leftmost position, each subsequent \lstinline{^} operation transforms the structure according to the right-hand-side proto-structure. However, composition is associative, and thus, we can define a \lstinline{noarr::vector<'N'>(N) ^ noarr::vector<'M'>(M)} composite proto-structure and apply it to a base structure later on.
 
@@ -41,9 +41,9 @@ All dimension name resolution, type deduction, and dispatch of the different que
 
 The composition syntax of Noarr structures, showcased in \cref{lst:noarr-usage}, can also be used to express transformed views of the same data layout, such as sub-arrays (e.g., sub-matrices), layouts with renamed dimensions, or layouts resulting from tiling.
 
-These transformations can be expressed by the following proto-structures: \lstinline{noarr::span<'D'>(start, length)}, which restricts the index space of the dimension \lstinline{'D'} to a given subspace, \lstinline{noarr::rename<'D', 'E'>()}, which renames the dimension \lstinline{'D'} to \lstinline{'E'}, and \lstinline{noarr::into_blocks<'D', 'G', 'B'>(tile_size)}, which tiles the dimension \lstinline{'D'} into a grid of blocks with a new grid dimension \lstinline{'G'} and a new block dimension \lstinline{'B'} of the given tile size.
+These transformations can be expressed by the following proto-structures: \lstinline{noarr::slice<'D'>(start, length)}, which restricts the index space of the dimension \lstinline{'D'} to a given subspace, \lstinline{noarr::rename<'D', 'E'>()}, which renames the dimension \lstinline{'D'} to \lstinline{'E'}, and \lstinline{noarr::into_blocks<'D', 'G', 'B'>(tile_size)}, which tiles the dimension \lstinline{'D'} into a grid of blocks with a new grid dimension \lstinline{'G'} and a new block dimension \lstinline{'B'} of the given tile size.
 
-Due to having all dimensions named, these transformations follow the principle of layout agnosticism. For example, consider a sub-matrix layout~--- it results from any 2D matrix layout by restricting its index space to a given subspace and shifting it to the origin (i.e., the first valid index point is zero-only); thus, we can express it by applying the \lstinline{span} proto-structure applied to each dimension of the original matrix layout. This transformation is independent of the physical layout of the original matrix, and thus layout-agnostic. We can define the transformation as \lstinline{noarr::span<'M'>(mStart, mLength) ^ noarr::span<'N'>(nStart, nLength)}, which results in a sub-matrix of size $mLength$ by $nLength$, starting at the index point $(mStart, nStart)$.
+Because all dimensions are named, these transformations follow the principle of layout agnosticism. For example, consider a sub-matrix layout~--- it results from any 2D matrix layout by restricting its index space to a given subspace and shifting it to the origin (i.e., the first valid index point is zero in every dimension); thus, we can express it by applying the \lstinline{slice} proto-structure to each dimension of the original matrix layout. This transformation is independent of the physical layout of the original matrix, and thus layout-agnostic. We can define the transformation as \lstinline{noarr::slice<'M'>(mStart, mLength) ^ noarr::slice<'N'>(nStart, nLength)}, which results in a sub-matrix of size $mLength$ by $nLength$, starting at the index point $(mStart, nStart)$.
 
 There are also proto-structures that change some properties of the layout, such as \lstinline{noarr::set_length<'D'>(length)}, which sets the length of an unbound dimension \lstinline{'D'} to a given value. In \cref{lst:noarr-usage}, we have defined a matrix using two \lstinline{vector} proto-structures, which are actually shortcuts for a composition of a \lstinline{noarr::vector<'D'>()} proto-structure, which adds a new dimension \lstinline{'D'} of unbound length, and a \lstinline{noarr::set_length<'D'>(length)} proto-structure, which then sets the length of the dimension to a given value. This separation might not seem useful at first, but it allows for more flexible uses of the same proto-structures. The following example illustrates the usefulness of this separation in the context of tiling a computation on a cluster of nodes.
 
@@ -52,35 +52,35 @@ Consider a situation where we want to parallelize a computation of a matrix on a
 % (a similar situation can be imagined for a GPU with a 2D grid of thread blocks).
 % This is an application of data parallelism, requiring no communication between the nodes during the computation.
 
-To achieve such tiling, we would compute the appropriate tile sizes (for each dimension, the size would be the total size of the dimension divided by the number of nodes in that dimension) and then apply a tiling transformation to the data layout. Computing the tile sizes is a common practice in parallelizing algorithms, especially on GPUs. Using this approach in Noarr, the resulting tiled layout can be defined by applying the \lstinline{into_blocks<old_dim, grid_dim, tile_dim>(tile_size)} proto-structure.
+To achieve such tiling, we would compute the appropriate tile sizes (for each dimension, the tile size would be the length of the dimension divided by the number of nodes in that dimension) and then apply a tiling transformation to the data layout. Computing the tile sizes is a common practice in parallelizing algorithms, especially on GPUs. Using this approach in Noarr, the resulting tiled layout can be defined by applying the \lstinline{into_blocks<old_dim, grid_dim, tile_dim>(tile_size)} proto-structure.
 
-This approach is simple enough on a small scale, but it can be quite cumbersome and error-prone to maintain. If we look at the example of tiling the computation from the perspective of the tiled layout, the number of tiles of the output matrix is implicitly determined by dividing the lengths of the original dimensions by the tile sizes. Thus, we have made redundant work, as the resulting number of tiles is exactly equal to the number of nodes in the cluster. It would be much more convenient to automatically infer the tile size directly from the number of nodes.
+This approach is simple enough on a small scale, but it can be quite cumbersome and error-prone to maintain. If we look at the example of tiling the computation from the perspective of the tiled layout, the number of tiles of the output matrix is implicitly determined by dividing the lengths of the original dimensions by the tile sizes. Thus, we have done redundant work, as the resulting number of tiles is exactly equal to the number of nodes in the cluster. It would be much more convenient to automatically infer the tile size directly from the number of nodes.
 
 \subparagraph*{Better tiling example}
 In Noarr, tiling the computation on a cluster without the redundant work of computing the tile sizes can be achieved by breaking the above-mentioned \lstinline{into_blocks} proto-structure into two separate proto-structures: \lstinline{into_blocks<old_dim, grid_dim, tile_dim>()} and \lstinline{set_length<tile_dim>(tile_size)}. By replacing the latter proto-structure with \lstinline{set_length<grid_dim>(num_nodes)}, we can avoid the redundant work.
-Replacing the \lstinline{set_length<tile_dim>} proto-structure with \lstinline{set_length<grid_dim>} is possible because there is a known relationship between the two parameters (assuming known \lstinline{old_dim}), which can be expressed mathematically as $length_{\text{\texttt{old\_dim}}} = length_{\text{\texttt{tile\_dim}}} \times length_{\text{\texttt{grid\_dim}}}$.
+Replacing the \lstinline{set_length<tile_dim>} proto-structure with \lstinline{set_length<grid_dim>} is possible because there is a known relationship between the two parameters (assuming the length of \lstinline{old_dim} is known and divisible by the chosen grid or tile length), which can be expressed mathematically as $length_{\text{\texttt{old\_dim}}} = length_{\text{\texttt{tile\_dim}}} \times length_{\text{\texttt{grid\_dim}}}$.
 
 \subsubsection{Noarr signatures}\label{sec:noarr-signatures}
 
 Since proto-structures are designed to express various transformations of data layouts and traversals that are derived from the layouts, the abstractions must encode the iteration order of the index space. The order is encoded via \emph{signatures}, which specify the hierarchical order of iteration of the dimensions of the index space~--- this is represented by a tree with dimension names as inner nodes and the base scalar structure as the leaf node.
 
-For example, the signature of the row-major layout of a floating-point matrix with dimensions \lstinline{'M'} and \lstinline{'N'} is $\text{\lstinline{'N'}} \to \text{\lstinline{'M'}} \to \text{\lstinline{float}}$, which specifies that the corresponding loop nest would have the \lstinline{'N'} dimension as the outer loop and the \lstinline{'M'} dimension as the inner loop, and all the elements traversed in the innermost loop would be of type \lstinline{float}.
+For example, the signature of the row-major layout of a floating-point matrix with dimensions \lstinline{'M'} and \lstinline{'N'} is $\text{\lstinline{'M'}} \to \text{\lstinline{'N'}} \to \text{\lstinline{float}}$, which specifies that the corresponding loop nest would have the \lstinline{'M'} dimension as the outer loop and the \lstinline{'N'} dimension as the inner loop, and all the elements traversed in the innermost loop would be of type \lstinline{float}.
 
-All proto-structures have a well-defined effect on the signature of the resulting structure. For example, the \lstinline{vector<'D'>(length)} proto-structure adds a new dimension \lstinline{'D'} as the outermost dimension of the signature, while the \lstinline{span<'D'>(start, length)} proto-structure does not change the signature at all.
+All proto-structures have a well-defined effect on the signature of the resulting structure. For example, the \lstinline{vector<'D'>(length)} proto-structure adds a new dimension \lstinline{'D'} as the outermost dimension of the signature, while the \lstinline{slice<'D'>(start, length)} proto-structure does not change the signature at all.
 
 Some proto-structures are dedicated to changing the signature of the resulting structure without modifying other properties of the layout. For example, the \lstinline{noarr::hoist<'D'>()} proto-structure moves the dimension \lstinline{'D'} to the outermost position in the signature.
 
 
-\subsubsection{Binding Noarr Structures to data buffers}\label{sec:binding-noarr-structures}
+\subsubsection{Binding Noarr structures to data buffers}\label{sec:binding-noarr-structures}
 
-Since Noarr structures are layout abstractions, they must be bound to actual data buffers in order to serve as regular data structures. For this purpose, the Noarr library provides the \lstinline{noarr::bag} abstraction, which is a simple wrapper around a Noarr structure and a pointer to an associated data buffer, carrying all the properties of the Noarr structure and allowing for accessing the elements using the traditional \lstinline{[]} (subscript) operator. Mirroring \cref{lst:noarr-usage}, we can define a bag from the same matrix layout and use it as follows.
+Since Noarr structures are layout abstractions, they must be bound to actual data buffers in order to serve as regular data structures. For this purpose, the Noarr library provides the \lstinline{noarr::bag} abstraction, which is a simple wrapper around a Noarr structure and a pointer to an associated data buffer, carrying all the properties of the Noarr structure and allowing access to the elements using the traditional \lstinline{[]} (subscript) operator. Mirroring \cref{lst:noarr-usage}, we can define a bag from the same matrix layout and use it as follows.
 
 \begin{lstlisting}[style=C++, caption={Defining a simple bag from a Noarr structure}, label={lst:simple-noarr-bag}, basicstyle=\ttfamily\scriptsize]
 namespace nr = noarr;
 
 // define row-major layout of an M by N matrix of floating-point numbers
 auto matrix = nr::scalar<float>() ^ nr::vector<'N'>(N) ^ nr::vector<'M'>(M);
-auto matrix_bag = noarr::bag(matrix);
+auto matrix_bag = nr::bag(matrix);
 
 // querying the bag for various properties (same as for the structure)
 auto offset = matrix_bag | nr::offset(nr::idx<'M', 'N'>(i, j));
@@ -88,36 +88,36 @@ auto size = matrix_bag | nr::get_size();
 auto N_length = matrix_bag | nr::get_length<'N'>();
 
 // indexing a bag gives a reference to the actual data in memory
-auto idx = idx<'M', 'N'>(i, j);
-float& value = matrix_bag[idx];
-matrix_bag[idx] = value;
+auto point = nr::idx<'M', 'N'>(i, j);
+float& value = matrix_bag[point];
+matrix_bag[point] = value;
 \end{lstlisting}
 
 The underlying buffer is automatically allocated and managed by the bag (sized according to the Noarr structure), and the type of the accessed elements is automatically deduced from the Noarr structure.
 
 Sometimes, it is desirable to have external control over the data buffer. For example, we might want to use the Noarr bag simply as a view of already existing data, which can be handy when there are multiple possible interpretations of the same data (e.g., a matrix can be viewed as a grid of submatrix tiles).
-Another important use case for external control over the data buffer is when it is managed by another library or resides in a special memory space that requires specific allocation and deallocation logic (e.g., GPU device memory or shared memory). \Cref{lst:cuda-noarr-bag} shows one such example of defining a Noarr bag with an externally managed data buffer, which is allocated in GPU device memory using \lstinline{CudaMalloc}.
+Another important use case for external control over the data buffer is when it is managed by another library or resides in a special memory space that requires specific allocation and deallocation logic (e.g., GPU device memory or shared memory). \Cref{lst:cuda-noarr-bag} shows one such example of defining a Noarr bag for the matrix layout from \cref{lst:simple-noarr-bag} with an externally managed data buffer, which is allocated in GPU device memory using \lstinline{cudaMalloc}.
 
 \begin{lstlisting}[style=C++, caption={Defining a Noarr bag with an externally managed data buffer}, label={lst:cuda-noarr-bag}, basicstyle=\ttfamily\scriptsize]
 // manually allocating a data buffer (in special memory space)
 void* data_buffer = nullptr;
-CudaMalloc(&data_buffer, matrix_layout | noarr::get_size());
-auto matrix_bag = noarr::bag(matrix_layout, data_buffer);
+cudaMalloc(&data_buffer, matrix | noarr::get_size());
+auto matrix_bag = noarr::bag(matrix, data_buffer);
 
 // ... some operations on the bag ...
 
 // manually deallocating the data buffer
-CudaFree(data_buffer);
+cudaFree(data_buffer);
 \end{lstlisting}
 
 The \lstinline{matrix_bag} in \cref{lst:cuda-noarr-bag} is functionally equivalent to the one in \cref{lst:simple-noarr-bag} with two important differences: (1) the bag performs no allocation or deallocation of the data buffer (and thus does not guarantee its lifetime), and (2) the bag is a trivial wrapper around the underlying Noarr structure, which means that it is trivially copyable and movable. In contrast, the bag in \cref{lst:simple-noarr-bag} is not copyable and thus cannot be passed by value.
 
-If we want the same freedom of copying and moving with bags that manage their own data buffer, we can pass a view of the bag \lstinline{matrix_bag.get_ref()}. The resulting view is a trivial wrapper, same as the bag in \cref{lst:cuda-noarr-bag}, which can be freely copied and moved without any side effects.
+If we want the same freedom of copying and moving with bags that manage their own data buffer, we can pass a view of the bag \lstinline{matrix_bag.get_ref()}. The resulting view is a trivial wrapper, same as the bag in \cref{lst:cuda-noarr-bag}, which can be freely copied and moved without transferring ownership.
 
 
-\subsection{Noarr Traversers}\label{sec:noarr-traversers}
+\subsection{Noarr traversers}\label{sec:noarr-traversers}
 
-In \cref{sec:traversal-agnostic-design}, we have already introduced the concept of traversers as an abstraction for traversal-agnostic algorithms and showed their possible use in an initialization algorithm and a copy algorithm, as a generalization of \lstinline{for_each}.
+In \cref{sec:traversal-agnostic-design}, we have already introduced the concept of traversers as an abstraction for traversal-agnostic algorithms and shown their possible use in an initialization algorithm and a copy algorithm, as a generalization of \lstinline{for_each}.
 
 A more complex example of using Noarr traversers is shown in \cref{lst:layout-agnostic-matmul-traverser}, which implements a layout-agnostic matrix multiplication algorithm that computes the output matrix \lstinline{matrixC} as the product of the input matrices \lstinline{matrixA} and \lstinline{matrixB}.
 
@@ -139,7 +139,7 @@ traverser(matrixC, matrixA, matrixB) | for_sections<'M', 'N'>([&](auto inner) {
 
 In this example, the index spaces of the input data structures do not match exactly --- the traverser's index space is constructed first from the index space of the first supplied \lstinline{matrixC} (represented by signature $\text{\lstinline{'N'}} \to \text{\lstinline{'M'}}$, disregarding the leaf node specifying the element type) and then extended to cover the index space of \lstinline{matrixA} ($\text{\lstinline{'K'}} \to \text{\lstinline{'M'}}$). The newly added dimensions are added as outer relative to the existing dimensions (i.e., the order of the dimensions outermost to the innermost is $\text{\lstinline{'K'}} \to \text{\lstinline{'N'}} \to \text{\lstinline{'M'}}$). \lstinline{matrixB} triggers no change to the traverser index space, as its index space is already covered by the traverser.
 
-Since the loop nest is imperfect (the two assignment statements have different iteration patterns), a different method of traversal is used --- the \lstinline{for_sections} method is used to iterate over the given list of dimensions (in this case, \lstinline{'M'} and \lstinline{'N'}) and for each such section of the index space, the provided callable is invoked with a new (inner) traverser that represents the inner loop nest. The \lstinline{inner} traverser is then used to finalize the traversal on each section through the \lstinline{'K'} dimension. The methods are called via the \lstinline{|} operator to avoid \cpp-specific issues of having to specify whether the methods have template parameters (e.g., \lstinline{traverser.template for_sections<'M', 'N'>(...)}).
+Since the loop nest is imperfect (the two assignment statements have different iteration patterns), a different method of traversal is used --- the \lstinline{for_sections} method is used to iterate over the given list of dimensions (in this case, \lstinline{'M'} and \lstinline{'N'}) and for each such section of the index space, the provided callable is invoked with a new (inner) traverser that represents the inner loop nest. The \lstinline{inner} traverser is then used to finalize the traversal on each section through the \lstinline{'K'} dimension. The methods are called via the \lstinline{|} operator to avoid \cpp-specific issues with having to write the \lstinline{template} disambiguator for template member functions (e.g., \lstinline{traverser.template for_sections<'M', 'N'>(...)}).
 
 
 

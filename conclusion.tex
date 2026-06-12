@@ -1,3 +1,13 @@
 \chapter{Conclusion}\label{chap:conclusion}
 
-This thesis summarizes my work.
+We have introduced layout-agnostic and traversal-agnostic algorithm design techniques as practical solutions for enabling user-directed optimizations and performance portability of high-performance scientific applications, particularly those that are memory-bound. We have also demonstrated that these techniques simplify parallelization and distribution of applications on both CPU and GPU-based systems.
+
+We have implemented Noarr and Cellato as proof-of-concept implementations of these techniques for general-purpose scientific and cellular automata applications, respectively. Both libraries are developed as header-only \cpp libraries, making them easy to integrate into existing applications. They are open-source and available on GitHub.
+
+The libraries have been evaluated on a variety of use cases for their respective domains, demonstrating they do not introduce significant overhead compared to hand-optimized implementations, while providing significant flexibility in terms of changing data layouts and traversal orders without modifying the core algorithm logic.
+
+We have also explored the potential of using reasoning LLMs to automatically generate optimized code. Our findings show that LLMs benefit from user-directed guidance (tutoring) for specific optimization goals or design choices in cases where the algorithm is too complex for the LLM to optimize on its own. On the other hand, our findings suggest that the abstractions that promote layout-agnostic and traversal-agnostic algorithm design in \cpp, or otherwise enable separation of algorithm logic from optimization choices, do not significantly benefit LLMs --- in many cases, hindering their ability to generate optimized code.
+
+Open questions remain regarding sparse data structures in layout-agnostic and traversal-agnostic algorithm design, as well as other specific domains such as graph algorithms. In the area of LLMs, further research may explore whether our findings generalize to newer, agentic LLMs, which can interact with tools and thus receive feedback on their code generation, enabling them to iteratively improve the generated code.
+
+% Overall, our work demonstrates feasibility and benefits of layout-agnostic and traversal-agnostic algorithm design in high-performance scientific applications

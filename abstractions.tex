@@ -103,6 +103,9 @@ Moreover, since we target CPU and GPU architectures, the abstractions must be de
 
 We have designed generic building blocks according to the principles of layout-agnostic design and within the above constraints, and we have shown that these building blocks are sufficient for constructing various data structures with different memory layouts.
 
+
+\subsection{Results}\label{sec:layout-agnostic-results}
+
 The experimental evaluation of the proposed abstractions in the paper showed that the abstractions achieve performance comparable to hand-written code while improving the flexibility of algorithm design.
 
 Major benefits of the proposed approach include the ability to easily change the layout of data structures without modifying the algorithms that operate on them, using layouts as building blocks for constructing more complex data structures, and improving code readability and maintainability by indexing data structures using named dimensions instead of explicit indexing expressions.
@@ -120,13 +123,16 @@ To express traversal transformations and derived views of data structures, we ha
 
 This principle, with theoretical foundations inspired by functional programming and type theory, can be further extended to support other transformations as well. The paper artifact documents how these building blocks can be extended by users of the proposed abstractions, allowing them to define their own transformations and views of data structures and traversers, including domain-specific ones.
 
-We have also assessed the usefulness of this approach for expressing parallel algorithms. We have shown that the dimension hierarchies encoded in the data structures and traversers provide a natural way to express parallelism on different parallel models, including various CPU-based parallelism frameworks and the CUDA framework for GPU parallelism. The abstractions allow for expressing parallelism in a declarative way, without modifying the core logic of the algorithms, and allow for applying different parallelization strategies by passing the corresponding traverser and the computation to a generic executor for a requested parallelization strategy that automatically parallelizes the computation.
+
+\subsection{Results}\label{sec:traversal-agnostic-results}
+
+We have assessed the usefulness of this approach for expressing parallel algorithms. We have shown that the dimension hierarchies encoded in the data structures and traversers provide a natural way to express parallelism on different parallel models, including various CPU-based parallelism frameworks and the CUDA framework for GPU parallelism. The abstractions allow for expressing parallelism in a declarative way, without modifying the core logic of the algorithms, and allow for applying different parallelization strategies by passing the corresponding traverser and the computation to a generic executor for a requested parallelization strategy that automatically parallelizes the computation.
 
 For GPU parallelism in particular, we have shown that the dimensions of the traversals can be easily mapped onto the dimensions of the GPU execution model (blocks and threads), allowing for a straightforward expression of GPU parallelism. We have also shown that the proposed abstractions can be extended to support building blocks specific to defining layouts that benefit from the nuances of GPU memories.
 
 % Our experimental evaluation showed that the proposed abstractions can be efficiently used in multiple use cases, including design of various algorithms from areas such as linear algebra and stencil computations, parallelizing such algorithms on both CPU and GPU architectures, and transforming the layouts and traversals of the algorithms to achieve better performance.
 
-Our experimental evaluation showed that the proposed abstractions can be efficiently used in algorithms from various areas of scientific computing.
+Our experimental evaluation showed that the proposed abstractions can be efficiently used to implement traversal-agnostic algorithms from various areas of scientific computing.
 The performance of the algorithms implemented using the proposed abstractions was comparable to semantically equivalent abstraction-less implementations across multiple algorithms, including single-threaded and parallel implementations on both CPU and GPU architectures.
 
 
@@ -138,11 +144,14 @@ This work continues the efforts laid out in the previous two contributions (\cre
 
 For algorithm implementations with no layout or traversal optimizations applied, we have shown that the proposed abstractions reduce the complexity of the indexing logic of algorithms, as well as the control flow complexity of the algorithms. This is counterbalanced by a slight increase in the verbosity of the code.
 
+
+\subsection{Results}\label{sec:abstractions-results}
+
 The main benefit of the proposed abstractions is that algorithms can be expressed in such a way that the developer may easily modify the layouts of data structures and the traversal order without making further modifications to the algorithms. The resulting layout-agnostic and traversal-agnostic design keeps the complexity and verbosity of the core algorithms constant regardless of the applied layout and traversal transformations, while the complexity and verbosity of algorithms without the proposed abstractions would increase considerably depending on the applied transformations.
 
 We have also shown that the proposed abstractions can be easily integrated with autotuning techniques in such a way that the configuration of the autotuning resides in the same codebase as the algorithm itself, which we have done by integrating our abstractions with multiple autotuning frameworks with different interfaces.
 
-Combined with the previous contributions, this work demonstrates that the proposed abstractions can be used to design efficient layout-agnostic and traversal-agnostic algorithms for parallel computing on both CPU and GPU architectures.
+% Combined with the previous contributions, this work demonstrates that the proposed abstractions can be used to design efficient layout-agnostic and traversal-agnostic algorithms for parallel computing on both CPU and GPU architectures.
 
 
 \section{Layout-agnostic MPI abstraction}\label{sec:layout-agnostic}
@@ -158,6 +167,9 @@ In this work, we have shown that the proposed abstractions can be efficiently in
 In the paper, we have conducted a study comparing the proposed approach with prior works that aim to facilitate MPI communication of data structures with various layouts.
 
 We have shown that the studied prior works do not provide the full flexibility necessary for the layout-agnostic design of distributed algorithms, while the proposed approach has the necessary properties for this purpose. Among the most challenging properties for prior approaches was the expressiveness required to support various logically equivalent structures with different memory layouts, and the ability to automatically translate between different layouts without modifying the communication logic, which is the key property for layout-agnostic communication.
+
+
+\subsection{Results}\label{sec:layout-agnostic-results}
 
 The experimental evaluation showed that the proposed approach, combined with the abstractions for layout-agnostic and traversal-agnostic design from the previous contributions, achieves performance comparable to equivalent hand-written code, regardless of the layout of the involved data structures, while selected prior works did not match the performance of hand-written code in many cases.
 
@@ -176,11 +188,15 @@ achieving layout-agnostic and traversal-agnostic design of the computational log
 
 The abstractions allow for running the computations expressed in the proposed DSL on both CPU and GPU architectures, and allow for applying various optimizations such as bit-packing, spatial and temporal blocking, and parallelization in a decoupled way, without modifying the computational logic. The primitives that allow for these optimizations are designed to be applicable to any stencil computation expressed in the proposed DSL\@.
 
+
+\subsection{Results and future work}\label{sec:stencil-computations-results}
+
 We have conducted an extensive case study on various cellular automata of different state spaces and complexities of the computational logic, and we have shown that the proposed approach provides flexibility for applying the different optimizations, while achieving performance comparable to equivalent hand-written code.
 
 Since the optimizations are applied declaratively in a decoupled way, the developer of a high-performance application that makes use of cellular automata can easily experiment with different optimizations to find the best configuration for their specific use case.
 
-In our ongoing research, we are applying different bit-packing techniques that can speed up the computations depending on the state space and the computational logic of the stencil computation. This opens up a new space of optimizations for stencil computations that can be applied to any cellular automaton.
+In our ongoing research, we are applying different bit-packing and bitwise evaluation strategies that can speed up the computations depending on the state space and the computational logic of the stencil computation. This opens up a new space of optimizations for stencil computations that can be applied to any cellular automaton.
+
 
 \section{Summary}\label{sec:abstractions-summary}
 

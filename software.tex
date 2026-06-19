@@ -4,13 +4,13 @@ During our research in the area of abstractions for layout- and traversal-agnost
 
 \section{Noarr}\label{sec:sw-noarr}
 
-Noarr\footnote{\url{https://github.com/ParaCoToUl/noarr-structures}} is an open-source \cpptwenty header-only library that provides abstractions for defining and manipulating memory layouts of multidimensional data structures and their traversal patterns, including support for parallel execution. It is the main software artifact for the contributions described in \cref{sec:astute-approach,sec:pure-cpp-approach,sec:cpp-abstractions,sec:layout-agnostic}.
+Noarr\footnote{The library is available at \url{https://github.com/ParaCoToUl/noarr-structures}.} is an open-source \cpptwenty header-only library that provides abstractions for defining and manipulating memory layouts of multidimensional data structures and their traversal patterns, including support for parallel execution. It is the main software artifact for the contributions described in \cref{sec:astute-approach,sec:pure-cpp-approach,sec:cpp-abstractions,sec:layout-agnostic}.
 
 Noarr is continuously tested on Linux, Windows, and macOS platforms using various versions of the \texttt{GCC}, \texttt{Clang}, and \texttt{MSVC} compilers, and it is available under the MIT license with no external dependencies.
 
 Integration of Noarr into an application requires only including the header file \texttt{noarr/traversers.hpp}. This includes all the necessary components of the library for the functionality described in the aforementioned sections.
 
-The library has two external components, Noarr-tuning\footnote{\url{https://github.com/ParaCoToUl/noarr-tuning}} and Noarr-MPI\footnote{\url{https://github.com/ParaCoToUl/noarr-mpi}}, which provide additional functionality discussed in \cref{sec:cpp-abstractions,sec:layout-agnostic}, respectively.
+The library has two external components, Noarr-tuning\footnote{Available at \url{https://github.com/ParaCoToUl/noarr-tuning}} and Noarr-MPI\footnote{Available at \url{https://github.com/ParaCoToUl/noarr-mpi}}, which provide additional functionality discussed in \cref{sec:cpp-abstractions,sec:layout-agnostic}, respectively.
 
 
 The library is centered around \emph{Noarr structures}, abstractions for memory layouts that are built by composing simpler building blocks called \emph{proto-structures}. In \cref{sec:native-abstractions}, we would categorize Noarr structures (and proto-structures) as an example of \emph{hierarchical views}. Both concepts use dimensions named mainly by character literals (e.g., \lstinline{'x'}, \lstinline{'y'}, \lstinline{'z'}). The dimension names and dispatch of all functions are resolved at compile time using template metaprogramming to avoid runtime overhead.
@@ -23,7 +23,7 @@ The library allows users to abstract away the details of memory layouts and trav
 
 \section{Cellato}\label{sec:sw-cellato}
 
-Cellato\footnote{\url{https://github.com/matyas-brabec/2026-cellato-journal}} is an open-source \cpptwenty header-only library that defines an embedded domain-specific language for describing the computation of a single cell in a cellular automaton and for evaluating it using a combination of an \emph{evaluator}, \emph{memory layout}, and \emph{traverser}. It supports CPU and GPU execution. The library is available under the MIT license with no external dependencies.
+Cellato\footnote{The library is available at \url{https://github.com/matyas-brabec/2026-cellato-journal}.} is an open-source \cpptwenty header-only library that defines an embedded domain-specific language for describing the computation of a single cell in a cellular automaton and for evaluating it using a combination of an \emph{evaluator}, \emph{memory layout}, and \emph{traverser}. It supports CPU and GPU execution. The library is available under the MIT license with no external dependencies.
 
 The repository contains the artifacts for an unpublished (as of the time of writing) extension of the work described in \cref{sec:stencil-computations}, which implements \emph{bit-plane} encoding along with bitwise evaluation as an alternative to the \emph{bit-array} encoding described in the original contribution.
 

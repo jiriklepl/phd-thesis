@@ -104,7 +104,7 @@ Moreover, since we target CPU and GPU architectures, the abstractions must be de
 We have designed generic building blocks according to the principles of layout-agnostic design and within the above constraints, and we have shown that these building blocks are sufficient for constructing various data structures with different memory layouts.
 
 
-\subsection{Results}\label{sec:layout-agnostic-results}
+\subsection{Results}\label{sec:astute-results}
 
 The experimental evaluation of the proposed abstractions in the paper showed that the abstractions achieve performance comparable to hand-written code while improving the flexibility of algorithm design.
 
@@ -138,9 +138,9 @@ The performance of the algorithms implemented using the proposed abstractions wa
 
 \section{Practical aspects of the abstractions}\label{sec:cpp-abstractions}
 
-We have continued the work on layout-agnostic and traversal-agnostic abstractions in our first journal publication dedicated to this line of research, which we have presented in \contribref{klepl2024abstractions}.
+We continued the work on layout-agnostic and traversal-agnostic abstractions in our first journal publication dedicated to this line of research, which we have presented in \contribref{klepl2024abstractions}.
 
-This work continues the efforts laid out in the previous two contributions (\cref{sec:astute-approach,sec:pure-cpp-approach}), focusing on more practical aspects of the proposed abstractions, including their effects on the verbosity and complexity of the developed algorithms, and their integrability with autotuning techniques for performance optimization.
+This work continues the efforts laid out in the previous two contributions (\cref{sec:astute-approach,sec:pure-cpp-approach}), focusing on more practical aspects of the proposed abstractions, including their effects on the verbosity and complexity of the developed algorithms, and their integration with autotuning techniques for performance optimization.
 
 For algorithm implementations with no layout or traversal optimizations applied, we have shown that the proposed abstractions reduce the complexity of the indexing logic of algorithms, as well as the control flow complexity of the algorithms. This is counterbalanced by a slight increase in the verbosity of the code.
 
@@ -178,15 +178,15 @@ The main benefit of the proposed approach is that the layouts can be easily chan
 
 \section{Agnostic design for stencil computations}\label{sec:stencil-computations}
 
-After demonstrating the feasibility of layout and traversal agnosticism in high-performance computing for more high-level design of algorithms, we have focused on applying the concepts of layout-agnostic and traversal-agnostic design to iterative stencil computations on finite state spaces (Cellular automata), which are useful for simulating physical and biological processes, and are widely used in scientific computing~\xxx{(cite)}. We have presented this work in \contribref{brabec2025cellato}.
+After demonstrating the feasibility of layout and traversal agnosticism in high-performance computing for higher-level algorithm design, we focused on applying the concepts of layout-agnostic and traversal-agnostic design to iterative stencil computations on finite state spaces (\emph{cellular automata}), which are widely used in scientific computing; for example, when simulating physical and biological processes~\xxx{(cite)}. We have presented this work in \contribref{brabec2025cellato}.
 
 Cellular automata operate on multidimensional grids, applying a fixed neighborhood-based computation pattern (the stencil) with a limited state space to each point in the grid. The stencil is typically applied iteratively, where the output of one iteration becomes the input for the next iteration. For this class of algorithms, spatial and temporal locality are crucial for performance, and thus, many approaches already exist for transforming the computation order into blocks, in both space and time, to improve efficiency. However, cellular automata also allow for stronger representation-level optimizations via \emph{bit-packing} techniques, which store multiple cell states in a single machine word and compute them in a bit-parallel fashion. To our knowledge, no prior works have proposed abstractions that would allow such optimizations to be applied generically in a layout-agnostic and traversal-agnostic manner.
 
-This work applies the agnostic design principles at a deeper level of the design compared to our previous contributions, as it directly targets the computational logic of stencil computations. In this work, we have proposed a \cpp-embedded domain-specific language (DSL), Cellato, that allows the user to express the computational logic of cellular automata in a way that is agnostic to both the layout of the data and the traversal order of the algorithm. Similarly to the previous contributions, this is achieved by using metaprogramming capabilities of \cpp to design zero-overhead abstractions that allow for
+This work applies the agnostic design principles at a deeper level of the design than our previous contributions, as it directly targets the computational logic of stencil computations. In this work, we have proposed a \cpp-embedded domain-specific language (DSL), Cellato, that allows the user to express the computational logic of cellular automata in a way that is agnostic to both the layout of the data and the traversal order of the algorithm. Similarly to the previous contributions, this is achieved by using metaprogramming capabilities of \cpp to design zero-overhead abstractions that support
 % expressing the computational logic in a way that is independent of the layout and traversal of the data
-achieving layout-agnostic and traversal-agnostic design of the computational logic while still allowing for aggressive optimizations by the compiler.
+layout-agnostic and traversal-agnostic design of the computational logic while still allowing for aggressive optimizations by the compiler.
 
-The abstractions allow for running the computations expressed in the proposed DSL on both CPU and GPU architectures, and allow for applying various optimizations such as bit-packing, spatial and temporal blocking, and parallelization in a decoupled way, without modifying the computational logic. The primitives that allow for these optimizations are designed to be applicable to any stencil computation expressed in the proposed DSL\@.
+The abstractions support running the computations expressed in the proposed DSL on both CPU and GPU architectures, and allow applying various optimizations such as bit-packing, spatial and temporal blocking, and parallelization in a decoupled way, without modifying the computational logic. The primitives that enable these optimizations are designed to be applicable to any stencil computation expressed in the proposed DSL\@.
 
 
 \subsection{Results and future work}\label{sec:stencil-computations-results}

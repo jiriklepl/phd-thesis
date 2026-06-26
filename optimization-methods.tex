@@ -40,22 +40,12 @@ Flexible abstractions allowing manipulation of data layouts and traversal orders
 
 We can broadly categorize these abstractions based on whether they stand completely separate from the source language (represented by \emph{domain-specific languages}), extend the source language with directives or transformation rules (\emph{annotation-based approaches}), or are implemented directly in the source language (\emph{native abstractions}).
 
-
-\begin{description}
-  % \item[Domain-specific languages (DSLs):]\label{des:dsl} These are specialized programming languages designed for specific computing domains, such as deep learning, stencil computations, or image processing. Their design is optimized for offering more concise syntax compared to general-purpose programming (e.g., \cpp) and for enabling powerful optimizations based on domain-specific knowledge and restrictions on the code structure.
-  \item[Domain-specific languages (DSLs)]\label{des:dsl}--- specialized programming languages designed for specific computing domains, such as deep learning, stencil computations, or image processing. By designing the language with domain-specific constructs built for the target domain, they can offer more concise and readable syntax compared to general-purpose \cpp code, while enabling powerful optimizations based on domain-specific knowledge.
-  % \item[Annotation-based approaches:]\label{des:annotation} These approaches involve annotating the code in the source language (e.g., \cpp) with special directives or pragmas that provide hints to the compiler or optimization framework about how to optimize the code. An example of this approach is Loopy~\cite{namjoshi2016loopy}, which allows users to do affine transformations of loop nests using natural math-like syntax.
-  \item[Annotation-based approaches]\label{des:annotation}--- approaches involving annotating the code in the \cpp source with special directives or pragmas that direct the compiler or optimization pipeline to perform specific transformations of the code. This offers a more flexible and less restrictive way to express optimizations compared to DSLs, and it mostly relies on constructs that are already familiar to the users. These approaches offer a trade-off between the expressiveness and optimization potential of DSLs and the ease of integration into existing codebases and toolchains of native code abstractions.
-  % \item[Native abstractions:]\label{des:native} These are abstractions implemented directly in the source language (e.g., \cpp) that allow users to express data layout and traversal optimizations without needing to use a custom tooling. Of special interest to our work are \emph{zero-cost abstractions}~\cite{stroustrup2012foundations} enabled by compiler optimizations, which allow users to write high-level constructs and use template metaprogramming techniques without introducing performance overhead.
-  \item[Native abstractions]\label{des:native}--- abstractions implemented directly in \cpp, which allow full integration with the existing toolchains (most notably, compilers and debugging tools) without any custom compilation pipelines. While the design space for efficient native abstractions is more limited than for other alternatives, well-designed native abstractions can still offer powerful optimization capabilities thanks to the metaprogramming capabilities of \cpp. Moreover, algorithms utilizing native abstractions can better compose with other \cpp constructs, libraries and tooling.
-\end{description}
-
-These three categories are not mutually exclusive --- for example, some native abstractions can be expressive enough to be used as DSLs, and many annotation-based approaches and DSLs overlap in how a user can express optimizations.
+% These three categories are not mutually exclusive --- for example, some native abstractions can be expressive enough to be used as DSLs, and many annotation-based approaches and DSLs overlap in how a user can express optimizations.
 
 
 \subsection{Domain-specific languages (DSLs)}\label{sec:dsl}
 
-DSLs are specialized programming languages designed for specific computing domains. They offer a high level of expressiveness and optimization potential by providing domain-specific constructs, but they require a separate compilation pipeline or runtime system to execute the code written in the DSL. They also require users to learn DSL-specific concepts, which may not translate well to other domains.
+DSLs are specialized programming languages designed for specific computing domains, such as deep learning, stencil computations, or image processing. By providing domain-specific constructs, they can offer more concise and readable syntax compared to general-purpose \cpp code, as well as a high level of expressiveness and optimization potential based on domain-specific knowledge. However, they require a separate compilation pipeline or runtime system to execute the code written in the DSL. They also require users to learn DSL-specific concepts, which may not translate well to other domains.
 
 There are many DSLs with varying characteristics and design principles that have been developed for optimizing code in various domains of high-performance computing applications. A common theme among the prominent DSLs is the strict separation of the algorithmic logic from the optimization, together with guarantees or checks that the optimization steps do not change the semantics of the original code.
 
@@ -73,22 +63,25 @@ DSLs can also be designed to be user-extensible, allowing support for new optimi
 
 \subsection{Annotation-based approaches}\label{sec:annotation}
 
-Annotation-based approaches allow users to express optimizations by adding optimization directives to the original code written in \cpp. Some such directives are supported even by major compilers (e.g., OpenMP pragmas for parallelization~\cite{openmp_6.0_spec} and unroll pragmas for loop unrolling).
+Annotation-based approaches allow users to express optimizations by adding optimization directives to the original code written in \cpp. These directives, such as pragmas, direct the compiler or optimization pipeline to perform specific transformations while relying mostly on constructs already familiar to \cpp users. Some such directives are supported even by major compilers (e.g., OpenMP pragmas for parallelization~\cite{openmp_6.0_spec} and unroll pragmas for loop unrolling).
 
-In a typical annotation-based approach, users write optimization directives that refer to code elements (e.g., loops, statements, data structures) and specify their transformations. These transformations are often based on representations such as the polyhedral model~\cite{namjoshi2016loopy,chen2008chill,hartono2009annotation}, as these models provide powerful and verifiable frameworks for users to express optimizations.
+In a typical annotation-based approach, users write optimization directives that refer to code elements (e.g., loops, statements, data structures) and specify their transformations. This offers a more flexible and less restrictive way to express optimizations compared to DSLs, at the cost of lower control over the structure of the optimized code. These transformations are often based on representations such as the polyhedral model~\cite{namjoshi2016loopy,chen2008chill,hartono2009annotation}, as these models provide powerful and verifiable frameworks for users to express optimizations.
 
 CHiLL~\cite{chen2008chill} and similar tools use semantic directives, such as \lstinline{tile} or \lstinline{permute}, that directly express the intended transformation, whereas tools such as Loopy use more flexible mathematical syntax.
 In Loopy~\cite{namjoshi2016loopy}, users can express loop transformations as affine mappings over iteration variables; for example, interchanging two loops in a loop nest with iteration variables \lstinline{i}, \lstinline{j}, and \lstinline{k} corresponds to mapping the iteration order from \lstinline{[i, j, k]} to \lstinline{[i, k, j]}.
+
+While annotation-based approaches are prominent in the context of parallelization (especially OpenMP pragmas), they do not offer significant characteristics that would not be covered by DSLs.
 
 % The design space for annotation-based approaches is more limited than for DSLs, annotation-based framework are often tightly integrated with the existing toolchains for the source language (such as OpenMP pragmas in \cpp), which allows users to easily integrate them into their existing codebases; and the annotated code is still interpretable by users and tools built for the source language.
 
 
 \subsection{Native abstractions}\label{sec:native-abstractions}
 
-Native abstractions are implemented directly in the source language and do not require any custom compilation pipelines. They are most relevant to our work, as the majority of our contributions fall into this group.
+Native abstractions are implemented directly in the source language and do not require any custom compilation pipelines. This allows full integration with existing \cpp toolchains, most notably compilers and debugging tools, and makes algorithms using native abstractions easier to compose with other \cpp constructs and libraries. They are most relevant to our work, as the majority of our contributions fall into this group.
 
-% We broadly separate the abstractions into three categories: layout-agnostic multidimensional arrays, hierarchical views, and abstractions for separating computation logic from traversals. These categories are not mutually exclusive --- for example, our contributions combine the principles of layout-agnostic multidimensional arrays and hierarchical views, while also separating the core algorithmic logic from the layout and traversal optimizations.
-We can broadly categorize native abstractions into three non-exclusive groups depending on what aspect of the design they abstract~--- \emph{layout-agnostic multidimensional arrays} that allow users to change the data layout without modifying the algorithmic logic; \emph{hierarchical views} that allow users to express more complex or transformed layouts by composing simpler building blocks; and abstractions for \emph{separating computational logic} from concrete data layouts and traversal orders, which allow users to express the core algorithmic logic in a way that is agnostic to the layout and traversal optimizations (working from the opposite direction of the previous two categories toward the same goal).
+While the design space for efficient native abstractions is more limited than for the above alternatives, well-designed native abstractions can still offer powerful optimization capabilities thanks to the metaprogramming capabilities of \cpp.
+
+The native abstractions form three non-exclusive categories depending on what aspect of the design they abstract~--- \emph{layout-agnostic multidimensional arrays} that allow users to change the data layout without modifying the algorithmic logic; \emph{hierarchical views} that allow users to express more complex or transformed layouts by composing simpler building blocks; and abstractions for \emph{separating computational logic} from concrete data layouts and traversal orders, which allow users to express the core algorithmic logic in a way that is agnostic to the layout and traversal optimizations (working from the opposite direction of the previous two categories toward the same goal).
 
 While these categories are not exhaustive, they cover the most prominent approaches that can be used to enable layout and traversal optimizations in a way that is decoupled from the core algorithmic logic. Most notably, we do not discuss approaches for specific data management strategies and other concerns that do not directly relate to data layouts and traversals.
 
@@ -142,9 +135,7 @@ We distinguish autotuning and LLM-directed approaches from general machine learn
 
 \subsection{Autotuning}\label{sec:autotuning}
 
-Autotuning is a powerful technique for parameter optimization even outside the context of high-performance computing, but it is particularly relevant in this context.
-
-It searches a space of possible parameter configurations (the \emph{search space}) to optimize a given \emph{objective function} (e.g., code performance) by iteratively evaluating different configurations and using the results to guide the search for better configurations. The search space can include various parameters, such as tile sizes for tiling transformations, loop orderings, choices between different algorithms, and even compiler flags.
+Autotuning is a powerful technique for parameter optimization even outside the context of high-performance computing, but it is particularly relevant in this context. It searches a space of possible parameter configurations (the \emph{search space}) to optimize a given \emph{objective function} (e.g., code performance) by iteratively evaluating different configurations and using the results to guide the search for better configurations. The search space can include various parameters, such as tile sizes for tiling transformations, loop orderings, choices between different algorithms, and even compiler flags.
 
 Simple autotuning techniques include random search and grid search, with grid search being practical for exhaustive exploration of small discrete search spaces. These methods are commonly used in black-box optimization settings where little structure is known about the objective function. If the objective function is not very complex and not too stochastic, local optimization methods (e.g., hill climbing or the Nelder--Mead method) may perform much better, as they can quickly converge to a local optimum.
 
@@ -208,3 +199,5 @@ Direct code generation goes further and allows the model to make more fundamenta
 
 Fully unsupervised generation of reliably optimized HPC code remains difficult, so several works use LLMs for translation between a more interpretable language and a programming model such as CUDA~\cite{palkowski2024gpt,dearing2024lassi}. One of these works, LASSI, defines a self-correcting pipeline where the LLM proposes a solution and can then respond to feedback from the compiler or verifier.
 % This direction is used in various state-of-the-art solutions such as ComPilot~\cite{merouani2025agentic}.
+
+\xxx{Finalize this section}

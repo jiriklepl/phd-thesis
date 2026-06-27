@@ -20,7 +20,7 @@ Compiler optimizations are a fundamental aspect of modern compilers and code dev
 Compiler optimizations also allow developers to use higher-level abstractions (e.g., \cpp templates) and more structured code without significant performance penalties, as compilers can interpret these abstractions and optimize them effectively, particularly when using so-called zero-cost abstractions~\cite{stroustrup2012foundations}. This allows developers to write more expressive and manageable code while still achieving high performance.
 
 However, compilers have limitations in their ability to optimize code --- they are often bound by the incomplete information available at compile time, so they have to operate under conservative assumptions about the program's behavior, follow heuristic rules, and apply transformations only when they preserve the observable behavior of the original code for any feasible execution path.
-Examples of mitigating these limitations include profile-guided optimization (PGO), autotuning techniques~\cite{ansel2014opentuner}, user-directed optimizations and custom compilation pipelines~\cite{kruse2018user}, and cost models based on machine learning~\cite{baghdadi2021deep}.
+Examples of mitigating these limitations include profile-guided optimization (PGO), autotuning techniques~\cite{ansel2014opentuner}, user-directed optimizations, custom compilation pipelines~\cite{kruse2018user}, and cost models based on machine learning~\cite{baghdadi2021deep}.
 
 
 \subsection{Polyhedral model}\label{sec:polyhedral-model}
@@ -195,7 +195,7 @@ For example, HPC-Coder~\cite{nichols2024hpc} shows that fine-tuning LLMs on HPC 
 
 \subsubsection{LLM code generation and transformation}\label{sec:llm-code-generation}
 
-Direct code generation goes further and allows the model to make more fundamental changes to the code. This has become more viable only recently, as the proficiency of LLMs in code generation has improved. Since LLMs are generally trained on large codebases, and only a relatively small part of generally available code falls into the HPC domain, the performance of off-the-shelf LLMs on HPC code has become a serious research target comparatively recently, following general code-generation milestones such as Codex~\cite{chen2021evaluating} and more recent evaluations of parallel and GPU code generation~\cite{nichols2024can,godoy2024large}.
+Direct code generation goes further, allowing the model to make more fundamental changes to the code. This has only recently become more viable, as the proficiency of LLMs in code generation has improved. Since LLMs are generally trained on large codebases, and only a relatively small part of generally available code falls into the HPC domain, the performance of off-the-shelf LLMs on HPC code has become a serious research target comparatively recently, following general code-generation milestones such as Codex~\cite{chen2021evaluating} and more recent evaluations of parallel and GPU code generation~\cite{nichols2024can,godoy2024large}.
 
 Fully unsupervised generation of reliably optimized HPC code remains difficult, so several works use LLMs for translation between a more interpretable language and a programming model such as CUDA~\cite{palkowski2024gpt,dearing2024lassi}. One of these works, LASSI, defines a self-correcting pipeline where the LLM proposes a solution and can then respond to feedback from the compiler or verifier.
 % This direction is used in various state-of-the-art solutions such as ComPilot~\cite{merouani2025agentic}.

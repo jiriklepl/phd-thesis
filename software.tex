@@ -19,7 +19,8 @@ In addition to Noarr structures, the library defines \emph{traversers}, which ar
 
 Traversers are then used to parallelize a given algorithm using various parallel models, such as OpenMP, \cpp threads, Intel Threading Building Blocks, and CUDA\@, or to distribute data across multiple nodes using MPI (using the Noarr-MPI component).
 
-The library allows users to abstract away the details of memory layouts and traversal patterns when defining parallel and distributed algorithms, enabling them to use tools such as autotuning to choose the best combination of layouts and traversals for a given hardware architecture without changing the algorithmic logic. Details of Noarr structures, traversers, and the various transformations that can be applied to them are described in \cref{chap:noarr}.
+The library allows users to abstract away the details of memory layouts and traversal patterns when defining parallel and distributed algorithms, enabling them to use tools such as autotuning to choose the best combination of layouts and traversals for a given hardware architecture without changing the algorithmic logic.
+% Details of Noarr structures, traversers, and the various transformations that can be applied to them are described in \cref{chap:noarr}.
 
 \section{Cellato}\label{sec:sw-cellato}
 
@@ -27,7 +28,10 @@ Cellato\footnote{The library is available at \url{https://github.com/ParaCoToUl/
 
 The repository contains the artifacts for an unpublished (as of the time of writing) extension of the work described in \cref{sec:stencil-computations}, which implements \emph{bit-plane} encoding along with bitwise evaluation as an alternative to the \emph{bit-array} encoding described in the original contribution.
 
-The approach of the Cellato library can be categorized as an abstraction for \emph{separating computation logic} from concerns related to data layouts and traversal patterns, as described in \cref{sec:native-abstractions}. The central concept is the abstract cell computation specification, defined by the user via pre-built nodes. The resulting specification is encoded at compile time as a hierarchical structure of nodes, similarly to an abstract syntax tree for a programming language. Each node represents a specific operation, such as a binary operation (e.g., addition, multiplication), a unary operation (e.g., negation), or a terminal node representing a cell state or a constant value.
+The approach of the Cellato library can be categorized as an abstraction for \emph{separating computation logic} from concerns related to data layouts and traversal patterns, as described in \cref{sec:native-abstractions}.
+
+The central concept of the library is the abstract cell computation specification, defined by the user via the Cellato DSL. The resulting specification is encoded at compile time as a hierarchical structure of nodes, similarly to an abstract syntax tree for a programming language. The computation can follow this abstract specification and perform computation on a given (parallel) backend under various layout, encoding, and temporal blocking optimizations.
+% Each node represents a specific operation, such as a binary operation (e.g., addition, multiplication), a unary operation (e.g., negation), or a terminal node representing a cell state or a constant value.
 
 The memory layout component specifies the encoding of the cellular automaton state, including the bit-array and bit-plane encodings. These layouts are applicable to arbitrary cell computation specifications.
 

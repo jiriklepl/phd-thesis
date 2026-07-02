@@ -200,4 +200,9 @@ Direct code generation goes further, allowing the model to make more fundamental
 Fully unsupervised generation of reliably optimized HPC code remains difficult, so several works use LLMs for translation between a more interpretable language and a programming model such as CUDA~\cite{palkowski2024gpt,dearing2024lassi}. One of these works, LASSI, defines a self-correcting pipeline where the LLM proposes a solution and can then respond to feedback from the compiler or verifier.
 % This direction is used in various state-of-the-art solutions such as ComPilot~\cite{merouani2025agentic}.
 
-\xxx{Finalize this section}
+
+\section{Summary}\label{sec:methods-summary}
+
+We have outlined various methods for optimizing code relevant to our work. Techniques such as compiler optimizations are necessary assumptions for our work on native abstractions for data layouts and traversals (see \cref{chap:abstractions}), and autotuning techniques then allow automated decision-making on the best design choices for a given target architecture.
+
+In our more recent contributions we explore the use of LLMs for code optimization (see \cref{chap:llms}). In one of the contributions, we evaluate whether various abstractions (Halide, Exo from \cref{sec:dsl}, and our own native abstractions) can benefit LLMs in generating optimized code.

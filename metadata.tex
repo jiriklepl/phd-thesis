@@ -1,5 +1,4 @@
 %%% Please fill in basic information on your thesis, which will be automatically
-%%% inserted at the right places. You need to replace \xxx{...} by real data.
 
 % Type of your thesis:
 %	"bc" for Bachelor's
@@ -14,8 +13,7 @@
 \def\StudyLanguage{cs}
 
 % Thesis title in English (exactly as in the official assignment)
-% (Note: \xxx is a "ToDo label" which makes the unfilled visible. Remove it.)
-\def\ThesisTitle{\xxx{Optimizing memory layouts of data structures designed for parallel systems}}
+\def\ThesisTitle{Optimizing Memory Layouts and Traversal Orders in High-Performance Computing}
 
 % Author of the thesis (you)
 \def\ThesisAuthor{Jiří Klepl}
@@ -49,20 +47,18 @@
 
 % Abstract (recommended length around 80-200 words; this is not a copy of your thesis assignment!)
 \def\Abstract{%
-\xxx{Use the most precise, shortest sentences that state what problem the
-thesis addresses, how it is approached, pinpoint the exact result achieved, and
-describe the applications and significance of the results. Highlight anything
-novel that was discovered or improved by the thesis. Maximum length is 200
-words, but try to fit into 120. Abstracts are often used for deciding if
-a reviewer will be suitable for the thesis; a well-written abstract thus
-increases the probability of getting a reviewer who will like the thesis.}
-}
+We present layout-agnostic and traversal-agnostic algorithm design approaches as practical solutions for enabling user-directed optimization of memory-bound high-performance scientific applications.
+We demonstrate that these approaches are effective for designing scientific applications as well as their parallelization and distribution. By combining these approaches with autotuning techniques, we show that the design principles can be used for automated optimization of memory layouts and traversal orders.
+We then apply the same principles to cellular automata simulations, which are widely used in scientific applications, with further domain-specific optimization techniques.
+For both approaches, we implement proof-of-concept implementations and evaluate them on a set of representative applications. The evaluation shows that the proposed approaches can achieve performance comparable to hand-tuned equivalents, while improving the flexibility and maintainability of the code.
+Reacting to the recent advances in large language models (LLMs), we also explore the potential of LLMs for assisting in optimization.
+We show that, on optimization tasks of specific difficulty, LLMs benefit from guidance that suggests or directs various design choices specific to the optimization task.
+With newer LLMs, we demonstrate that they do not benefit from user-oriented abstractions for algorithm design but their performance is still affected by the specificity of the prompting strategy.}
 
 % 3 to 5 keywords (recommended) separated by \sep
 % Keywords are useful for indexing and searching for the theses by topic.
 \def\ThesisKeywords{%
-\xxx{keyword\sep key phrase}
-}
+Memory layout\sep Traversal order\sep Layout-agnostic algorithm design\sep Traversal-agnostic algorithm design\sep Large language models\sep High-performance computing}
 
 % If any of your metadata strings contains TeX macros, you need to provide
 % a plain-text version for use in XMP metadata embedded in the output PDF file.
@@ -74,22 +70,27 @@ increases the probability of getting a reviewer who will like the thesis.}
 
 % If your abstracts are long and do not fit in the infopage, you can make the
 % fonts a bit smaller by this setting. (Also, you should try to compress your abstract more.)
-\def\InfoPageFont{}
-%\def\InfoPageFont{\small}  % uncomment to decrease font size
+% \def\InfoPageFont{}
+\def\InfoPageFont{\scriptsize}  % uncomment to decrease font size
 
 % If you are studying in a Czech programme, you also need to provide metadata in Czech:
 % (in English programmes, this is not used anywhere)
 
-\def\ThesisTitleCS{\xxx{Optimalizace paměťových rozložení datových struktur určených pro paralelní systémy}}
+\def\ThesisTitleCS{Optimalizace paměťových rozložení a pořadí průchodů ve vysoce výkonných výpočtech}
 \def\DepartmentCS{Katedra distribuovaných a spolehlivých systémů}
 \def\DeptTypeCS{Katedra}
 \def\SupervisorsDepartmentCS{Katedra distribuovaných a spolehlivých systémů}
 \def\StudyProgrammeCS{Informatika --- Softwarové systémy (P4I2)}
 
 \def\ThesisKeywordsCS{%
-\xxx{klíčová slova\sep klíčové fráze}
-}
+Paměťové rozložení\sep Pořadí průchodů\sep Návrh algoritmů nezávislý na rozložení\sep Návrh algoritmů nezávislý na průchodu\sep Velké jazykové modely\sep Vysoce výkonné výpočty}
 
 \def\AbstractCS{%
-\xxx{Abstrakt práce přeložte také do češtiny.}
+Představujeme přístupy k návrhu algoritmů nezávislému na paměťovém rozložení a pořadí průchodu jako praktická řešení umožňující uživatelem řízenou optimalizaci vědeckých aplikací s vysokými nároky na výkon, jejichž výkon je omezen přístupem do paměti.
+Ukazujeme, že tyto přístupy jsou účinné pro návrh vědeckých aplikací i pro jejich paralelizaci a distribuci. Kombinací těchto přístupů s technikami automatického ladění ukazujeme, že dané návrhové principy lze využít pro automatizovanou optimalizaci paměťových rozložení a pořadí průchodů.
+Stejné principy dále aplikujeme na simulace celulárních automatů, které se široce používají ve vědeckých aplikacích, spolu s dalšími doménově specifickými optimalizačními technikami.
+Pro oba přístupy implementujeme prototypové implementace a vyhodnocujeme je na sadě reprezentativních aplikací. Vyhodnocení ukazuje, že navržené přístupy mohou dosahovat výkonu srovnatelného s ručně laděnými ekvivalenty a zároveň zlepšovat flexibilitu a udržovatelnost kódu.
+V reakci na nedávný pokrok velkých jazykových modelů (LLM) zkoumáme také potenciál LLM pro asistenci při optimalizaci.
+Ukazujeme, že u optimalizačních úloh určité obtížnosti LLM těží z vedení, které navrhuje nebo přímo určuje různé návrhové volby specifické pro danou optimalizační úlohu.
+U novějších LLM ukazujeme, že jim abstrakce pro návrh algoritmů zaměřené na lidské uživatele nepomáhají, ale jejich výkon je nadále ovlivněn mírou konkrétnosti použité strategie promptování.
 }

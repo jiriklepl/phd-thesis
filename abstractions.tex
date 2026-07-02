@@ -6,7 +6,7 @@ In our research towards enabling developers to easily design high-performance al
 
 In this chapter, we describe the main milestones of this line of research, starting with the concept of layout-agnostic design and finishing with the application of these concepts to domain-specific algorithms.
 
-We consider an algorithm design to be concern-agnostic (e.g., layout-agnostic) if it does not encode specific assumptions about the concern --- thus, supporting separation of concerns in the given application. For example, a layout-agnostic algorithm does not access a data structure using explicit memory offsets; instead, it relies solely on the logical structure of the data (its index space).
+We consider an algorithm design to be concern-agnostic (e.g., layout-agnostic) if it does not encode specific assumptions about the concern, thus supporting separation of concerns in the given application. For example, a layout-agnostic algorithm does not access a data structure using explicit memory offsets; instead, it relies solely on the logical structure of the data (its index space).
 
 The first two sections introduce these concepts in more detail, and the following sections present our consecutive peer-reviewed contributions in the area of native abstractions for this design style in high-performance computing.
 
@@ -45,7 +45,7 @@ for (size_t i = __0; i < __M; ++i) {
 }
 \end{lstlisting}
 
-\Cref{lst:layout-agnostic-copy} shows a layout-agnostic version of the copy algorithm that is implemented using an abstraction based on our approach. The data structures are indexed using the same logical index \lstinline{idx} and thus, they are interchangeable with any other structure that shares the $M \times N$ logical structure, regardless of the actual physical layout.
+\Cref{lst:layout-agnostic-copy} shows a layout-agnostic version of the copy algorithm that is implemented using an abstraction based on our approach. The data structures are indexed using the same logical index \lstinline{idx}, and thus, they are interchangeable with any other structure that shares the $M \times N$ logical structure, regardless of the actual physical layout.
 % The logical structure (encoding the index space) is the definition domain of the data layout, if we consider the data layout as a mapping as defined in \cref{def:data-layout}.
 
 Syntactically, the logical layout of the data can be expressed in many different ways. For example, the \lstinline{std::mdspan} abstraction encodes different dimensions as positional arguments (e.g., \lstinline{my_mdspan(i, j)} passes iteration variable $i$ as the index in the first dimension and $j$ as the index in the second dimension), while our approach encodes different dimensions as named arguments --- \lstinline{idx<'M', 'N'>(i, j)}\footnote{\lstinline{'M'} and similar dimension names are given as \cpp character literals; alternatively, \lstinline{noarr::dim<V>()} is a more extensible way to specify a dimension name, with \lstinline{V} being an arbitrary literal value.} explicitly associates $i$ with the dimension \lstinline{'M'} and $j$ with the dimension \lstinline{'N'}.
@@ -151,7 +151,7 @@ For algorithm implementations with no layout or traversal optimizations applied,
 
 \subsection{Results}\label{sec:abstractions-results}
 
-The main benefit of the proposed abstractions is that algorithms can be expressed in such a way that the developer may easily modify the layouts of data structures and the traversal order without making further modifications to the algorithms. This allows for optimizing the algorithms by applying different layout and traversal order transformations.
+The main benefit of the proposed abstractions is that algorithms can be expressed in such a way that the developer may easily modify the layouts of data structures and the traversal order without making further modifications to the algorithms. This allows for optimizing the algorithms by applying different transformations of layouts and traversal orders.
 
 The separation of concerns enabled by the abstractions keeps the complexity and verbosity of the core algorithms constant regardless of the applied layout and traversal transformations, while the complexity and verbosity of algorithms without the proposed abstractions would increase considerably depending on the applied transformations.
 
@@ -211,7 +211,7 @@ We have presented the concept of layout-agnostic and traversal-agnostic design a
 
 Throughout the series of contributions studying these design principles, we have shown their main benefits on CPU-based and GPU-based parallel computing, distributed computing, and domain-specific applications such as cellular automata.
 
-The novelty of this line of research lies in developing a general-purpose native abstraction for unified layout-agnostic and traversal-agnostic design in high-performance computing, and in application of these principles to cellular automata with added support for domain-specific optimizations such as bit-packing and bitwise evaluation of the computational logic.
+The novelty of this line of research lies in developing a general-purpose native abstraction for unified layout-agnostic and traversal-agnostic design in high-performance computing, and in the application of these principles to cellular automata with added support for domain-specific optimizations such as bit-packing and bitwise evaluation of the computational logic.
 
 The proof-of-concept implementations of the proposed abstractions (described in more detail in \cref{chap:software}) enable the design of algorithms that are independent of the layout and traversal of the data, which can be easily modified without changing the core logic of the algorithms. Together with autotuning techniques, this allows for automated optimization of the algorithms for a given target architecture, while keeping the complexity of the developed algorithms manageable.
 

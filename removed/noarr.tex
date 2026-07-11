@@ -12,7 +12,7 @@ The Noarr library has undergone significant development throughout the course of
 
 % It further expands on the concepts of layout-agnostic design and hierarchical composition of data layouts, omitting many technical details of the implementation and usage of Noarr structures, which are covered in the original paper and the documentation of the Noarr library.
 
-Noarr structures are the fundamental abstraction in the Noarr library. They are used for modeling multidimensional data layouts according to the principles of layout agnosticism and hierarchical composition of data layouts (see \cref{sec:native-abstractions}).
+Noarr structures are the fundamental abstraction in the Noarr library. They are used for modeling multidimensional data layouts according to the principles of layout agnosticism and hierarchical composition of data layouts (\cref{sec:native-abstractions}).
 
 % \subsection{Layout-agnostic design}\label{sec:noarr-layout-agnostic-design}
 
@@ -539,7 +539,7 @@ Noarr library also provides a built-in proto-structure for copying a structure i
 %   \label{fig:noarr-mpi-communication}
 % \end{figure}
 
-% Since two corresponding Noarr structures at the sender and receiver side (with same dimensions but possibly different layouts) can correspond to many different MPI datatypes depending on the chosen linearization of the dimensions, using Noarr traversers to express the semantic order of the communicated data brings the opportunity to explore different linearizations by adjusting the traverser. For example, Noarr offers proto-structures, such as \lstinline{hoist} (see \cref{sec:parallel-traversers}), that can be used to safely reorder the dimensions of the traverser signature without affecting the correctness of the communication.
+% Since two corresponding Noarr structures at the sender and receiver side (with same dimensions but possibly different layouts) can correspond to many different MPI datatypes depending on the chosen linearization of the dimensions, using Noarr traversers to express the semantic order of the communicated data brings the opportunity to explore different linearizations by adjusting the traverser. For example, Noarr offers proto-structures, such as \lstinline{hoist} (\cref{sec:parallel-traversers}), that can be used to safely reorder the dimensions of the traverser signature without affecting the correctness of the communication.
 
 % We have also applied the layout-agnostic MPI datatype construction approach to Kokkos views~\cite{trott2021kokkos} and mdspan~\cite{trott2022mdspan}, which offer efficient multidimensional array abstractions. However, as these abstractions do not provide named dimensions or otherwise encode the semantic order of elements in their type system, such application relies on careful pairing of positional indices to the appropriate dimensions.
 

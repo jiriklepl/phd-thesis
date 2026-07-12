@@ -38,6 +38,7 @@ sed 's/\\ge\b/≥/g' |
 sed 's/\\ll\b/≪/g' |
 sed 's/\\gg\b/≫/g' |
 sed 's/\\times\b/×/g' |
+sed 's/\\\!//g' |
 sed 's/\\ast\b/∗/g' |
 sed 's/\\sim\b/∼/g' |
 sed 's/\\&/\&/g' |
@@ -104,6 +105,8 @@ sed 's/\\[a-zA-Z]\+{\([^}]*\)}/\1/g' |
 sed 's/\\[a-zA-Z]\+{\([^}]*\)}/\1/g' |
 sed 's/\$\([0-9.]\+\)\$/\1/g' |
 sed 's/\$//g' | # remove remaining $ (math mode delimiters)
+sed 's/\\(//g' | # remove remaining \( (math mode delimiters)
+sed 's/\\)//g' | # remove remaining \) (math mode delimiters)
 sed 's/\\@//g' |
 sed 's/\\_/_/g' |
 sed '/^$/N;/^\n$/D'

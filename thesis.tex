@@ -14,15 +14,24 @@
 \setlength\topmargin{0mm}
 \setlength\headsep{0mm}
 \setlength\headheight{0mm}
+\raggedbottom
 \let\openright=\cleardoublepage
 
-%% Generate PDF/A-2u
-\usepackage[a-2u]{pdfx}
+\usepackage{iftex}
+
+% pdfx expects the legacy pdfTeX version primitive, which recent LuaTeX
+% releases no longer provide; bridge it to LuaTeX's current interface.
+\ifluatex
+\protected\def\pdfminorversion{\pdfvariable minorversion}
+\def\thepdfminorversion{7}
+\fi
+
+%% Generate PDF/A-2u. PDF 1.7 accommodates the included manuscripts.
+\usepackage[a-2u,pdf17]{pdfx}
 
 %% Prefer Latin Modern fonts
 \usepackage{lmodern}
 % If we are not using LuaTeX, we need to set up character encoding:
-\usepackage{iftex}
 \ifpdftex
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -96,6 +105,9 @@
 
 % Our definitions of macros (see description inside)
 \input{macros}
+\clearcaptionsetup{algorithm}
+\clearcaptionsetup{listing}
+\captionsetup[lstlisting]{style=thesis,singlelinecheck=off}
 
 %%% Title page and various mandatory informational pages
 \begin{document}

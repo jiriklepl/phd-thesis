@@ -13,6 +13,7 @@ thesis.pdf: thesis.tex $(wildcard *.tex) bibliography.bib $(eps)
 
 abstract-%.pdf: abstract-%.tex
 	lualatex $<
+	lualatex $<
 
 img/%.eps: img/%.svg
 	inkscape $< --export-type="eps" --export-filename=$@

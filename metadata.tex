@@ -31,7 +31,7 @@
 \def\DeptType{Department}
 
 % Thesis supervisor: name, surname and titles
-\def\Supervisor{Martin Kruliš}
+\def\Supervisor{doc. RNDr. Martin Kruliš, Ph.D.}
 
 % Supervisor's department (again according to Organizational structure of MFF)
 \def\SupervisorsDepartment{Department of Distributed and Dependable Systems}
@@ -42,7 +42,11 @@
 % An optional dedication: you can thank whomever you wish (your supervisor,
 % consultant, who provided you with tea and pizza, etc.)
 \def\Dedication{%
-\xxx{Dedication.}
+I would like to thank my family, friends, and colleagues for their support and encouragement throughout studying at Charles University. It has been a long and emotional journey, and I am grateful for the people and experiences that have shaped my academic and personal growth.
+
+This research would not exist without the awesome team that started the Noarr project, which was my first real exposure to research and the world of high-performance computing. Thus, I would like to directly thank my supervisor Martin Kruliš, classmates Jiří Mayer, Petr Šimůnek, and Adam Šmelko, and my past supervisor Mirek Kratochvíl.
+
+Special thanks go to Martin Kruliš for his guidance and support in my PhD journey, and Matyáš Brabec for his invaluable help in last stages of my research. Together with Adam Šmelko, they have been great collaborators and friends in our small research group.
 }
 
 % Abstract (recommended length around 80-200 words; this is not a copy of your thesis assignment!)
@@ -70,8 +74,8 @@ Memory layout\sep Traversal order\sep Layout-agnostic algorithm design\sep Trave
 
 % If your abstracts are long and do not fit in the infopage, you can make the
 % fonts a bit smaller by this setting. (Also, you should try to compress your abstract more.)
-% \def\InfoPageFont{}
-\def\InfoPageFont{\scriptsize}  % uncomment to decrease font size
+\def\InfoPageFont{}
+% \def\InfoPageFont{\scriptsize}  % uncomment to decrease font size
 
 % If you are studying in a Czech programme, you also need to provide metadata in Czech:
 % (in English programmes, this is not used anywhere)
@@ -86,7 +90,7 @@ Memory layout\sep Traversal order\sep Layout-agnostic algorithm design\sep Trave
 Paměťové rozložení\sep Pořadí průchodů\sep Návrh algoritmů nezávislý na rozložení\sep Návrh algoritmů nezávislý na průchodu\sep Velké jazykové modely\sep Vysoce výkonné výpočty}
 
 \def\AbstractCS{%
-Představujeme přístupy k návrhu algoritmů nezávislému na paměťovém rozložení a pořadí průchodu jako praktická řešení umožňující uživatelem řízenou optimalizaci vědeckých aplikací s vysokými nároky na výkon, jejichž výkon je omezen přístupem do paměti.
+Prezentujeme přístupy k návrhu algoritmů nezávislému na paměťovém rozložení a pořadí průchodu jako praktická řešení umožňující uživatelem řízenou optimalizaci vědeckých aplikací s vysokými nároky na výkon, jejichž výkon je omezen přístupem do paměti.
 Ukazujeme, že tyto přístupy jsou účinné pro návrh vědeckých aplikací i pro jejich paralelizaci a distribuci. Kombinací těchto přístupů s technikami automatického ladění ukazujeme, že dané návrhové principy lze využít pro automatizovanou optimalizaci paměťových rozložení a pořadí průchodů.
 Stejné principy dále aplikujeme na simulace celulárních automatů, které se široce používají ve vědeckých aplikacích, spolu s dalšími doménově specifickými optimalizačními technikami.
 Pro oba přístupy implementujeme prototypové implementace a vyhodnocujeme je na sadě reprezentativních aplikací. Vyhodnocení ukazuje, že navržené přístupy mohou dosahovat výkonu srovnatelného s ručně laděnými ekvivalenty a zároveň zlepšovat flexibilitu a udržovatelnost kódu.

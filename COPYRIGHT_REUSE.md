@@ -22,7 +22,7 @@ the PDFs in `papers/`.
 | Ready | `klepl2025layout.pdf` | Springer thesis-reuse permission | Full VoR, citation, and Springer acknowledgement |
 | Ready | `brabec2025cellato.pdf` | CC BY 4.0 | Official 2026 VoR, citation, DOI, licence link, and “no changes” statement |
 | Ready | `brabec2025tutoring.pdf` | Springer thesis-reuse permission | Full VoR, citation, and Springer acknowledgement |
-| Check after decision | `klepl2026shifting.pdf` | Pre-acceptance manuscript | Labelled “Submitted as”; no open licence; preprint notice included |
+| Check after decision | `klepl2026effect.pdf` | Pre-acceptance manuscript | Labelled “Submitted as”; no open licence; preprint notice included |
 
 ## The only time-sensitive item: ICA3PP 2026
 

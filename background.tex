@@ -7,7 +7,6 @@ CPUs are primarily designed for latency-sensitive task processing, executing a s
 
 In typical HPC systems, GPUs are separate accelerator devices attached to the host system, with their own memory and task scheduling. Thus, a computation running on a GPU typically requires transferring input data from system memory to the GPU device memory, and then transferring the results back to system memory after the computation is done. The data-parallel task is typically expressed as a \emph{kernel} function, which represents the computation that would be performed in each iteration of an equivalent massively parallelized loop. Upon \emph{kernel launch} (a modified function call), the kernel function is scheduled to run on the GPU in many threads, independently of the host system. CPU workloads, on the other hand, typically run directly on the host system using the system memory without requiring such transfers, unless the computation is distributed across multiple machines.
 
-
 The differences between the two platforms present different challenges and opportunities for optimizing algorithm performance, which we will discuss in more detail in the following sections.
 
 

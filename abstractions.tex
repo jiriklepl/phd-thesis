@@ -94,7 +94,6 @@ In our work, we also specify systematic traverser construction applicable to str
 
 In the first contribution of this line of research, we have proposed abstractions for layout-agnostic data structures as the first milestone towards the goal of exploring design patterns for layout-agnostic and traversal-agnostic algorithms in high-performance computing. We have presented this work in \contribref{vsmelko2022astute}.
 
-
 The main goal of this work was to demonstrate the feasibility of designing composable layouts for layout-agnostic algorithms usable in high-performance computing, which requires that the abstractions do not introduce significant overhead compared to hand-written code. This is a non-trivial requirement that necessitates the use of metaprogramming techniques to achieve zero-overhead abstraction and to allow compile-time constant expressions in the indexing logic of the data structures, so that the compiler can make more aggressive optimizations.
 
 Moreover, since we target general CPU and GPU-based systems, the abstractions must be designed to be portable across different architectures and compilers, which imposes additional constraints on their design.
@@ -130,7 +129,6 @@ The abstractions allow for expressing parallelism in a declarative way, without 
 
 For GPUs in particular, we have shown that the dimensions of the traversals can be easily mapped onto the dimensions of the GPU execution model (blocks and threads), allowing for a straightforward expression of GPU parallelism. We have also shown that the proposed abstractions can be extended to support building blocks specific to defining layouts that benefit from the nuances of GPU memories.
 
-
 Our experimental evaluation showed that the proposed abstractions can be efficiently used to implement traversal-agnostic algorithms from various areas of scientific computing.
 The performance of the algorithms implemented using the proposed abstractions was comparable to semantically equivalent abstraction-less implementations across multiple algorithms, including single-threaded and parallel implementations on both CPU and GPU architectures.
 
@@ -153,9 +151,7 @@ The separation of concerns enabled by the abstractions keeps the complexity and 
 We have also shown that the proposed abstractions can be easily integrated with autotuning techniques in such a way that the configuration of the autotuning resides in the same codebase as the algorithm itself, which we have done by integrating our abstractions with multiple autotuning frameworks with different interfaces.
 
 
-
 \section{Distributed computing extensions}\label{sec:layout-agnostic}
-
 
 Since high-performance computing often relies on distributed parallelism, which allows for scaling computations across multiple nodes, we studied whether the proposed abstractions can be efficiently integrated with the MPI distributed parallel programming model.
 
@@ -188,7 +184,6 @@ The abstractions support running the computations expressed in the proposed DSL 
 
 
 \subsection{Results and future work}\label{sec:stencil-computations-results}
-
 
 We have conducted a case study on various cellular automata of different state spaces and complexities of the computational logic, and we have shown that the proposed approach provides flexibility for applying the different optimizations, while achieving performance comparable to equivalent hand-written code.
 

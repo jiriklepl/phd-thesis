@@ -4,9 +4,10 @@
 #
 # Ghostscript's pdfwrite PDF/A conversion retains nonconforming font objects
 # from some publisher PDFs (including missing Unicode maps and invalid glyph
-# widths).  Rendering each page as an RGB image removes those objects.  The
-# output is an image-only facsimile intended for inclusion in thesis.pdf; the
-# outer pdfx document supplies the PDF/A identification and output intent.
+# widths). Rendering each page as a losslessly compressed RGB image removes
+# those objects. The output is an image-only facsimile intended for inclusion
+# in thesis.pdf; the outer pdfx document supplies the PDF/A identification and
+# output intent.
 
 set -euo pipefail
 
@@ -17,8 +18,8 @@ fi
 
 input=$1
 output=${2:-"pdfa-$(basename -- "$input")"}
-dpi=${PDFA_DPI:-200}
-jpeg_quality=${PDFA_JPEG_QUALITY:-95}
+dpi=${PDFA_DPI:-300}
+compression=${PDFA_COMPRESSION:-Flate}
 temporary="$output.tmp"
 
 if [[ ! -f "$input" ]]; then
@@ -32,7 +33,7 @@ trap 'rm -f "$temporary"' EXIT
 gs -q -dSAFER -dBATCH -dNOPAUSE \
   -sDEVICE=pdfimage24 \
   -r"$dpi" \
-  -dJPEGQ="$jpeg_quality" \
+  -sCompression="$compression" \
   -sOutputFile="$temporary" \
   "$input"
 

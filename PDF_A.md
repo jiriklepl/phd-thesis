@@ -17,24 +17,47 @@ The first run downloads checksum-pinned copies of the official validator
 profile and veraPDF into `.cache/cuni-thesis-validator/`. XML reports are
 written to `validation/`. Both directories are generated and ignored by Git.
 
+## File-size requirement
+
+MFF Dean's Measure 26/2023 applies to dissertations and limits files uploaded
+to SIS to 850 MB. Charles University's Rector's Measure 72/2017 delegates the
+exact maximum to the SIS methodology and requires oversized files to be handed
+to the faculty for assisted upload. Neither measure dictates image resolution
+or JPEG quality.
+
+The `validate` target treats 850 MB as 850,000,000 bytes and fails before PDF/A
+validation if `thesis.pdf` exceeds it. The current 300-dpi build is only about
+23 MB, leaving a very large safety margin.
+
+Sources checked on 13 July 2026:
+
+- [MFF Dean's Measure 26/2023, article 4(6)](https://www.mff.cuni.cz/cs/vnitrni-zalezitosti/predpisy/opatreni-dekana/opatreni-dekana-c-26-2023)
+- [Rector's Measure 72/2017, articles 5(7)--(8)](https://cuni.cz/UK-8701.html)
+
 ## Why the paper copies are rasterized
 
 The thesis source itself is valid PDF/A-2u, but directly importing the seven
 publisher PDFs also imports their non-archival font, colour, and metadata
 objects. Declaring the assembled file to be PDF/A does not convert those
 objects. The Makefile therefore calls `pdfa.sh`, which uses Ghostscript's
-`pdfimage24` device to make 200-dpi RGB page facsimiles in `papers/pdfa/`; the
+`pdfimage24` device to make 300-dpi RGB page facsimiles in `papers/pdfa/`; the
 originals in `papers/` remain untouched. This preserves the complete visual
 papers and yields a compliant assembled thesis, at the cost of making the
 reproduced paper pages image-only.
 
-The resolution and JPEG quality can be overridden if needed, for example:
+The facsimiles use lossless Flate compression. Ghostscript's own documentation
+warns that JPEG is intended for photographs and is unsuitable for most rendered
+pages containing text and graphics. At only about 23 MB there is no need to
+trade fidelity for lossy JPEG compression. The 300-dpi resolution can still be
+overridden if necessary, for example:
 
 ```sh
-make ARCHIVAL_DPI=300 ARCHIVAL_JPEG_QUALITY=98 thesis.pdf
+make ARCHIVAL_DPI=400 thesis.pdf
 ```
 
 Any change to these settings requires running `make validate` again.
+
+Ghostscript reference: [PDF image and JPEG output devices](https://ghostscript.readthedocs.io/en/gs10.07.1/Devices.html).
 
 ## University-profile compatibility note
 

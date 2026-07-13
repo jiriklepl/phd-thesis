@@ -4,8 +4,9 @@ eps = $(patsubst img/%.svg,img/%.eps,$(wildcard img/*.svg))
 paper_sources = $(wildcard papers/*.pdf)
 archival_papers = $(patsubst papers/%.pdf,papers/pdfa/%.pdf,$(paper_sources))
 
-ARCHIVAL_DPI ?= 200
-ARCHIVAL_JPEG_QUALITY ?= 95
+ARCHIVAL_DPI ?= 300
+ARCHIVAL_COMPRESSION ?= Flate
+CUNI_MAX_FILE_BYTES ?= 850000000
 
 all: thesis.pdf abstract-en.pdf abstract-cs.pdf
 
@@ -17,13 +18,18 @@ thesis.pdf: thesis.tex $(wildcard *.tex) bibliography.bib $(eps) $(archival_pape
 	lualatex $<
 
 validate: thesis.pdf tools/validate-thesis.sh
+	@file_size=$$(wc -c < $<); \
+		if [ "$$file_size" -gt "$(CUNI_MAX_FILE_BYTES)" ]; then \
+			echo "$< is $$file_size bytes; the MFF SIS limit is $(CUNI_MAX_FILE_BYTES) bytes." >&2; \
+			exit 1; \
+		fi
 	./tools/validate-thesis.sh $<
 
 # Imported publisher PDFs contain fonts and colour objects that do not satisfy
 # PDF/A-2u.  Render each page to a visually equivalent RGB archival facsimile;
 # the original, searchable PDFs remain untouched in papers/.
 papers/pdfa/%.pdf: papers/%.pdf pdfa.sh
-	PDFA_DPI=$(ARCHIVAL_DPI) PDFA_JPEG_QUALITY=$(ARCHIVAL_JPEG_QUALITY) \
+	PDFA_DPI=$(ARCHIVAL_DPI) PDFA_COMPRESSION=$(ARCHIVAL_COMPRESSION) \
 		./pdfa.sh $< $@
 
 abstract-%.pdf: abstract-%.tex

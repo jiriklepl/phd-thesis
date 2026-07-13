@@ -49,6 +49,11 @@ using the [pdfx](https://www.ctan.org/tex-archive/macros/latex/contrib/pdfx)
 LaTeX package. If the version of pdfx in your TeX distribution is too old
 or broken, please download it independently and extract it to `tex/pdfx/`.
 
+For this thesis, build and validate the final file with `make validate`. This
+checks both the standard PDF/A-2u profile and the Charles University custom
+profile. See [`PDF_A.md`](PDF_A.md) for the pinned validator setup and the
+handling of included publisher PDFs.
+
 ### Overleaf
 
 MFF UK provides a professional license for Overleaf, which is a TeX editor

@@ -182,7 +182,48 @@
 \end{tikzpicture}}}
 \newcommand{\margincontrib}[1]{\marginnote{\contribmark{#1}}}
 
-\newcommand{\publishedas}[1]{\begin{description}\item[Published as]\begin{refsection}\fullcite{#1}\end{refsection}\end{description}}
+\newcommand{\publicationas}[2]{%
+  \begin{description}
+    \item[#1]\begin{refsection}\fullcite{#2}\end{refsection}
+  \end{description}
+}
+\newcommand{\publishedas}[1]{\publicationas{Published as}{#1}}
+
+\newcommand{\submittedmanuscriptnotice}{%
+  \begingroup
+  \small\noindent\emph{This preprint has not undergone peer review (when
+  applicable) or any post-submission improvements or corrections.}\par
+  \endgroup
+}
+
+\newcommand{\submittedas}[1]{%
+  \publicationas{Submitted as}{#1}%
+  \submittedmanuscriptnotice
+}
+
+\newcommand{\springerthesisnotice}{%
+  \begingroup
+  \small\noindent\emph{Reproduced with permission from Springer Nature.}\par
+  \endgroup
+}
+
+\newcommand{\ccbythesisnotice}{%
+  \begingroup
+  \small\noindent This work is licensed under the Creative Commons
+  Attribution 4.0 International License (CC BY 4.0),
+  \url{https://creativecommons.org/licenses/by/4.0/}. Reproduced without changes.\par
+  \endgroup
+}
+
+\newcommand{\springerpublishedas}[1]{%
+  \publishedas{#1}%
+  \springerthesisnotice
+}
+
+\newcommand{\ccpublishedas}[1]{%
+  \publishedas{#1}%
+  \ccbythesisnotice
+}
 
 % ONLINE VERSION without the manuscripts
 \newif\ifonlineversion

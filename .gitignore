@@ -34,4 +34,7 @@ thesis-archive.tar.gz
 *-SAVE-ERROR
 
 /dist
+/.cache/cuni-thesis-validator/
+/papers/pdfa/
+/validation/
 %OUTDIR%/

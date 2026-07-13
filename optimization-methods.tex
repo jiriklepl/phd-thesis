@@ -40,7 +40,6 @@ Flexible abstractions allowing manipulation of data layouts and traversal orders
 
 We can broadly categorize these abstractions based on whether they stand completely separate from the source language (represented by \emph{domain-specific languages}), extend the source language with directives or transformation rules (\emph{annotation-based approaches}), or are implemented directly in the source language (\emph{native abstractions}).
 
-% These three categories are not mutually exclusive --- for example, some native abstractions can be expressive enough to be used as DSLs, and many annotation-based approaches and DSLs overlap in how a user can express optimizations.
 
 
 \subsection{Domain-specific languages (DSLs)}\label{sec:dsl}
@@ -49,16 +48,14 @@ DSLs are specialized programming languages designed for specific computing domai
 
 There are many DSLs with varying characteristics and design principles that have been developed for optimizing code in various domains of high-performance computing applications. A common theme among the prominent DSLs is the strict separation of the algorithmic logic from the optimization, together with guarantees or checks that the optimization steps do not change the semantics of the original code.
 
-In many such DSLs~\cite{ragan2013halide,baghdadi2019tiramisu,chen2018tvm,zhang2018graphit}, these two aspects are separated into an \textit{algorithm} specification and a \textit{schedule}. The algorithm specification describes the computations to be performed in a high-level, declarative manner; while the schedule is a list of optimization directives that specify how the computations should be executed, which may include specifying traversal orders, caching strategies, and parallelization.
+In many such DSLs~\cite{ragan2013halide,baghdadi2019tiramisu,chen2018tvm,zhang2018graphit}, these two aspects are separated into an \textit{algorithm} specification and a \textit{schedule}. The algorithm specification describes the computations to be performed in a high-level, declarative manner, while the schedule is a list of optimization directives that specify how the computations should be executed, which may include specifying traversal orders, caching strategies, and parallelization.
 
 The main advantage of separating the algorithm definition from the optimization is that a single algorithm can be optimized in multiple ways for different target hardware architectures. Since the framework typically ensures that the optimizations do not change the semantics of the original code, users can also experiment with different optimization strategies without worrying about breaking the correctness of the computation. This allows such DSLs to serve as a basis for automatic optimization techniques that can search for the best optimization strategy by iteratively modifying the schedule and evaluating the performance of the resulting code~\cite{ragan2013halide,chen2018tvm,merouani2025agentic}.
 
 Prominent examples of DSLs include Halide~\cite{ragan2013halide} (a DSL for image processing and stencil computations), TVM~\cite{chen2018tvm} (which adapts the scheduling-based approach to deep learning workloads), and Tiramisu~\cite{baghdadi2019tiramisu} (which targets a wider range of affine loop nests, covering general scientific computing applications).
-% Halide and TVM are based on a more restricted version of the polyhedral model (called interval analysis), while Tiramisu is based on the full polyhedral model.
 
 DSLs can also be designed to be user-extensible, allowing support for new optimizations and target hardware architectures. An example of this is the Exo~\cite{ikarashi2022exocompilation} DSL, which follows similar separation principles but is designed to allow users to specify new optimization transformations and hardware instructions by describing their semantics as Python functions.
 
-% DSLs offer the highest level of flexibility and optimization potential and the prominent examples all also offer powerful verification capabilities for the optimization directives.
 
 
 \subsection{Annotation-based approaches}\label{sec:annotation}
@@ -72,7 +69,6 @@ In Loopy~\cite{namjoshi2016loopy}, users can express loop transformations as aff
 
 While annotation-based approaches are prominent in the context of parallelization (especially OpenMP pragmas), they do not offer significant characteristics that would not be covered by DSLs.
 
-% The design space for annotation-based approaches is more limited than for DSLs, annotation-based framework are often tightly integrated with the existing toolchains for the source language (such as OpenMP pragmas in \cpp), which allows users to easily integrate them into their existing codebases; and the annotated code is still interpretable by users and tools built for the source language.
 
 
 \subsection{Native abstractions}\label{sec:native-abstractions}
@@ -104,16 +100,13 @@ Another powerful abstraction for data layout and traversal optimizations is the 
 For data layouts, C and many other languages natively support hierarchical composition of types (e.g., arrays of arrays, record types containing arrays, etc.). However, these abstractions are not suitable for layout-agnostic programming, as the indexing logic is tightly coupled with the data structure definition.
 
 MPI datatypes~\cite{mpi-5.0} stand out as a layout abstraction that shows characteristics of layout-agnosticism,
-%  --- any two datatypes representing logically equivalent data layouts can be given to opposite communication endpoints. Even though datatype definitions are hierarchical, semantic equivalence of different layouts is based on the number and logical order of elements, not the particular hierarchical structure of the definition.
 as they separate the logical structure from the physical layout. Any two datatypes representing logically equivalent data layouts\footnote{Logically equivalent MPI datatypes have the same number of base elements, such as integers or floating-point numbers, in the same logical order.} can be given to opposite endpoints of a communication primitive (e.g., a send-receive operation) regardless of their physical layout, which is defined by offsets of their base elements in memory.
-% For example, \lstinline{MPI_Type_vector(N, __1, stride, type, &new_type)} can be used to define a row vector \lstinline{new_type} in row-major layout for a matrix ($M \times N$ of elements of \lstinline{type}) by using unit strides, while a row vector in column-major layout can be defined by using strides equal to the number of rows in the matrix ($M$), both constructions being logically equivalent and interchangeable in communication operations.
 
 For example, we can define an MPI datatype that enumerates the first column of a matrix in row-major layout and another datatype that enumerates the corresponding (contiguous) column in column-major layout. A send-receive operation using these datatypes on opposite endpoints can communicate the same logical sequence of elements while reading from and writing to different physical layouts. If we perform this operation for each corresponding pair of columns, we can effectively convert between the row-major and column-major physical layouts using MPI communication. Thanks to the hierarchical composition of datatypes, we can extend each of the two datatypes to enumerate the whole matrix column by column in their respective layouts, and perform the conversion using a single communication operation.
 
 
 \subsubsection{Separating computational logic}\label{sec:separating-computational-logic}
 
-% The \cpp template system allows for powerful abstractions that can be used to separate the core algorithmic logic from other aspects of the design, including data layout and traversal.
 
 \cpp has generic programming capabilities that allow defining algorithms in such a way that they are agnostic to the data layouts and traversal orders. A central language feature allowing for this principle without sacrificing performance is the template system, which allows for algorithms to be parameterized by types and values that are interpreted at compile time, enabling the compiler to optimize the code for specific arguments and, thus, allowing for zero-cost abstractions~\cite{stroustrup2012foundations}.
 
@@ -124,7 +117,6 @@ Other, more advanced examples of this approach are stencil computations in the G
 
 \section{Data-driven optimization approaches}\label{sec:soft-computing-approaches}
 
-% Recently, machine learning (ML) techniques, including large language models (LLMs), have been increasingly applied to various aspects of code optimization. The main motivation for using these techniques is their flexibility and ability to learn and generalize complex patterns from data, which can overcome limitations of traditional optimization methods that rely on hand-crafted heuristics or analytical models.
 
 So far, we have discussed various formal methods for optimization and methods that allow users to direct optimizations or express algorithms in such a way that different design choices can be more easily optimized. In this section, we discuss various data-driven approaches that can be used to optimize code based on empirical performance measurements or to generalize patterns from learned data (for predicting various performance characteristics or even generating optimized code). We distinguish autotuning and LLM-directed approaches from general machine learning-based (ML-based) approaches and discuss them in more detail, as we have made contributions related to these two areas.
 
@@ -136,29 +128,14 @@ Autotuning is a powerful technique for parameter optimization even outside the c
 Simple autotuning techniques include random search and grid search, with grid search being practical for exhaustive exploration of small discrete search spaces. These methods are commonly used in black-box optimization settings where little structure is known about the objective function. If the objective function is not very complex and not too stochastic, local optimization methods (e.g., hill climbing or the Nelder--Mead method) may perform much better, as they can quickly converge to a local optimum.
 
 For objective functions that are expensive to evaluate (as is often the case when evaluating algorithm performance), surrogate-based optimization methods (e.g., Bayesian optimization) are often used. These methods build an approximate (surrogate) model of the objective function based on previous evaluations and use this model to guide the search for optimal parameters.
-% The more advanced autotuning techniques explore the search space based on the observed performance of the configurations, which can lead to much faster convergence to optimal parameters compared to simple techniques such as random search or grid search.
 This can help avoid evaluating configurations that are likely to perform poorly, thus reducing the number of evaluations needed to find optimal parameters.
 
-% Perhaps one of the most prominent applications of ML techniques in code optimization is autotuning. Autotuning techniques are powerful and versatile methods for (among many other uses) optimizing performance of applications based on empirical performance measurements or cost models. While methods such as linear programming can find optimal parameters for certain objective functions, situation is much more complex in more difficult-to-model optimization problems. Many autotuning techniques are specifically designed to address black-box optimization problems or functions that may be expensive to evaluate, non-continuous, and stochastic (among other characteristics making them unfit for analytical approach) --- performance of code is one such function.
 
 In a scenario of optimizing data layouts and traversals, the search space may comprise categorical parameters (e.g., the order of loops in a loop nest, the choice of data layout) and numerical parameters (e.g., tile sizes). Categorical parameters typically do not follow any obvious ordering, while the ranges of numerical parameters can be very large, each benefiting from different exploration techniques.
 
 Since the search space usually contains combinations of categorical and numerical parameters, and the performance function may follow complex patterns with stochastic behavior, many works combine different exploration techniques using various meta-strategies to achieve better results. One prominent example of this is the OpenTuner framework~\cite{ansel2014opentuner}, which was designed to tune compiler optimization flags but can be applied to a wide range of optimization problems.
 
 Autotuning techniques are particularly effective in conjunction with other optimization methods, such as the polyhedral model, DSLs, and annotation-based approaches, when their compilation pipeline verifies that the optimizations do not change the semantics of the original code. This has been shown to be effective in the Halide autoscheduler~\cite{ragan2013halide,adams2019learning}.
-
-
-% \subsection{ML-based cost models}\label{sec:ml-based-cost-models}
-
-% Measuring the performance of code is often expensive and noisy, which makes it infeasible to evaluate the performance of an algorithm for a sufficiently large sample of configurations in the search space.
-
-% At the same time, performance characteristics of code often follow, to some extent, predictable patterns based on the code features (e.g., the number of accesses to memory in a loop can predict cache utilization).
-
-% To address this issue, many works have proposed using ML techniques to build cost models that predict the performance of code based on its features.
-% They are based on predicting the performance based on how it interacts with some code features extracted from the code.
-% The scope of this approach is quite broad --- for example, some works have proposed encoding code instructions into a vector representation and use neighborhood-based methods to predict the performance of code based on the performance of similar code.
-% % Recent additions in the area of HPC include works, such as \citeauthor{baghdadi2021deep}~\cite{baghdadi2021deep}, who use deep learning methods as cost models in a polyhedral optimization framework (the Tiramisu compiler), or \citeauthor{adams2019learning}~\cite{adams2019learning}, who use a learned cost model to guide the search in the Halide autotuning framework.
-% More recently, some works have proposed using deep learning methods to build cost models that can guide exploration of the search space for autotuning based on analyzing the abstract syntax tree of the code~\cite{baghdadi2021deep,adams2019learning}.
 
 
 \subsection{ML-based code optimization}\label{sec:ml-based-code-optimization}
@@ -179,11 +156,8 @@ Recently, LLMs have emerged as promising tools for both directing code optimizat
 
 \subsubsection{Generating optimization directives}\label{sec:llm-generating-directives}
 
-Various works have explored the use of
-% off-the-shelf LLMs or fine-tuned (or even trained from scratch)
-LLMs for generating directives used to optimize code, such as OpenMP directives for parallelization~\cite{nichols2024hpc} and scheduling directives for frameworks such as Halide or Tiramisu~\cite{merouani2025agentic}.
+Various works have explored the use of LLMs for generating directives used to optimize code, such as OpenMP directives for parallelization~\cite{nichols2024hpc} and scheduling directives for frameworks such as Halide or Tiramisu~\cite{merouani2025agentic}.
 
-% Just like autotuning techniques, earlier approaches to LLM-directed optimization used the LLMs to generate optimization directives that might be applied via the framework and easily verified.
 Using LLMs to generate optimization directives for a framework (such as those discussed in~\cref{sec:dsl,sec:annotation}) has the added benefit that the framework can validate the applicability or correctness of many proposed optimizations. Thus, even if the LLM is not reliable enough to generate optimized code directly, it can use its learned patterns to propose optimizations, similar to autotuning techniques enhanced with surrogate cost models.
 
 For example, HPC-Coder~\cite{nichols2024hpc} shows that fine-tuning LLMs on HPC code can enable them to generate expected OpenMP directives for parallelization with high accuracy, as well as generate parallel code snippets for MPI-based distributed parallelization. ComPilot~\cite{merouani2025agentic} uses an LLM agent as a search driver when exploring the search space of transformation directives, effectively performing LLM-accelerated autotuning.
@@ -194,11 +168,8 @@ For example, HPC-Coder~\cite{nichols2024hpc} shows that fine-tuning LLMs on HPC 
 Direct code generation goes further, allowing the model to make more fundamental changes to the code. This has only recently become more viable, as the proficiency of LLMs in code generation has improved. Since LLMs are generally trained on large codebases, and only a relatively small part of generally available code falls into the HPC domain, the performance of off-the-shelf LLMs on HPC code has become a serious research target comparatively recently, following general code-generation milestones such as Codex~\cite{chen2021evaluating} and more recent evaluations of parallel and GPU code generation~\cite{nichols2024can,godoy2024large}.
 
 Fully unsupervised generation of reliably optimized HPC code remains difficult, so several works use LLMs for translation between a more interpretable language and a programming model such as CUDA~\cite{palkowski2024gpt,dearing2024lassi}. One of these works, LASSI, defines a self-correcting pipeline where the LLM proposes a solution and can then respond to feedback from the compiler or verifier.
-% This direction is used in various state-of-the-art solutions such as ComPilot~\cite{merouani2025agentic}.
-
-
 \section{Summary}\label{sec:methods-summary}
 
-We have outlined various methods for optimizing code relevant to our work. Techniques such as compiler optimizations are necessary assumptions for our work on native abstractions for data layouts and traversals (\cref{chap:abstractions}), and autotuning techniques then allow automated decision-making on the best design choices for a given target architecture.
+We have outlined various methods for optimizing code relevant to our work. Techniques such as compiler optimizations are prerequisites for our work on native abstractions for data layouts and traversals (\cref{chap:abstractions}), and autotuning techniques then enable automated decisions about the best design choices for a given target architecture.
 
 In our more recent contributions, we explore the use of LLMs for code optimization (\cref{chap:llms}). In one of the contributions, we evaluate whether various abstractions (Halide, Exo from \cref{sec:dsl}, and our own native abstractions) can benefit LLMs in generating optimized code.

@@ -77,7 +77,7 @@
 %\DeclareNameAlias{sortname}{family-given}
 %\DeclareNameAlias{default}{family-given}
 \DeclareDelimFormat{namelabeldelim}{~}
-\renewcommand*{\bibfont}{\small}
+\renewcommand*{\bibfont}{\small\hfuzz=2pt\sloppy}
 
 \usepackage{booktabs}
 \usepackage{xcolor}
@@ -89,8 +89,7 @@
 
 %%% Basic information on the thesis
 
-\hypersetup{unicode}
-\hypersetup{breaklinks=true}
+\hypersetup{unicode,hidelinks,breaklinks=true}
 
 \usepackage[capitalize]{cleveref}
 

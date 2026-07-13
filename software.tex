@@ -16,8 +16,6 @@ In addition to Noarr structures, the library defines \emph{traversers}, which ar
 Traversers are then used to parallelize a given algorithm using various parallel models, such as OpenMP, \cpp threads, Intel Threading Building Blocks, and CUDA\@, or to distribute data across multiple nodes using MPI (using the Noarr-MPI component).
 
 The library allows users to abstract away the details of memory layouts and traversal patterns when defining parallel and distributed algorithms, enabling them to use tools such as autotuning to choose the best combination of layouts and traversals for a given hardware architecture without changing the algorithmic logic.
-% Details of Noarr structures, traversers, and the various transformations that can be applied to them are described in \cref{chap:noarr}.
-
 \section{Cellato}\label{sec:sw-cellato}
 
 Cellato\footnote{The library is available at \url{https://github.com/ParaCoToUl/cellato} along with the documentation and examples for its usage.} is an open-source \cpptwenty header-only library that defines an embedded domain-specific language (DSL) for describing the computation of each cell in a cellular automaton (\cref{sec:stencil-computations}) and for evaluating it using a combination of an \emph{evaluator}, \emph{memory layout}, and \emph{traverser}~--- each of these components provides a specific implementation of a given aspect of the algorithm. The approach of the Cellato library can be categorized as an abstraction for \emph{separating computation logic} from concerns related to data layouts and traversal patterns, as described in \cref{sec:native-abstractions}.

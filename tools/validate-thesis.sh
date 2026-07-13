@@ -75,12 +75,11 @@ fi
 
 verapdf_home="$cache_dir/verapdf-$verapdf_version"
 verapdf="$verapdf_home/verapdf"
+installer_zip="$cache_dir/verapdf-greenfield-$verapdf_version-installer.zip"
+installer_dir="$cache_dir/verapdf-installer-$verapdf_version"
+auto_install="$cache_dir/verapdf-auto-install-$verapdf_version.xml"
 
 if [[ ! -x "$verapdf" ]]; then
-  installer_zip="$cache_dir/verapdf-greenfield-$verapdf_version-installer.zip"
-  installer_dir="$cache_dir/verapdf-installer-$verapdf_version"
-  auto_install="$cache_dir/verapdf-auto-install-$verapdf_version.xml"
-
   download_checked "$verapdf_url" "$verapdf_zip_sha256" "$installer_zip"
   rm -rf "$installer_dir" "$verapdf_home"
   mkdir -p "$installer_dir"
@@ -108,6 +107,11 @@ EOF
     "$installer_dir/verapdf-greenfield-$verapdf_version/verapdf-izpack-installer-$verapdf_version.jar" \
     "$auto_install"
 fi
+
+# The installed CLI is self-contained; retaining the installer and its
+# extracted copy only triples the cache size.
+rm -rf "$installer_dir"
+rm -f "$installer_zip" "$auto_install"
 
 validate() {
   local label=$1

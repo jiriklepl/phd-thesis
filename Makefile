@@ -1,8 +1,13 @@
 #!/usr/bin/make -f
 
-eps = $(patsubst img/%.svg,img/%.eps,$(wildcard img/*.svg))
 paper_sources = $(wildcard papers/*.pdf)
 archival_papers = $(patsubst papers/%.pdf,papers/pdfa/%.pdf,$(paper_sources))
+thesis_sources = \
+	thesis.tex metadata.tex xmp.tex macros.tex title.tex \
+	introduction.tex background.tex optimization-methods.tex abstractions.tex \
+	llms.tex software.tex conclusion.tex bibliography.tex publications.tex \
+	contributions.tex
+abstract_sources = metadata.tex xmp.tex macros.tex
 
 ARCHIVAL_DPI ?= 300
 ARCHIVAL_COMPRESSION ?= Flate
@@ -11,7 +16,7 @@ CUNI_MAX_FILE_BYTES ?= 850000000
 all: thesis.pdf abstract-en.pdf abstract-cs.pdf
 
 # LaTeX must be run multiple times to get references right
-thesis.pdf: thesis.tex $(wildcard *.tex) bibliography.bib $(eps) $(archival_papers)
+thesis.pdf: $(thesis_sources) bibliography.bib $(archival_papers)
 	lualatex $<
 	biber thesis
 	lualatex $<
@@ -32,18 +37,15 @@ papers/pdfa/%.pdf: papers/%.pdf pdfa.sh
 	PDFA_DPI=$(ARCHIVAL_DPI) PDFA_COMPRESSION=$(ARCHIVAL_COMPRESSION) \
 		./pdfa.sh $< $@
 
-abstract-%.pdf: abstract-%.tex
+abstract-%.pdf: abstract-%.tex $(abstract_sources)
 	lualatex $<
 	lualatex $<
-
-img/%.eps: img/%.svg
-	inkscape $< --export-type="eps" --export-filename=$@
 
 clean:
 	rm -f \
 		*.aux \
 		*.bbl \
-        *.bcf \
+		*.bcf \
 		*.blg \
 		*.dvi \
 		*.fls \
@@ -53,12 +55,17 @@ clean:
 		*.log \
 		*.lot \
 		*.out \
-        *.run.xml \
+		*.run.xml \
 		*.toc \
-        *.xmpdata \
+		*.xmpdata \
 		*.xmpi \
+		*-SAVE-ERROR \
+		.out \
 		;
-	rm -f thesis.pdf abstract-en.pdf abstract-cs.pdf
-	rm -f $(archival_papers)
+	rm -f thesis.pdf abstract-en.pdf abstract-cs.pdf pdfa-thesis.pdf thesis-core.pdf
+	rm -rf papers/pdfa validation
 
-.PHONY: all clean validate
+distclean: clean
+	rm -rf .cache/cuni-thesis-validator
+
+.PHONY: all clean distclean validate

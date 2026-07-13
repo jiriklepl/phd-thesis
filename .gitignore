@@ -16,25 +16,18 @@
 *.nls
 *.out
 /*.pdf
-!thesis-instructions-cs.pdf
 *.run.xml
-pdfa.xmpi
 *.snm
 .*.swp
 *.synctex.gz
 *.synctex(busy)
 thesis-blx.bib
-thesis-run.xml
-thesis-archive.zip
-thesis-archive.tar.gz
 *.toc
-*-eps-converted-to.pdf
 *.vrb
 *.xmpdata
+*.xmpi
 *-SAVE-ERROR
 
-/dist
 /.cache/cuni-thesis-validator/
 /papers/pdfa/
 /validation/
-%OUTDIR%/

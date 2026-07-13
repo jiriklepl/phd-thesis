@@ -1,6 +1,6 @@
 \chapter{LLMs in algorithm design}\label{chap:llms}
 
-Since LLMs have been shown to be increasingly capable of software development, we have investigated some previously underexplored applications of LLMs to algorithm design in HPC\@. In particular, our goal was to explore the potential of LLMs to optimize code using transformations and redesigns that would be difficult to achieve with the abstractions explored in \cref{chap:abstractions}.
+Since LLMs have been shown to be increasingly capable of software development, we have investigated some previously underexplored applications of LLMs to algorithm design in HPC\@. In particular, our goal was to explore the potential of LLMs to optimize code using transformations and redesigns that would be difficult to achieve with the abstractions explored in \cref{chap:abstractions} alone.
 
 
 \section{Tutoring LLMs for CUDA optimization}\label{sec:human-directed-code-optimization}
@@ -35,7 +35,7 @@ For our experiments, we have used the PolyBench benchmark suite, which we had pr
 
 The methodology of our experiments combined prompts with varying specificity of optimization goals (such as suggesting a focus on parallelism and cache locality) with different abstractions (Halide, Exo, and Noarr, our own abstraction library for user-directed code optimization) or no abstractions at all. The considered prompts included a na\"{\i}ve prompt that simply directed the LLM to optimize for a multi-core CPU, as well as different prompts that either directed the LLM to consider various optimization goals or directed it to choose from such goals itself. It is important to note that, in contrast to our work presented in \cref{sec:human-directed-code-optimization}, the more specific prompts were not designed to dictate specific design decisions for individual algorithms, but they suggested optimization strategies that are generally applicable to a wide variety of algorithms, thus shifting from tutoring to more general guidance, following the motivation for this study.
 
-We have also considered an alternative approach that splits the optimization process into two steps. First, the LLM was directed to formalize the characteristics of the algorithm and the optimization strategy, and then, in the second step, the LLM was directed to generate code according to the provided optimization plan.
+We have also considered an alternative approach that splits the optimization process into two steps. First, the LLM was directed to formalize the characteristics of the algorithm and the optimization strategy; then, in the second step, the LLM was directed to generate code according to the provided optimization plan.
 
 
 \subsection{Results}\label{sec:llms-results}

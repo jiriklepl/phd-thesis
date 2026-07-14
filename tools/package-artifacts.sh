@@ -29,7 +29,6 @@ repositories=(
   "noarr-tuning|https://github.com/ParaCoToUl/noarr-tuning.git||Autotuning integration for Noarr layouts and traversals."
   "noarr-mpi|https://github.com/ParaCoToUl/noarr-mpi.git||Noarr MPI extensions for layout-agnostic datatype construction and distributed communication."
   "cellato|https://github.com/ParaCoToUl/cellato.git||Cellato: C++20 embedded DSL and CPU/CUDA implementations for cellular automata and stencil computations."
-  "2025-europar-llm|https://github.com/matyas-brabec/2025-europar-llm.git|GPT-5-high|Experiments and results for LLM-assisted CUDA optimization; packaged from the thesis-cited GPT-5-high branch."
 )
 
 readme="$archive_root/README.md"
@@ -42,7 +41,6 @@ readme="$archive_root/README.md"
   echo
   echo "- **Noarr ecosystem:** \`noarr-structures\` is the core Noarr library; \`noarr-tuning\` and \`noarr-mpi\` provide autotuning and distributed-memory extensions."
   echo "- **Cellato:** \`cellato\` contains the Cellato library for cellular automata; includes Cellato DSL with components for efficient CPU and CUDA implementations and implementations of the automata used in benchmarks."
-  echo "- **LLM experiments:** \`2025-europar-llm\` contains the LLM-assisted CUDA optimization experiments discussed in the thesis."
   echo
   echo "## Source snapshots"
   echo

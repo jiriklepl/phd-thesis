@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Usage: trivialize-tex.sh < input.tex
+# Usage: tools/trivialize-tex.sh < input.tex
 # Output: the trivialized version of input.tex (to stdout; without many LaTeX commands); tools like Grammarly like it better, usually
 
 set -e

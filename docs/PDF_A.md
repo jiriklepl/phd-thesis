@@ -39,7 +39,7 @@ Sources checked on 13 July 2026:
 The thesis source itself is valid PDF/A-2u, but directly importing the seven
 publisher PDFs also imports their non-archival font, colour, and metadata
 objects. Declaring the assembled file to be PDF/A does not convert those
-objects. The Makefile therefore calls `pdfa.sh`, which uses Ghostscript's
+objects. The Makefile therefore calls `tools/pdfa.sh`, which uses Ghostscript's
 `pdfimage24` device to make 300-dpi RGB page facsimiles in `papers/pdfa/`; the
 originals in `papers/` remain untouched. This preserves the complete visual
 papers and yields a compliant assembled thesis, at the cost of making the

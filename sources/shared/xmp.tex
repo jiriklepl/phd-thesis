@@ -21,7 +21,7 @@
 % expand macros. We need to dive deeper...
 \newwrite\xmp
 \immediate\openout\xmp=\jobname.xmpdata
-\immediate\write\xmp{\percenthack\space Generated automatically from metadata.tex, please don't edit here.}
+\immediate\write\xmp{\percenthack\space Generated automatically from sources/shared/metadata.tex, please don't edit here.}
 \def\xmpitem#1#2{\immediate\write\xmp{\string#1{#2}}}
 \xmpitem\Author\ThesisAuthorXMP
 \xmpitem\Title\ThesisTitleXMP

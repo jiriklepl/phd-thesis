@@ -2,12 +2,12 @@
 
 paper_sources = $(wildcard papers/*.pdf)
 archival_papers = $(patsubst papers/%.pdf,papers/pdfa/%.pdf,$(paper_sources))
-thesis_sources = \
-	thesis.tex metadata.tex xmp.tex macros.tex title.tex \
-	introduction.tex background.tex optimization-methods.tex abstractions.tex \
-	llms.tex software.tex conclusion.tex bibliography.tex publications.tex \
-	contributions.tex
-abstract_sources = metadata.tex xmp.tex macros.tex
+full_sources = $(wildcard sources/full/*.tex)
+shared_sources = $(wildcard sources/shared/*.tex)
+short_sources = $(wildcard sources/short/*.tex)
+reference_sources = $(wildcard references/*.bib)
+thesis_sources = thesis.tex $(full_sources) $(shared_sources)
+abstract_sources = $(shared_sources)
 
 ARCHIVAL_DPI ?= 300
 ARCHIVAL_COMPRESSION ?= Flate
@@ -15,10 +15,16 @@ CUNI_MAX_FILE_BYTES ?= 850000000
 
 all: thesis.pdf abstract-en.pdf abstract-cs.pdf
 
+short: thesis-short.pdf
+
 # LaTeX must be run multiple times to get references right
-thesis.pdf: $(thesis_sources) bibliography.bib $(archival_papers)
+thesis.pdf: $(thesis_sources) $(reference_sources) $(archival_papers)
 	lualatex $<
 	biber thesis
+	lualatex $<
+	lualatex $<
+
+thesis-short.pdf: thesis-short.tex $(short_sources) $(shared_sources)
 	lualatex $<
 	lualatex $<
 
@@ -30,14 +36,22 @@ validate: thesis.pdf tools/validate-thesis.sh
 		fi
 	./tools/validate-thesis.sh $<
 
+validate-short: thesis-short.pdf tools/validate-thesis.sh
+	@file_size=$$(wc -c < $<); \
+		if [ "$$file_size" -gt "$(CUNI_MAX_FILE_BYTES)" ]; then \
+			echo "$< is $$file_size bytes; the MFF SIS limit is $(CUNI_MAX_FILE_BYTES) bytes." >&2; \
+			exit 1; \
+		fi
+	./tools/validate-thesis.sh $<
+
 # Imported publisher PDFs contain fonts and colour objects that do not satisfy
 # PDF/A-2u.  Render each page to a visually equivalent RGB archival facsimile;
 # the original, searchable PDFs remain untouched in papers/.
-papers/pdfa/%.pdf: papers/%.pdf pdfa.sh
+papers/pdfa/%.pdf: papers/%.pdf tools/pdfa.sh
 	PDFA_DPI=$(ARCHIVAL_DPI) PDFA_COMPRESSION=$(ARCHIVAL_COMPRESSION) \
-		./pdfa.sh $< $@
+		./tools/pdfa.sh $< $@
 
-abstract-%.pdf: abstract-%.tex $(abstract_sources)
+abstract-%.pdf: abstracts/abstract-%.tex $(abstract_sources)
 	lualatex $<
 	lualatex $<
 
@@ -62,10 +76,11 @@ clean:
 		*-SAVE-ERROR \
 		.out \
 		;
-	rm -f thesis.pdf abstract-en.pdf abstract-cs.pdf pdfa-thesis.pdf thesis-core.pdf
+	rm -f thesis.pdf abstract.pdf abstract-en.pdf abstract-cs.pdf pdfa-thesis.pdf thesis-core.pdf
+	rm -f thesis-short.pdf
 	rm -rf papers/pdfa validation
 
 distclean: clean
 	rm -rf .cache/cuni-thesis-validator
 
-.PHONY: all clean distclean validate
+.PHONY: all short abstract clean distclean validate validate-short

@@ -1,37 +1,24 @@
-%%% The main file. It contains definitions of basic parameters and includes all other parts.
-
-% Meta-data of your thesis (please edit)
 \input sources/shared/metadata.tex
-
-% Generate metadata in XMP format for use by the pdfx package
 \input sources/shared/xmp.tex
 
-\documentclass[12pt,a4paper,twoside,openright]{report}
-\setlength\textwidth{145mm}
-\setlength\textheight{247mm}
-\setlength\oddsidemargin{14.6mm}
+\documentclass[10pt,a5paper,oneside]{report}
+\setlength\textwidth{105mm}
+\setlength\textheight{170mm}
+% \setlength\oddsidemargin{10mm}
 \setlength\evensidemargin{0mm}
 \setlength\topmargin{0mm}
 \setlength\headsep{0mm}
 \setlength\headheight{0mm}
 \raggedbottom
-\let\openright=\cleardoublepage
+\let\openright=\newpage
 
 \usepackage{iftex}
-
-% pdfx expects the legacy pdfTeX version primitive, which recent LuaTeX
-% releases no longer provide; bridge it to LuaTeX's current interface.
 \ifluatex
 \protected\def\pdfminorversion{\pdfvariable minorversion}
 \def\thepdfminorversion{7}
 \fi
-
-%% Generate PDF/A-2u. PDF 1.7 accommodates the included manuscripts.
 \usepackage[a-2u,pdf17]{pdfx}
-
-%% Prefer Latin Modern fonts
 \usepackage{lmodern}
-% If we are not using LuaTeX, we need to set up character encoding:
 \ifpdftex
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -103,51 +90,36 @@
 
 % Our definitions of macros (see description inside)
 \input{sources/shared/macros}
+
+\usepackage{titlesec}
+\titlespacing*{\chapter}{0pt}{0ex}{2ex}
+\titleformat{\chapter}{\LARGE\bfseries\sloppy}{\thechapter}{1em}{}{}
+
 \clearcaptionsetup{algorithm}
 \clearcaptionsetup{listing}
 \captionsetup[lstlisting]{style=thesis,singlelinecheck=off}
 
 %%% Title page and various mandatory informational pages
 \begin{document}
-\input{sources/full/title}
-
-%%% A page with automatically generated table of contents of the thesis
+\input{sources/short/title}
 \tableofcontents
 
+\input{sources/short/introduction}
 
-%%% Each chapter is kept in a separate file
-\input{sources/full/introduction}
+\input{sources/short/background}
+\input{sources/short/optimization-methods}
 
-\input{sources/full/background}
-\input{sources/full/optimization-methods}
+\input{sources/short/abstractions}
+\input{sources/short/llms}
 
-\input{sources/full/abstractions}
-\input{sources/full/llms}
+\input{sources/short/software}
 
-\input{sources/full/software}
-
-\input{sources/full/conclusion}
+\input{sources/short/conclusion}
 
 \input{sources/full/ai-declaration}
 
 %%% Bibliography
 \input{sources/shared/bibliography}
 
-\input{sources/full/publications}
-
-\input{sources/full/contributions}
-
-%%% Attachments to the thesis, if any. Each attachment must be referred to
-%%% at least once from the text of the thesis. Attachments are numbered.
-%%%
-%%% The printed version should preferably contain attachments, which can be
-%%% read (additional tables and charts, supplementary text, examples of
-%%% program output, etc.). The electronic version is more suited for attachments
-%%% which will likely be used in an electronic form rather than read (program
-%%% source code, data files, interactive charts, etc.). Electronic attachments
-%%% should be uploaded to SIS. Allowed file formats are specified in provision
-%%% of the rector no. 72/2017. Exceptions can be approved by faculty's coordinator.
-% \appendix
-% \chapter{Attachments}\label{chap:attachments}
-
+\input{sources/short/publications}
 \end{document}

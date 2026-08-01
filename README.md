@@ -13,16 +13,35 @@ important points in comments. Still, we advise you to read the complete rules.
 
 ## How to use this template
 
-First of all, fill in basic information on your thesis in the `metadata.tex`
-file. From there, they are automatically propagated to other places.
+First of all, fill in basic information on your thesis in
+`sources/shared/metadata.tex`. From there, it is automatically propagated to
+other places.
 
 The main TeX file is `thesis.tex`. Here you find basic settings of LaTeX
 (packages etc.), but also commands inserting individual parts of the thesis
 which live in other files.
 
-In addition to that, you can compile `abstract-en.tex` and `abstract-cs.tex`
-to get a stand-alone abstract of the thesis in English and Czech. The
-abstract is also submitted in SIS together with the thesis.
+In addition to that, you can compile `abstracts/abstract-en.tex` and
+`abstracts/abstract-cs.tex` to get a stand-alone abstract of the thesis in
+English and Czech. The abstract is also submitted in SIS together with the
+thesis.
+
+## Repository layout
+
+- `abstracts/` contains the stand-alone English and Czech abstracts.
+- `sources/full/` contains the complete dissertation chapters and front matter.
+- `sources/shared/` contains metadata, macros, and bibliography rendering shared
+  by document variants.
+- `sources/short/` contains clearly marked placeholders for a future abbreviated
+  dissertation, which can be compiled with `make short`.
+- `references/` contains BibLaTeX databases.
+- `archive/` retains superseded source material and ignored legacy outputs.
+- `slides/` is reserved for dissertation presentation material.
+- `docs/` contains project-specific PDF/A and copyright notes.
+- `img/` contains figures and faculty branding.
+- `papers/` contains the publications reproduced in the thesis.
+- `tools/` contains build, validation, packaging, and text-processing scripts.
+- `artifacts/` is the ignored destination for generated software packages.
 
 If you are not familiar with LaTeX yet, you can find numerous tutorials on
 the Web. We like [the Wikibook on LaTeX](http://en.wikibooks.org/wiki/LaTeX).
@@ -51,7 +70,7 @@ or broken, please download it independently and extract it to `tex/pdfx/`.
 
 For this thesis, build and validate the final file with `make validate`. This
 checks both the standard PDF/A-2u profile and the Charles University custom
-profile. See [`PDF_A.md`](PDF_A.md) for the pinned validator setup and the
+profile. See [`docs/PDF_A.md`](docs/PDF_A.md) for the pinned validator setup and the
 handling of included publisher PDFs.
 
 ### Overleaf

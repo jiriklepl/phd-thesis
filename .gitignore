@@ -31,4 +31,5 @@ thesis-blx.bib
 /.cache/cuni-thesis-validator/
 /papers/pdfa/
 /validation/
-/phd-thesis-artifacts.zip
+/artifacts/
+/archive/*.pdf

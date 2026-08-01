@@ -3,7 +3,7 @@
 set -euo pipefail
 
 root_dir=$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
-output=${1:-"$root_dir/phd-thesis-artifacts.zip"}
+output=${1:-"$root_dir/artifacts/phd-thesis-artifacts.zip"}
 case "$output" in
   /*) ;;
   *) output="$PWD/$output" ;;

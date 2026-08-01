@@ -9,8 +9,8 @@
   describes it as submitted and under review. The thesis will be released only
   after the decision, so this check is mandatory before submission.
 
-Everything else is already reflected in `contributions.tex`, `macros.tex`, and
-the PDFs in `papers/`.
+Everything else is already reflected in `sources/full/contributions.tex`,
+`sources/shared/macros.tex`, and the PDFs in `papers/`.
 
 ## Paper-by-paper status
 
@@ -29,8 +29,8 @@ the PDFs in `papers/`.
 Current repository state:
 
 - the manuscript is a **pre-acceptance version**;
-- `publications.tex` calls it **under review**;
-- `contributions.tex` calls it **Submitted as**;
+- `sources/full/publications.tex` calls it **under review**;
+- `sources/full/contributions.tex` calls it **Submitted as**;
 - it has **no Creative Commons or other open licence**; and
 - its contribution page says that it has not undergone peer review or
   post-submission corrections.
@@ -106,9 +106,9 @@ and [LNCS information for authors](https://link.springer.com/series/558/informat
 
 ## Repository implementation
 
-- `contributions.tex` uses `\springerpublishedas`, `\ccpublishedas`, or
-  `\submittedas` for every included paper.
+- `sources/full/contributions.tex` uses `\springerpublishedas`,
+  `\ccpublishedas`, or `\submittedas` for every included paper.
 - `papers/` keeps the seven original PDFs.
-- `pdfa.sh` generates image-only PDF/A facsimiles in `papers/pdfa/` for thesis
+- `tools/pdfa.sh` generates image-only PDF/A facsimiles in `papers/pdfa/` for thesis
   assembly. This technical conversion does not change the reuse basis or
   replace the originals.

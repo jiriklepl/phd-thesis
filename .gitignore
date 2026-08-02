@@ -27,6 +27,7 @@ thesis-blx.bib
 *.xmpdata
 *.xmpi
 *-SAVE-ERROR
+*-converted-to.pdf
 
 /.cache/cuni-thesis-validator/
 /papers/pdfa/

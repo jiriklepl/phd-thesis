@@ -13,7 +13,7 @@ The first two sections introduce these concepts in more detail, and the remainin
 
 \section{Layout-agnostic design}\label{sec:layout-agnostic-design}
 
-Layout-agnostic design separates the logical structure of the data (the index space defined by the dimension names) from its physical layout in memory. Consider \cref{lst:non-agnostic-copy} as an example of a non-layout-agnostic copy algorithm for 2D arrays in \cpp.
+Layout-agnostic design separates the logical structure of the data (the index space defined by the dimension names) from its physical layout in memory (types and offsets of value elements). Consider \cref{lst:non-agnostic-copy} as an example of a non-layout-agnostic copy algorithm for 2D arrays in \cpp.
 
 \begin{lstlisting}[style=C++, caption={A non-layout-agnostic copy algorithm in \cpp}, label={lst:non-agnostic-copy}]
 float* source = new float[__M * __N];
@@ -95,67 +95,229 @@ This approach offers expressiveness and flexibility, which allows it to handle m
 
 \xxx{In our work, we also specify systematic traverser construction applicable to structures with non-matching (or partially matching) index spaces~\cite{klepl2024pure}.}
 
-% TODO: continue from here
+
+\section{Core abstractions for agnostic design}\label{sec:abstractions}
+
+Since the first three contributions in this line of research (\cref{sec:astute-approach,sec:pure-cpp-approach,sec:cpp-abstractions}) are closely related and subsequent contributions re-evaluate abstractions from the earlier work, we present them in this thesis abstract together in this section with a common summary of the results (\cref{sec:abstractions-results}) to avoid unnecessary repetition.
 
 
-\section{Layout abstractions}\label{sec:astute-approach}
+\subsection{Layout abstractions}\label{sec:astute-approach}
 
 In the first contribution of this line of research, we have proposed abstractions for layout-agnostic data structures as the first milestone towards the goal of exploring design patterns for layout-agnostic and traversal-agnostic algorithms in high-performance computing. We have presented this work in \contribref{smelko2022astute}.
 
 The main goal of this work was to demonstrate the feasibility of designing composable layouts for layout-agnostic algorithms usable in high-performance computing, which requires that the abstractions do not introduce significant overhead compared to hand-written code. This is a non-trivial requirement that necessitates the use of metaprogramming techniques to achieve zero-overhead abstraction and to allow compile-time constant expressions in the indexing logic of the data structures, so that the compiler can make more aggressive optimizations.
 
-Moreover, since we target general CPU and GPU-based systems, the abstractions must be designed to be portable across different architectures and compilers, which imposes additional constraints on their design.
+The abstractions comprise of Noarr structures (representing layouts) and proto-structures (representing transformations of layouts). The base Noarr structure is \lstinline{noarr::scalar<T>()}, which represents a single value of type \lstinline{T} with no dimensions. This structure can be extended using proto-structures like \lstinline{noarr::array<__D, __S>()}, which adds a dimension \lstinline{__D} of compile-time size \lstinline{__S} to the layout or using \lstinline{noarr::vector<__D>(__S)}, which adds a dimension \lstinline{__D} of size \lstinline{__S} that is modifiable at runtime. An example of a proto-structure that transforms only the logical structure is \lstinline{noarr::into_blocks<__D, __B>(__S)}\footnote{\lstinline{noarr::into_blocks} was introduced in later versions of the library, but provides a good example for the purpose of this discussion.}, which transforms a dimension \lstinline{__D} into blocks of size \lstinline{__S} enumerated by a new dimension \lstinline{__B}.
 
-We have designed generic building blocks according to these principles and within the above constraints, and we have shown that these building blocks are sufficient for constructing various data structures with different memory layouts.
+\newlength{\MatrixLayoutsSubfigWidth}
+\setlength{\MatrixLayoutsSubfigWidth}{0.3\textwidth}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{subfigure}{\MatrixLayoutsSubfigWidth}
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/matrix-row-major}
+    \caption{row-major}%
+    \label{fig:matrix-row-major}%
+  \end{subfigure}%
+  \hfill%
+  \begin{subfigure}{\MatrixLayoutsSubfigWidth}
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/matrix-col-major}
+    \caption{col-major}%
+    \label{fig:matrix-col-major}%
+  \end{subfigure}%
+  \hfill%
+  \begin{subfigure}{\MatrixLayoutsSubfigWidth}
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/matrix-tiled}
+    \caption{tiled row-major}%
+    \label{fig:matrix-tiled}%
+  \end{subfigure}%
+  \caption{Different layouts of a 2D matrix.}
+  \label{fig:matrix-layouts}
+\end{figure}
+
+\Cref{fig:matrix-layouts} shows three different layouts of a 2D matrix. Thick continuous lines cover elements contiguous in memory and differing in just one dimension from the logical structure, while dashed lines connect elements contiguous in memory but not enumerated by the same dimension in the logical structure.
+\Cref{fig:matrix-row-major} and \cref{fig:matrix-col-major} show the standard row-major and column-major layouts differing in the physical layout (order of the elements in memory), while \cref{fig:matrix-tiled} shows a tiled row-major layout, which differs from the standard row-major layout in the logical structure (has two additional dimensions enumerating the tiles comprising quadrants of the matrix).
+
+We can express these layouts using the proposed abstractions as shown in \cref{lst:matrix-layouts}, composing base structure \lstinline{noarr::scalar<float>()} with proto-structures using the \lstinline{^} operator\footnote{This example uses syntax consistent with later iterations of the library.}.
+
+\begin{lstlisting}[style=C++, caption={Noarr representations of the layouts in \cref{fig:matrix-layouts}}, label={lst:matrix-layouts},float=htbp]
+// row-major layout:
+auto row_major = noarr::scalar<float>()
+               ^ noarr::array<'M', __M>()
+               ^ noarr::array<'N', __N>();
+// column-major layout:
+auto col_major = noarr::scalar<float>()
+               ^ noarr::array<'N', __N>()
+               ^ noarr::array<'M', __M>();
+// tiled row-major layout:
+auto tiled_row_major = row_major
+                     ^ noarr::into_blocks<'M', 'm'>(__M/2)
+                     ^ noarr::into_blocks<'N', 'n'>(__N/2);
+\end{lstlisting}
+
+The proposed abstractions allow for defining data structures represented using \lstinline{noarr::bag}, which is an owning or non-owning view of some data in memory parametrized by a Noarr structure and an optional pointer to the non-owned buffer containing the data. Thusly defined data structures can be indexed as shown in \cref{lst:layout-agnostic-copy}, following the layout-agnostic design principles described in \cref{sec:layout-agnostic-design}.
+
+The Noarr structures and their derived bags also allow for querying the properties of the data structures, such as the size of a given dimension (in bytes), length of a given dimension (in elements), or the offset of a particular element in memory, as shown in \cref{lst:layout-agnostic-query}.
+
+\begin{lstlisting}[style=C++, caption={Querying properties of a data structure}, label={lst:layout-agnostic-query},float=htbp]
+auto size = row_major | noarr::get_size();
+auto length = row_major | noarr::get_length<'M'>();
+auto point = idx<'M', 'N'>(i, j);
+auto offset = row_major | noarr::offset(point);
+\end{lstlisting}
+
+The \lstinline{|} (pipe) operator is used in favor of the more common \lstinline{.} (dot) operator to allow for easier extension of supported queries and to avoid the need for the \lstinline{template} keyword when using template methods.
+
+% Moreover, since we target general CPU and GPU-based systems, the abstractions must be designed to be portable across different architectures and compilers, which imposes additional constraints on their design.
+
+% We have designed generic building blocks according to these principles and within the above constraints, and we have shown that these building blocks are sufficient for constructing various data structures with different memory layouts.
 
 
-\subsection{Results}\label{sec:astute-results}
-
-The experimental evaluation of the proposed abstractions in the paper showed that the abstractions achieve performance comparable to hand-written code while improving the flexibility of algorithm design.
-
-Major benefits of the proposed approach include the ability to easily change the layout of data structures without modifying the algorithms that operate on them, using layouts as building blocks for constructing more complex data structures, and improving code readability and maintainability by indexing data structures using named dimensions instead of explicit indexing expressions.
+% \subsection{Results}\label{sec:astute-results}
 
 
-\section{Traversal abstractions}\label{sec:pure-cpp-approach}
+% Major benefits of the proposed approach include the ability to easily change the layout of data structures without modifying the algorithms that operate on them, using layouts as building blocks for constructing more complex data structures, and improving code readability and maintainability by indexing data structures using named dimensions instead of explicit indexing expressions.
+
+
+\subsection{Traversal abstractions}\label{sec:pure-cpp-approach}
 
 After demonstrating the feasibility of layout-agnostic design in high-performance computing, we have focused on extending the same separation principle to traversal orders, improving the expressiveness beyond layout optimization to also include traversal optimization and parallelizability. We have presented this work in \contribref{klepl2024pure}.
 
 The key concepts we introduced in this work were \emph{traversers} and transformations applicable to layouts and traversers alike. We have observed that both can be achieved by extending the concept of data layout composition, with traversers being a thin abstraction on top of their corresponding data layouts.
 
-This required extending the design of the abstractions to encode the traversal order as well, which we achieved by introducing \emph{signatures} --- compile-time constants that specify the hierarchy of the dimensions for traversal purposes. In simple terms, the signature can be viewed as a tree structure that encodes the loop nesting structure of the corresponding traversal of a given data structure (or a traverser). For example, a signature of the traversers in \cref{lst:traversal-agnostic-initialization,lst:traversal-agnostic-copy} could be $\text{\lstinline{'M'}} \to \text{\lstinline{'N'}} \to \text{\lstinline{void}}$, which encodes \lstinline{M} as the outer dimension and \lstinline{N} as the inner dimension of the traversal, \lstinline{void} denoting the end of the hierarchy (for data structures, this would be replaced with the type of the stored elements).
+This required extending the design of the abstractions to encode the traversal order as well, which we achieved by introducing \emph{signatures} --- compile-time constants that specify the hierarchy of the dimensions for traversal purposes. In simple terms, the signature can be viewed as a tree structure that encodes the loop nesting structure of the corresponding traversal of a given data structure (or a traverser). For example, a signature of the traversers in \cref{lst:traversal-agnostic-initialization} could be $\text{\lstinline{'M'}} \to \text{\lstinline{'N'}} \to \text{\lstinline{void}}$, which encodes \lstinline{M} as the outer dimension and \lstinline{N} as the inner dimension of the traversal, \lstinline{void} denoting the end of the hierarchy (for data structures, this would be replaced with the actual type of the stored elements).
 
 To express traversal transformations and derived views of data structures, we have introduced building blocks that, instead of being just for data layout construction, can be used for defining various sub-layouts (such as submatrices), renaming dimensions, and reordering the logical hierarchies of the dimensions.
 
 This principle, with theoretical foundations inspired by functional programming and type theory, can be further extended to support other transformations as well. The paper artifact documents how these building blocks can be extended by users of the proposed abstractions, allowing them to define their own transformations and views of data structures and traversers, including domain-specific ones.
 
 
-\subsection{Results}\label{sec:traversal-agnostic-results}
+% \subsection{Results}\label{sec:traversal-agnostic-results}
 
-We have assessed the usefulness of this approach for expressing parallel algorithms. We have shown that the dimension hierarchies encoded in the data structures and traversers provide a natural way to express parallelism on different parallel models, including various CPU-based frameworks (OpenMP, TBB) and the CUDA framework for GPUs.
+% We have assessed the usefulness of this approach for expressing parallel algorithms. We have shown that the dimension hierarchies encoded in the data structures and traversers provide a natural way to express parallelism on different parallel models, including various CPU-based frameworks (OpenMP, TBB) and the CUDA framework for GPUs.
 
-The abstractions allow for expressing parallelism in a declarative way, without modifying the core logic of the algorithms, and allow for applying different strategies by passing the corresponding traverser and the computation to a generic executor for the requested strategy, which automatically parallelizes the computation.
+% The abstractions allow for expressing parallelism in a declarative way, without modifying the core logic of the algorithms, and allow for applying different strategies by passing the corresponding traverser and the computation to a generic executor for the requested strategy, which automatically parallelizes the computation.
 
-For GPUs in particular, we have shown that the dimensions of the traversals can be easily mapped onto the dimensions of the GPU execution model (blocks and threads), allowing for a straightforward expression of GPU parallelism. We have also shown that the proposed abstractions can be extended to support building blocks specific to defining layouts that benefit from the nuances of GPU memories.
+% For GPUs in particular, we have shown that the dimensions of the traversals can be easily mapped onto the dimensions of the GPU execution model (blocks and threads), allowing for a straightforward expression of GPU parallelism. We have also shown that the proposed abstractions can be extended to support building blocks specific to defining layouts that benefit from the nuances of GPU memories.
 
-Our experimental evaluation showed that the proposed abstractions can be efficiently used to implement traversal-agnostic algorithms from various areas of scientific computing.
-The performance of the algorithms implemented using the proposed abstractions was comparable to semantically equivalent abstraction-less implementations across multiple algorithms, including single-threaded and parallel implementations on both CPU and GPU architectures.
+% Our experimental evaluation showed that the proposed abstractions can be efficiently used to implement traversal-agnostic algorithms from various areas of scientific computing.
+% The performance of the algorithms implemented using the proposed abstractions was comparable to semantically equivalent abstraction-less implementations across multiple algorithms, including single-threaded and parallel implementations on both CPU and GPU architectures.
 
 
-\section{Practical aspects of the abstractions}\label{sec:cpp-abstractions}
+\subsection{Practical aspects of the abstractions}\label{sec:cpp-abstractions}
 
 We followed up on these abstractions in our first journal publication dedicated to this line of research, which we have presented in \contribref{klepl2024abstractions}.
 
 This work continues the efforts laid out in the previous two contributions (\cref{sec:astute-approach,sec:pure-cpp-approach}), focusing on more practical aspects of the proposed abstractions, including their effects on the verbosity and complexity of the developed algorithms, and their integration with autotuning techniques for performance optimization, thus enabling automatic optimization.
 
-For algorithm implementations with no layout or traversal optimizations applied, we have shown that the proposed abstractions reduce the complexity of the indexing logic of algorithms, as well as the control flow complexity of the algorithms.
+% For algorithm implementations with no layout or traversal optimizations applied, we have shown that the proposed abstractions reduce the complexity of the indexing logic of algorithms, as well as the control flow complexity of the algorithms.
 % This is counterbalanced by a slight increase in the verbosity of the code.
 
 
 \subsection{Results}\label{sec:abstractions-results}
 
+We have evaluated the proposed abstractions on a set of algorithms from various areas of scientific computing included in the PolyBench/C benchmark suite~\cite{polybench4.2.1} by systematically reimplementing the algorithms using the proposed abstractions and comparing them against the original C implementations.
+
+\subsubsection{Performance of layouts and traversals}\label{sec:abstractions-performance}
+
+The experimental evaluation of the proposed abstractions showed that the abstractions achieve performance comparable to hand-written code while improving the flexibility of algorithm design. % TODO: polybench-c results discussion
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.7\textwidth]{img/polybench-c}
+  \caption{Performance comparison of Noarr-based implementations against the original C implementations in the PolyBench/C benchmark suite (performance above 1.0 means that the Noarr-based implementation is faster than the corresponding C baseline; ideal performance is 1.0 since the Noarr-based implementation is meant to reflect the original C implementation).}%
+  \label{fig:polybench-c}
+\end{figure}
+
 The main benefit of the proposed abstractions is that algorithms can be expressed in such a way that the developer may easily modify the layouts of data structures and the traversal order without making further modifications to the algorithms. This allows for optimizing the algorithms by applying different transformations of layouts and traversal orders.
 
-The separation of concerns enabled by the abstractions keeps the complexity and verbosity of the core algorithms constant regardless of the applied layout and traversal transformations, while the complexity and verbosity of algorithms without the proposed abstractions would increase considerably depending on the applied transformations.
+
+\subsubsection{Parallelism}\label{sec:abstractions-parallelism}
+
+The dimension hierarchies encoded in the data structures and traversers provide a natural way to express parallelism on different parallel models, including various CPU-based frameworks (OpenMP, TBB) and the CUDA framework for GPUs. For evaluating the performance in parallel settings, we have implemented a set of parallel algorithms, modifying a subset of the algorithms from the PolyBench/C benchmark suite. For GPUs in particular, we have used the methodology used in \cref{sec:abstractions-performance} on the PolyBench/GPU benchmark suite~\cite{grauergray2012autotuning}.
+
+\newlength{\ParallelResultsSubfigWidth}
+\setlength{\ParallelResultsSubfigWidth}{0.3\textwidth}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{subfigure}{\ParallelResultsSubfigWidth}
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/polybench-c-omp}
+    \caption{OpenMP}%
+    \label{fig:polybench-c-openmp}%
+  \end{subfigure}%
+  \hfill%
+  \begin{subfigure}{\ParallelResultsSubfigWidth}
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/polybench-c-tbb}
+    \caption{TBB}%
+    \label{fig:polybench-c-tbb}%
+  \end{subfigure}%
+  \hfill%
+  \begin{subfigure}{\ParallelResultsSubfigWidth}
+    \centering
+    \includegraphics[width=0.9\textwidth]{img/polybench-gpu}
+    \caption{CUDA}%
+    \label{fig:polybench-c-cuda}%
+  \end{subfigure}%
+\end{figure}
+
+Furthermore, the abstractions allow for expressing parallelism in a declarative way, without modifying the core logic of the algorithms, and allow for applying different strategies by passing the corresponding traverser and the computation to a generic executor for the requested strategy, which automatically parallelizes the computation.
+
+
+\subsubsection{Complexity and verbosity}\label{sec:abstractions-complexity}
+
+For algorithm implementations with no layout or traversal optimizations applied, we have shown that the proposed abstractions reduce the complexity of the indexing logic of algorithms (rows \emph{Indexation complexity} and \emph{Subscript complexity}, depending on whether different dimensions are counted separately), as well as the control flow complexity of the algorithms (row \emph{McCabe complexity}), at the cost of a slight increase in the verbosity of the code (evidenced by the increase in the number of characters, code tokens, gzipped size, and Halstead metrics).
+
+\begin{table}[ht]
+  \caption{Comparison of code complexity metrics between the baseline C code and the Noarr code (negative difference means that Noarr is better)}%
+  \label{tab:code-complexity}
+  \scriptsize\centering%
+  \begin{tabular}{|l|c|c|c|}
+    \hline
+    \textbf{Metric} & \textbf{Baseline C} & \textbf{Noarr} & \textbf{Difference} \\
+    \hline
+    Lines of code & $452$ & $393$ & $-13.1\%$ \\
+    \hline
+    Characters count & $14424$ & $17558$ & $+21.7\%$ \\
+    \hline
+    Code tokens & $6157$ & $6551$ & $+6.4\%$ \\
+    \hline
+    Gzipped code size & $6011$ & $7447$ & $+23.9\%$ \\
+    \hline
+    Gzipped archive size & $3446$ & $4115$ & $+19.4\%$ \\
+    \hline
+    \hline
+    McCabe complexity & $189$ & $153$ & $-19.0\%$ \\
+    \hline
+    Halstead Length & $6127$ & $6521$ & $+6.4\%$ \\
+    \hline
+    Halstead Vocabulary & $156$ & $205$ & $+31.4\%$ \\
+    \hline
+    Halstead Volume & $44637.7$ & $50077.9$ & $+12.2\%$ \\
+    \hline
+    Halstead Difficulty & $308.6$ & $371.6$ & $+20.2\%$ \\
+    \hline
+    Halstead Effort & $1.38 \cdot 10^7$ & $1.86 \cdot 10^7$ & $+34.9\%$ \\
+    \hline
+    \hline
+    Indexation complexity & $525$ & $332$ & $-36.8\%$ \\
+    \hline
+    Subscript complexity & $1126$ & $332$ & $-70.5\%$ \\
+    \hline
+  \end{tabular}
+\end{table}
+
+The separation of concerns enabled by the abstractions keeps the complexity and verbosity of the core logic constant regardless of the applied layout and traversal transformations, while the complexity and verbosity of algorithms without the proposed abstractions would increase considerably depending on the applied transformations.
+
+% TODO: continue from here
+
+
+\subsubsection{Autotuning}\label{sec:abstractions-autotuning}
 
 We have also shown that the proposed abstractions can be easily integrated with autotuning techniques in such a way that the configuration of the autotuning resides in the same codebase as the algorithm itself, which we have done by integrating our abstractions with multiple autotuning frameworks with different interfaces.
 

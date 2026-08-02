@@ -16,7 +16,7 @@ Everything else is already reflected in `sources/full/contributions.tex`,
 
 | Status | Local paper | Reuse route | Current thesis treatment |
 |---|---|---|---|
-| Ready | `vsmelko2022astute.pdf` | Springer thesis-reuse permission | Full Version of Record (VoR), citation, and Springer acknowledgement |
+| Ready | `smelko2022astute.pdf` | Springer thesis-reuse permission | Full Version of Record (VoR), citation, and Springer acknowledgement |
 | Ready | `klepl2024pure.pdf` | CC BY 4.0 | Full VoR, citation, licence link, and “no changes” statement |
 | Ready | `klepl2024abstractions.pdf` | CC BY 4.0 | Full VoR, citation, DOI, licence link, and “no changes” statement |
 | Ready | `klepl2025layout.pdf` | Springer thesis-reuse permission | Full VoR, citation, and Springer acknowledgement |
@@ -57,7 +57,7 @@ Each version has different reuse conditions.
 
 Applies to:
 
-- `vsmelko2022astute.pdf`
+- `smelko2022astute.pdf`
 - `klepl2025layout.pdf`
 - `brabec2025tutoring.pdf`
 

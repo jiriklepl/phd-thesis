@@ -99,6 +99,10 @@
 \clearcaptionsetup{listing}
 \captionsetup[lstlisting]{style=thesis,singlelinecheck=off}
 
+% define an xxx macro for todo notes (red text)
+\newcommand{\xxx}[1]{\textcolor{red}{#1}} % TODO: remove this macro
+\renewcommand{\contribref}[1]{\citetitle{#1}~\cite{#1}}
+
 %%% Title page and various mandatory informational pages
 \begin{document}
 \input{sources/short/title}
@@ -106,8 +110,8 @@
 
 \input{sources/short/introduction}
 
-\input{sources/short/background}
-\input{sources/short/optimization-methods}
+% \input{sources/short/background}
+% \input{sources/short/optimization-methods}
 
 \input{sources/short/abstractions}
 \input{sources/short/llms}

@@ -1,3 +1,210 @@
 \chapter{Proposed abstractions}\label{chap:abstractions}
 
-\emph{TODO: Add the abbreviated abstractions chapter.}
+In our research towards enabling developers to easily design high-performance algorithms for parallel computing on CPU and GPU architectures, we have introduced the concepts of layout-agnostic and traversal-agnostic design, which had not been extensively studied prior to our work.
+% Yet, many works in the area of high-performance computing have incidentally applied some of the principles, such as \cpp \lstinline{std::mdspan}~\cite{trott2022mdspan}, which serves as the interface for the HPC-focused basic linear algebra algorithms in the \cpptwentysix standard~\cite{hoemmen2023linalg}; \lstinline{Kokkos::View}, used in the Kokkos library~\cite{trott2021kokkos}; and CuTe layouts, used in the CUTLASS library~\cite{thakkar2023cutlass}.
+Yet, many works in the area of HPC have incidentally applied some of the principles~\cite{trott2022mdspan,trott2021kokkos,thakkar2023cutlass}.
+
+% In this chapter, we describe the main milestones of this line of research, starting with the concept of layout-agnostic design and finishing with the application of these concepts to domain-specific algorithms.
+
+We consider an algorithm design to be concern-agnostic (e.g., layout-agnostic) if it does not encode specific assumptions about the concern, thus supporting separation of concerns in the given application. For example, a layout-agnostic algorithm does not access a data structure using explicit memory offsets; instead, it relies solely on the logical structure of the data (its index space).
+
+The first two sections introduce these concepts in more detail, and the remaining sections present our consecutive peer-reviewed contributions in the area of native abstractions for this design style in high-performance computing.
+
+
+\section{Layout-agnostic design}\label{sec:layout-agnostic-design}
+
+Layout-agnostic design separates the logical structure of the data (the index space defined by the dimension names) from its physical layout in memory. Consider \cref{lst:non-agnostic-copy} as an example of a non-layout-agnostic copy algorithm for 2D arrays in \cpp.
+
+\begin{lstlisting}[style=C++, caption={A non-layout-agnostic copy algorithm in \cpp}, label={lst:non-agnostic-copy}]
+float* source = new float[__M * __N];
+float* destination = new float[__M * __N];
+
+for (size_t i = __0; i < __M; ++i) {
+  for (size_t j = __0; j < __N; ++j) {
+    destination[i*__N + j] = source[j*__M + i];(*@\label{line:non-agnostic-copy}@*)
+  }
+}
+\end{lstlisting}
+
+This implementation of the algorithm assumes a specific layout of the data in memory (column-major and row-major for \lstinline{source} and \lstinline{destination}, respectively; encoded by the indexing expressions in \cref{lst:non-agnostic-copy}, \cref{line:non-agnostic-copy}), and special care must be taken to ensure that the indexing logic correctly reflects the layout of the data. This is usually not desirable; in practice, explicit indexing expressions (e.g., \texttt{i*N + j} and \texttt{j*M + i}) are often replaced with abstractions of the data layouts (e.g., \lstinline{source(i, j)} and \lstinline{destination(i, j)}).
+
+The logic of the copy algorithm does not actually rely on the individual physical layouts of the source and destination data --- it simply copies the elements from one representation of the data to another; as such, it requires the two data structures to share the same logical structure (index space; in this case, a 2D space with size $M \times N$), but the actual physical layout of the data in memory may differ.
+
+\begin{lstlisting}[style=C++, caption={A layout-agnostic copy algorithm}, label={lst:layout-agnostic-copy}]
+// column-major layout:
+auto source = make_matrix<float, 'N', 'M'>(__N, __M);
+// row-major layout:
+auto destination = make_matrix<float, 'M', 'N'>(__M, __N);
+
+for (size_t i = __0; i < __M; ++i) {
+  for (size_t j = __0; j < __N; ++j) {
+    // a point in the M by N index space:
+    auto point = idx<'M', 'N'>(i, j);
+    // same indexing logic:
+    destination[point] = source[point];
+  }
+}
+\end{lstlisting}
+
+\Cref{lst:layout-agnostic-copy} shows a layout-agnostic version of the copy algorithm that is implemented using an abstraction based on our approach. The data structures are indexed using the same logical index \lstinline{idx}, and thus, they are interchangeable with any other structure that shares the $M \times N$ logical structure, regardless of the actual physical layout.
+
+% Syntactically, the logical layout of the data can be expressed in many different ways. For example, the \lstinline{std::mdspan} abstraction encodes different dimensions as positional arguments (e.g., \lstinline{my_mdspan(i, j)} passes iteration variable $i$ as the index in the first dimension and $j$ as the index in the second dimension), while our approach encodes different dimensions as named arguments --- \lstinline{idx<'M', 'N'>(i, j)}\footnote{\lstinline{'M'} and similar dimension names are given as \cpp character literals; alternatively, \lstinline{noarr::dim<V>()} is a more extensible way to specify a dimension name, with \lstinline{V} being an arbitrary literal value.} explicitly associates $i$ with the dimension \lstinline{'M'} and $j$ with the dimension \lstinline{'N'}.
+Syntactically, the logical layout of the data can be expressed in many different ways. Our approach encodes different dimensions as named arguments --- \lstinline{idx<'M', 'N'>(i, j)}\footnote{\lstinline{'M'} and similar dimension names are given as \cpp character literals; alternatively, \lstinline{noarr::dim<V>()} is a more extensible way to specify a dimension name, with \lstinline{V} being an arbitrary literal value.} explicitly associates $i$ with the dimension \lstinline{'M'} and $j$ with the dimension \lstinline{'N'}.
+
+Although this approach (\lstinline{source[idx<'M', 'N'>(i, j)]}) is generally more verbose compared to forms such as the positional approach used with mdspan or Kokkos Views (\lstinline{source[i, j]})~\cite{trott2022mdspan,trott2021kokkos}, it can prevent many indexing mistakes, as any association between an index and a dimension is explicit. Furthermore, the approach of encoding dimensions as named arguments is more robust in cases where different data structures have unrelated index spaces (e.g., accessing a structure with an unrelated index space leads to a compile-time error rather than a hidden logic error). It also reduces the reliance on implicit conventions, such as the broadcasting rules known from frameworks that choose the positional approach, such as NumPy~\cite{harris2020array}.
+
+\section{Traversal-agnostic design}\label{sec:traversal-agnostic-design}
+
+Traversal-agnostic design builds on top of layout-agnostic design by separating the traversal order from the algorithmic operation performed at each logical point.
+% This concept is related to \cpp ranges, their views, and associated algorithms, which rely on iterability and dereferenceability without assuming unnecessary characteristics of the traversed range. A range algorithm is, in this sense, a traversal-agnostic abstraction that only assumes directly relevant and queryable characteristics of the traversed range (or view); for example, a sorting algorithm assumes random-access iteration.
+
+In our work, we express traversal-agnostic design using the concept of \emph{index spaces} with encoded traversal order. In our proposed abstractions  following this paradigm, we represent these ordered index spaces via objects called \emph{traversers}, which generalize the concept of a \texttt{for\_each} algorithm. For the simplest case, the traverser offers a \lstinline{for_each} method that generates points in the index space of the traversed data structure, as shown in the following example of a traversal-agnostic initialization algorithm.
+
+\begin{lstlisting}[style=C++, caption={A traversal-agnostic initialization algorithm}, label={lst:traversal-agnostic-initialization}]
+// M by N array:
+auto data_structure = make_matrix<float, 'M', 'N'>(__M, __N);
+// traverser with the M by N index space:
+auto traverser = make_traverser(data_structure);
+
+traverser.for_each([&](auto point) {
+  data_structure[point] = init_value(point);
+});
+\end{lstlisting}
+
+This algorithm makes no assumptions about either the layout of the data structure or the traversal order of the algorithm --- it simply specifies an assignment for each element in the data structure. The actual traversal order is encoded in the traverser, which may be given as a parameter to the algorithm just like the data structure itself.
+
+A \emph{traverser} is a view of one or more traversed data structures, and its index space is derived from the index spaces of the traversed data structures. In simple cases, this derived space is equivalent to the Cartesian product of the unique dimensions occurring in the traversed data structures. The generated points are then applicable to all traversed data structures, as they contain all expected dimensions.
+
+This approach offers expressiveness and flexibility, which allows it to handle many different algorithms and their optimizations. Similarly to the initialization algorithm, we can define a traversal-agnostic copy algorithm that operates on two data structures.
+% , as follows.
+
+% \begin{lstlisting}[style=C++, caption={A traversal-agnostic copy algorithm}, label={lst:traversal-agnostic-copy}]
+% // column-major layout:
+% auto source = make_matrix<float, 'N', 'M'>(__N, __M);
+% // row-major layout:
+% auto destination = make_matrix<float, 'M', 'N'>(__M, __N);
+% // traverser with M x N index space (covers both data structures)
+% auto traverser = make_traverser(source, destination);
+
+% traverser.for_each([&](auto point) {
+%   destination[point] = source[point];
+% });
+% \end{lstlisting}
+
+% Compared to the layout-agnostic version of the copy algorithm in \cref{lst:layout-agnostic-copy}, this algorithm assumes no specific traversal order. It only relies on the fact that the two data structures share the same logical structure (index space), which is inherited by the traverser.
+
+\xxx{In our work, we also specify systematic traverser construction applicable to structures with non-matching (or partially matching) index spaces~\cite{klepl2024pure}.}
+
+% TODO: continue from here
+
+
+\section{Layout abstractions}\label{sec:astute-approach}
+
+In the first contribution of this line of research, we have proposed abstractions for layout-agnostic data structures as the first milestone towards the goal of exploring design patterns for layout-agnostic and traversal-agnostic algorithms in high-performance computing. We have presented this work in \contribref{vsmelko2022astute}.
+
+The main goal of this work was to demonstrate the feasibility of designing composable layouts for layout-agnostic algorithms usable in high-performance computing, which requires that the abstractions do not introduce significant overhead compared to hand-written code. This is a non-trivial requirement that necessitates the use of metaprogramming techniques to achieve zero-overhead abstraction and to allow compile-time constant expressions in the indexing logic of the data structures, so that the compiler can make more aggressive optimizations.
+
+Moreover, since we target general CPU and GPU-based systems, the abstractions must be designed to be portable across different architectures and compilers, which imposes additional constraints on their design.
+
+We have designed generic building blocks according to these principles and within the above constraints, and we have shown that these building blocks are sufficient for constructing various data structures with different memory layouts.
+
+
+\subsection{Results}\label{sec:astute-results}
+
+The experimental evaluation of the proposed abstractions in the paper showed that the abstractions achieve performance comparable to hand-written code while improving the flexibility of algorithm design.
+
+Major benefits of the proposed approach include the ability to easily change the layout of data structures without modifying the algorithms that operate on them, using layouts as building blocks for constructing more complex data structures, and improving code readability and maintainability by indexing data structures using named dimensions instead of explicit indexing expressions.
+
+
+\section{Traversal abstractions}\label{sec:pure-cpp-approach}
+
+After demonstrating the feasibility of layout-agnostic design in high-performance computing, we have focused on extending the same separation principle to traversal orders, improving the expressiveness beyond layout optimization to also include traversal optimization and parallelizability. We have presented this work in \contribref{klepl2024pure}.
+
+The key concepts we introduced in this work were \emph{traversers} and transformations applicable to layouts and traversers alike. We have observed that both can be achieved by extending the concept of data layout composition, with traversers being a thin abstraction on top of their corresponding data layouts.
+
+This required extending the design of the abstractions to encode the traversal order as well, which we achieved by introducing \emph{signatures} --- compile-time constants that specify the hierarchy of the dimensions for traversal purposes. In simple terms, the signature can be viewed as a tree structure that encodes the loop nesting structure of the corresponding traversal of a given data structure (or a traverser). For example, a signature of the traversers in \cref{lst:traversal-agnostic-initialization,lst:traversal-agnostic-copy} could be $\text{\lstinline{'M'}} \to \text{\lstinline{'N'}} \to \text{\lstinline{void}}$, which encodes \lstinline{M} as the outer dimension and \lstinline{N} as the inner dimension of the traversal, \lstinline{void} denoting the end of the hierarchy (for data structures, this would be replaced with the type of the stored elements).
+
+To express traversal transformations and derived views of data structures, we have introduced building blocks that, instead of being just for data layout construction, can be used for defining various sub-layouts (such as submatrices), renaming dimensions, and reordering the logical hierarchies of the dimensions.
+
+This principle, with theoretical foundations inspired by functional programming and type theory, can be further extended to support other transformations as well. The paper artifact documents how these building blocks can be extended by users of the proposed abstractions, allowing them to define their own transformations and views of data structures and traversers, including domain-specific ones.
+
+
+\subsection{Results}\label{sec:traversal-agnostic-results}
+
+We have assessed the usefulness of this approach for expressing parallel algorithms. We have shown that the dimension hierarchies encoded in the data structures and traversers provide a natural way to express parallelism on different parallel models, including various CPU-based frameworks (OpenMP, TBB) and the CUDA framework for GPUs.
+
+The abstractions allow for expressing parallelism in a declarative way, without modifying the core logic of the algorithms, and allow for applying different strategies by passing the corresponding traverser and the computation to a generic executor for the requested strategy, which automatically parallelizes the computation.
+
+For GPUs in particular, we have shown that the dimensions of the traversals can be easily mapped onto the dimensions of the GPU execution model (blocks and threads), allowing for a straightforward expression of GPU parallelism. We have also shown that the proposed abstractions can be extended to support building blocks specific to defining layouts that benefit from the nuances of GPU memories.
+
+Our experimental evaluation showed that the proposed abstractions can be efficiently used to implement traversal-agnostic algorithms from various areas of scientific computing.
+The performance of the algorithms implemented using the proposed abstractions was comparable to semantically equivalent abstraction-less implementations across multiple algorithms, including single-threaded and parallel implementations on both CPU and GPU architectures.
+
+
+\section{Practical aspects of the abstractions}\label{sec:cpp-abstractions}
+
+We followed up on these abstractions in our first journal publication dedicated to this line of research, which we have presented in \contribref{klepl2024abstractions}.
+
+This work continues the efforts laid out in the previous two contributions (\cref{sec:astute-approach,sec:pure-cpp-approach}), focusing on more practical aspects of the proposed abstractions, including their effects on the verbosity and complexity of the developed algorithms, and their integration with autotuning techniques for performance optimization, thus enabling automatic optimization.
+
+For algorithm implementations with no layout or traversal optimizations applied, we have shown that the proposed abstractions reduce the complexity of the indexing logic of algorithms, as well as the control flow complexity of the algorithms.
+% This is counterbalanced by a slight increase in the verbosity of the code.
+
+
+\subsection{Results}\label{sec:abstractions-results}
+
+The main benefit of the proposed abstractions is that algorithms can be expressed in such a way that the developer may easily modify the layouts of data structures and the traversal order without making further modifications to the algorithms. This allows for optimizing the algorithms by applying different transformations of layouts and traversal orders.
+
+The separation of concerns enabled by the abstractions keeps the complexity and verbosity of the core algorithms constant regardless of the applied layout and traversal transformations, while the complexity and verbosity of algorithms without the proposed abstractions would increase considerably depending on the applied transformations.
+
+We have also shown that the proposed abstractions can be easily integrated with autotuning techniques in such a way that the configuration of the autotuning resides in the same codebase as the algorithm itself, which we have done by integrating our abstractions with multiple autotuning frameworks with different interfaces.
+
+
+\section{Distributed computing extensions}\label{sec:layout-agnostic}
+
+High-performance computing often relies on distributed parallelism to scale computations across multiple nodes, with MPI being the predominant programming model for inter-node communication in scientific computing~\cite{mpi-5.0,laguna2019large}. We therefore studied whether the proposed abstractions can be efficiently integrated with MPI. We have presented this work in \contribref{klepl2025layout}.
+
+The work shows that the proposed abstractions can be efficiently integrated with MPI datatype construction, which enables layout-agnostic communication of data structures across different nodes. We have also shown that the proposed approach can be applied to other abstractions that, to some extent, also abstract away the layout of data structures, such as the \cpp \lstinline{std::mdspan} abstraction or the Kokkos \lstinline{Kokkos::View} abstraction.
+
+The paper presents a study comparing the proposed approach with prior works that aim to facilitate MPI communication of data structures with various layouts. We have shown that the studied prior works do not provide the full flexibility necessary for the layout-agnostic design of distributed algorithms, while the abstractions from the previous contributions have the necessary properties for this purpose. Among the most challenging properties for prior approaches was the expressiveness required to support various logically equivalent structures with different memory layouts, and the ability to automatically translate between different layouts without modifying the communication logic, which is the key property for layout-agnostic communication.
+
+
+\subsection{Results}\label{sec:layout-agnostic-results}
+
+The experimental evaluation showed that the proposed approach, combined with the abstractions from the previous contributions, achieves performance comparable to equivalent hand-written code, regardless of the layout of the involved data structures, while selected prior works did not match the performance of hand-written code in many cases.
+
+The main benefit of the proposed approach is that the layouts can be easily changed without modifying the communication logic; this, combined with the previously established benefits of this design style, allows for flexible algorithm design in distributed settings. This makes the approach a practical solution for high-performance computing on heterogeneous clusters, as the approach is applicable to both CPU and GPU architectures and allows for layout-agnostic communication between the heterogeneous nodes. Furthermore, the traverser concept allows for tuning the datatype construction for better performance in cases where the communication overhead is significant, without necessitating further modifications to any part of the communication logic or algorithms, which is not supported by the prior approaches.
+
+
+\section{Abstractions for stencil computations}\label{sec:stencil-computations}
+
+After demonstrating the feasibility and practicality of these principles in high-performance computing for higher-level algorithm design, we focused on applying them to iterative stencil computations on finite state spaces (\emph{cellular automata}), which are widely used in scientific computing; for example, when simulating physical and biological processes~\cite{mohebbi2020implementation,babu2021modeling,valentim2023cellular}. We have presented this work in \contribref{brabec2025cellato}.
+
+Cellular automata operate on multidimensional grids, applying a fixed neighborhood-based computation pattern (the stencil) with a limited state space to each \emph{cell} of the grid. The stencil is typically applied iteratively, where the output of one iteration becomes the input for the next iteration. For this class of algorithms, spatial and temporal locality are crucial for performance, and thus, many approaches already exist for transforming the computation order into blocks, in both space and time, to improve efficiency~\cite{afanasyev2021gridtools,christen2011patus,matsumura2020an5d}. However, cellular automata also allow for stronger representation-level optimizations via \emph{bit-packing} techniques, which store multiple cell states in a single machine word and compute them in a bit-parallel fashion. To our knowledge, no prior works have proposed abstractions that would allow such optimizations to be applied generically, independently of data layout and traversal order.
+
+This work applies the design principles from our earlier contributions at a deeper level, as it directly targets the computational logic of stencil computations. In this work, we have proposed a \cpp-embedded domain-specific language (DSL), Cellato, that allows the user to express the computational logic of cellular automata in a way that is independent of both the traversal order of the algorithm and the layout of the data, including the specifics of state encoding. Similarly to the previous contributions, this is achieved by using metaprogramming capabilities of \cpp to achieve zero-overhead abstractions that enable
+specialization of the computational logic for different layouts and traversal orders while allowing for aggressive optimization by the compiler.
+
+The abstractions support running the computations expressed in the proposed DSL on both CPU and GPU architectures, and allow applying various optimizations such as bit-packing, spatial and temporal blocking, and parallelization in a decoupled way, without modifying the computational logic. The primitives that enable these optimizations are designed to be applicable to any stencil computation expressed in the proposed DSL\@.
+
+
+\subsection{Results and future work}\label{sec:stencil-computations-results}
+
+We have conducted a case study on various cellular automata of different state spaces and complexities of the computational logic, and we have shown that the proposed approach provides flexibility for applying the different optimizations, while achieving performance comparable to equivalent hand-written code.
+
+Since the optimizations are applied declaratively in a decoupled way, the developer of a high-performance application that makes use of cellular automata can easily experiment with different optimizations to find the best configuration for their specific use case.
+
+In our ongoing research\footnote{The follow-up work has been submitted for publication to the Parallel Computing journal (ParCo).}, we are applying different bit-packing and bitwise evaluation strategies that can speed up the computations depending on the state space and the computational logic of the stencil computation. This opens up a new space of optimizations for stencil computations that can be applied to any cellular automaton.
+
+
+\section{Summary}\label{sec:abstractions-summary}
+
+We have presented the concept of layout-agnostic and traversal-agnostic design and shown that these design principles can be applied to high-performance computing via abstractions that rely solely on the metaprogramming capabilities of \cpp. This shows that the proposed approach is directly applicable to real-world high-performance computing applications, as the proposed abstractions fit existing \cpp toolchains and do not require any custom compiler or runtime support.
+
+Throughout the series of contributions studying these design principles, we have shown their main benefits on CPU-based and GPU-based parallel computing, distributed computing, and domain-specific applications such as cellular automata.
+
+The novelty of this line of research lies in developing a general-purpose native abstraction for unified layout-agnostic and traversal-agnostic design in high-performance computing, and in the application of these principles to cellular automata with added support for domain-specific optimizations such as bit-packing and bitwise evaluation of the computational logic.
+
+The proof-of-concept implementations of the proposed abstractions (described in more detail in \cref{chap:software}) enable the design of algorithms that are independent of the layout and traversal of the data, which can be easily modified without changing the core logic of the algorithms. Together with autotuning techniques, this allows for automated optimization of the algorithms for a given target architecture, while keeping the complexity of the developed algorithms manageable.
+
+This area still has many open questions and challenges, including its applicability to other specialized domains, support for sparse data structures, and the combination of abstractions for general computational logic with data layout and traversal abstractions, which would open up further optimization opportunities.

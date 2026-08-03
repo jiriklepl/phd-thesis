@@ -158,7 +158,7 @@ auto tiled_row_major = row_major
                      ^ noarr::into_blocks<'N', 'n'>(__N/2);
 \end{lstlisting}
 
-The proposed abstractions allow for defining data structures represented using \lstinline{noarr::bag}, which is an owning or non-owning view of some data in memory parametrized by a Noarr structure and an optional pointer to the non-owned buffer containing the data. Thusly defined data structures can be indexed as shown in \cref{lst:layout-agnostic-copy}, following the layout-agnostic design principles described in \cref{sec:layout-agnostic-design}.
+The proposed abstractions allow for defining data structures represented using \lstinline{noarr::bag}, which implements an owning or non-owning view of some data in memory parametrized by a Noarr structure and an optional pointer to the non-owned buffer containing the data. Thusly defined data structures can be indexed as shown in \cref{lst:layout-agnostic-copy}, following the layout-agnostic design principles described in \cref{sec:layout-agnostic-design}.
 
 The Noarr structures and their derived bags also allow for querying the properties of the data structures, such as the size of a given dimension (in bytes), length of a given dimension (in elements), or the offset of a particular element in memory, as shown in \cref{lst:layout-agnostic-query}.
 
@@ -169,7 +169,7 @@ auto point = idx<'M', 'N'>(i, j);
 auto offset = row_major | noarr::offset(point);
 \end{lstlisting}
 
-The \lstinline{|} (pipe) operator is used in favor of the more common \lstinline{.} (dot) operator to allow for easier extension of supported queries and to avoid the need for the \lstinline{template} keyword when using template methods.
+% The \lstinline{|} (pipe) operator is used in favor of the more common \lstinline{.} (dot) operator to allow for easier extension of supported queries and to avoid the need for the \lstinline{template} keyword when using template methods.
 
 % Moreover, since we target general CPU and GPU-based systems, the abstractions must be designed to be portable across different architectures and compilers, which imposes additional constraints on their design.
 
@@ -223,7 +223,7 @@ We have evaluated the proposed abstractions on a set of algorithms from various 
 
 \subsubsection{Performance of layouts and traversals}\label{sec:abstractions-performance}
 
-The experimental evaluation of the proposed abstractions showed that the abstractions achieve performance comparable to hand-written code while improving the flexibility of algorithm design. % TODO: polybench-c results discussion
+The experimental evaluation of the proposed abstractions showed that the abstractions achieve performance comparable to hand-written code while improving the flexibility of algorithm design. \Cref{fig:polybench-c} shows the wall-clock runtime of Noarr-based implementations relative to the corresponding original C implementations. For most cases, the performance matches; there are some outlier cases, mostly caused by the compiler choosing different optimization paths, that ballance out (visualized using the geometric \texttt{MEAN}).
 
 \begin{figure}[htbp]
   \centering
@@ -237,7 +237,9 @@ The main benefit of the proposed abstractions is that algorithms can be expresse
 
 \subsubsection{Parallelism}\label{sec:abstractions-parallelism}
 
-The dimension hierarchies encoded in the data structures and traversers provide a natural way to express parallelism on different parallel models, including various CPU-based frameworks (OpenMP, TBB) and the CUDA framework for GPUs. For evaluating the performance in parallel settings, we have implemented a set of parallel algorithms, modifying a subset of the algorithms from the PolyBench/C benchmark suite. For GPUs in particular, we have used the methodology used in \cref{sec:abstractions-performance} on the PolyBench/GPU benchmark suite~\cite{grauergray2012autotuning}.
+The dimension hierarchies encoded in the data structures and traversers provide a natural way to express parallelism on different parallel models, including various CPU-based frameworks (OpenMP~\xxx{(cite)}, openAPI Threading Building Blocks~\xxx{(cite)}) and the CUDA~\xxx{(cite)} framework for GPUs. For evaluating the performance in parallel settings, we have implemented a set of parallel algorithms, modifying a subset of the algorithms from the PolyBench/C benchmark suite (selected so they cover different types of algorithms). For GPUs in particular, we have used the methodology used in \cref{sec:abstractions-performance} on the PolyBench/GPU benchmark suite~\cite{grauergray2012autotuning}.
+
+For most cases, the Noarr abstractions resulted in similar or better wall-clock runtime, as visualized in \cref{fig:polybench-parallel}. Each plot visualizes a geometric \texttt{MEAN} aggregating all results for a given platform.
 
 \newlength{\ParallelResultsSubfigWidth}
 \setlength{\ParallelResultsSubfigWidth}{0.3\textwidth}
@@ -264,6 +266,8 @@ The dimension hierarchies encoded in the data structures and traversers provide 
     \caption{CUDA}%
     \label{fig:polybench-c-cuda}%
   \end{subfigure}%
+  \caption{Performance comparison of parallel reimplementations of a subset of PolyBench/C algorithms. The comparison follows the same methodology as the one visualized in \cref{fig:polybench-c}.}%
+  \label{fig:polybench-parallel}
 \end{figure}
 
 Furthermore, the abstractions allow for expressing parallelism in a declarative way, without modifying the core logic of the algorithms, and allow for applying different strategies by passing the corresponding traverser and the computation to a generic executor for the requested strategy, which automatically parallelizes the computation.
@@ -271,9 +275,9 @@ Furthermore, the abstractions allow for expressing parallelism in a declarative 
 
 \subsubsection{Complexity and verbosity}\label{sec:abstractions-complexity}
 
-For algorithm implementations with no layout or traversal optimizations applied, we have shown that the proposed abstractions reduce the complexity of the indexing logic of algorithms (rows \emph{Indexation complexity} and \emph{Subscript complexity}, depending on whether different dimensions are counted separately), as well as the control flow complexity of the algorithms (row \emph{McCabe complexity}), at the cost of a slight increase in the verbosity of the code (evidenced by the increase in the number of characters, code tokens, gzipped size, and Halstead metrics).
+For algorithm implementations with no layout or traversal optimizations applied, we have shown that the proposed abstractions reduce the complexity of the indexing logic of algorithms (rows \emph{Indexation complexity} and \emph{Subscript complexity}, depending on whether different dimensions are counted separately), as well as the control flow complexity of the algorithms (row \emph{McCabe complexity}), at the cost of a slight increase in the verbosity of the code (evidenced by the increase in the number of characters, code tokens, gzipped size, and Halstead metrics). The metrics are described in more detail in the journal article along with further discussion~\cite{klepl2024abstractions}.
 
-\begin{table}[ht]
+\begin{table}[htbp]
   \caption{Comparison of code complexity metrics between the baseline C code and the Noarr code (negative difference means that Noarr is better)}%
   \label{tab:code-complexity}
   \scriptsize\centering%
@@ -314,8 +318,6 @@ For algorithm implementations with no layout or traversal optimizations applied,
 
 The separation of concerns enabled by the abstractions keeps the complexity and verbosity of the core logic constant regardless of the applied layout and traversal transformations, while the complexity and verbosity of algorithms without the proposed abstractions would increase considerably depending on the applied transformations.
 
-% TODO: continue from here
-
 
 \subsubsection{Autotuning}\label{sec:abstractions-autotuning}
 
@@ -324,7 +326,7 @@ We have also shown that the proposed abstractions can be easily integrated with 
 
 \section{Distributed computing extensions}\label{sec:layout-agnostic}
 
-High-performance computing often relies on distributed parallelism to scale computations across multiple nodes, with MPI being the predominant programming model for inter-node communication in scientific computing~\cite{mpi-5.0,laguna2019large}. We therefore studied whether the proposed abstractions can be efficiently integrated with MPI. We have presented this work in \contribref{klepl2025layout}.
+High-performance computing often relies on distributed parallelism to scale computations across multiple nodes; thus, we therefore studied whether the proposed abstractions can be efficiently integrated with MPI, which is the predominant programming model for inter-node communication in scientific computing~\cite{mpi-5.0,laguna2019large}. We have presented this work in \contribref{klepl2025layout}.
 
 The work shows that the proposed abstractions can be efficiently integrated with MPI datatype construction, which enables layout-agnostic communication of data structures across different nodes. We have also shown that the proposed approach can be applied to other abstractions that, to some extent, also abstract away the layout of data structures, such as the \cpp \lstinline{std::mdspan} abstraction or the Kokkos \lstinline{Kokkos::View} abstraction.
 
@@ -334,6 +336,17 @@ The paper presents a study comparing the proposed approach with prior works that
 \subsection{Results}\label{sec:layout-agnostic-results}
 
 The experimental evaluation showed that the proposed approach, combined with the abstractions from the previous contributions, achieves performance comparable to equivalent hand-written code, regardless of the layout of the involved data structures, while selected prior works did not match the performance of hand-written code in many cases.
+
+For the evaluation, we performed a case study on distributed matrix multiplication with each of the three matrices in row-major or column-major layout. The computation started by scattering inputs corresponding to tiles of the output to available nodes from a chosen root node, followed by local computation of the output tiles, and finally gathering the results back to the root node. The results are visualized in \cref{fig:noarr-mpi}.
+
+The visualization shows two extreme cases --- small matrices (\texttt{MINI}) and large matrices (\texttt{EXTRALARGE}). The \texttt{MINI} case should highlight how well the different approaches handle the communication overhead (MPI type construction and the communication itself), while the \texttt{EXTRALARGE} case should highlight how well the different approaches handle the local computation of the output tiles. In both cases, the Noarr-based implementation achieves performance matching the hand-written MPI implementation.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{img/combined_MINI_EXTRALARGE.pdf}
+  \caption{Comparison of Noarr-based implementations against hand-written MPI implementations and two selected prior works on distributed matrix multiplication of $I \times K$ and $K \times J$ matrices into an $I \times J$ matrix; the x-axis labels shows the major dimension (row or column) for each matrix (in the order \emph{output, left operand, right operand}; $C = A \cdot B$). The visualized times show the wall-clock times of scattering the data across nodes, computing local results, and gathering the output.}%
+  \label{fig:noarr-mpi}
+\end{figure}
 
 The main benefit of the proposed approach is that the layouts can be easily changed without modifying the communication logic; this, combined with the previously established benefits of this design style, allows for flexible algorithm design in distributed settings. This makes the approach a practical solution for high-performance computing on heterogeneous clusters, as the approach is applicable to both CPU and GPU architectures and allows for layout-agnostic communication between the heterogeneous nodes. Furthermore, the traverser concept allows for tuning the datatype construction for better performance in cases where the communication overhead is significant, without necessitating further modifications to any part of the communication logic or algorithms, which is not supported by the prior approaches.
 

@@ -51,9 +51,9 @@
 \usepackage{subcaption}
 
 \usepackage{caption}
-\DeclareCaptionFont{fig}{\figfamily}
-\captionsetup{font={footnotesize,fig},labelfont=bf,labelsep=quad}
-\DeclareCaptionStyle{ruled}{font={footnotesize,fig},labelfont=bf,labelsep=quad,strut=off}
+\captionsetup[figure]{font={footnotesize},labelfont=bf,labelsep=quad,strut=off}
+\DeclareCaptionStyle{ruled}{font={footnotesize},labelfont=bf,labelsep=quad,strut=off}
+\captionsetup[table]{font={footnotesize},labelfont=bf,labelsep=quad,strut=off}
 
 \usepackage{chngcntr}
 \counterwithout{figure}{chapter}
@@ -64,7 +64,7 @@
 %\DeclareNameAlias{sortname}{family-given}
 %\DeclareNameAlias{default}{family-given}
 \DeclareDelimFormat{namelabeldelim}{~}
-\renewcommand*{\bibfont}{\small\hfuzz=2pt\sloppy}
+\renewcommand*{\bibfont}{\scriptsize\hfuzz=2pt\sloppy}
 
 \usepackage{booktabs}
 \usepackage{xcolor}
@@ -98,7 +98,7 @@
 
 \clearcaptionsetup{algorithm}
 \clearcaptionsetup{listing}
-\captionsetup[lstlisting]{style=thesis,singlelinecheck=off}
+\captionsetup[lstlisting]{style=thesis,singlelinecheck=off,font={footnotesize},labelfont=bf,labelsep=quad,strut=off}
 
 % define an xxx macro for todo notes (red text)
 \newcommand{\xxx}[1]{\textcolor{red}{#1}} % TODO: remove this macro
@@ -121,7 +121,7 @@
 
 \input{sources/short/conclusion}
 
-\input{sources/full/ai-declaration}
+% \input{sources/full/ai-declaration}
 
 %%% Bibliography
 \input{sources/shared/bibliography}

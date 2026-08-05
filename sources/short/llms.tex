@@ -69,7 +69,7 @@ We have also studied an alternative approach that splits the optimization proces
 
 \subsection{Results}\label{sec:llms-results}
 
-Our findings have shown that, the abstractions designed for human users generally hindered both the correctness and performance of generated code. More importantly, the results of our study showed that the specificity of the prompts used to guide the LLMs had a greater positive impact on the performance of the generated code than either the choice of abstraction or the use of the alternative approach of splitting the optimization process into two steps.
+Our findings have shown that the abstractions designed for human users generally hindered both the correctness and performance of generated code. More importantly, the results of our study showed that the specificity of the prompts used to guide the LLMs had a greater positive impact on the performance of the generated code than either the choice of abstraction or the use of the alternative approach of splitting the optimization process into two steps.
 
 As shown in \cref{fig:llms-results}, the highest performance and correctness of the generated code was achieved with the most specific prompts (\texttt{AllHints} and \texttt{ChooseHints}) and without any abstraction (C, visualized by a blue line), regardless of the given budget of generated code variants. Further discussion of the results and their implications is available in the original paper~\cite{klepl2026effect}.
 
@@ -80,7 +80,7 @@ As shown in \cref{fig:llms-results}, the highest performance and correctness of 
   \label{fig:llms-results}
 \end{figure}
 
-These results suggest that, while contemporary abstractions for user-directed code optimization can benefit human users and formal validation of optimization transformations, they also restricted the design space available to the LLM, increasing its error rate and hindering its performance when generating efficient code for the studied algorithms.
+These results suggest that, while contemporary abstractions for user-directed code optimization can benefit human users and formal validation of optimization transformations, they also restrict the design space available to the LLM, increasing its error rate and hindering its performance when generating efficient code for the studied algorithms.
 
 
 \section{Summary}\label{sec:llms-summary}

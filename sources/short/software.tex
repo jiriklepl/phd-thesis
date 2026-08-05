@@ -10,7 +10,7 @@ It supports Linux, Windows, and macOS with multiple compilers, as well as CUDA f
 
 % Noarr supports Linux, Windows, and macOS platforms using various versions of the \texttt{GCC}, \texttt{Clang}, and \texttt{MSVC} compilers, and is available under the MIT license with no external dependencies. Integration of Noarr into an application requires only including the header file \texttt{noarr/noarr.hpp}. This includes all the necessary components of the library for the functionality described in \cref{sec:astute-approach,sec:pure-cpp-approach}.
 
-The library has two external modules, Noarr-tuning and Noarr-MPI\footnote{Available at \url{https://github.com/ParaCoToUl/noarr-tuning} and \url{https://github.com/ParaCoToUl/noarr-mpi}} providing functionality discussed in \cref{sec:cpp-abstractions,sec:layout-agnostic}.
+The library has two external modules, Noarr-tuning and Noarr-MPI\footnote{Available at \url{https://github.com/ParaCoToUl/noarr-tuning} and \url{https://github.com/ParaCoToUl/noarr-mpi}}, providing functionality discussed in \cref{sec:cpp-abstractions,sec:layout-agnostic}.
 
 The library is centered around \emph{Noarr structures}, abstractions for memory layouts built by composing simpler building blocks called \emph{proto-structures}. The resulting operations are resolved at compile time, avoiding runtime overhead.
 % Both concepts use dimensions named mainly by character literals (e.g., \lstinline{'x'}, \lstinline{'y'}, \lstinline{'z'}). The dimension names and dispatch of all functions are resolved at compile time using template metaprogramming to avoid runtime overhead.

@@ -3,9 +3,9 @@
 Since Large Language Models (LLMs) have been shown to be increasingly capable of software development, we have investigated some previously underexplored applications of LLMs to algorithm design in HPC\@. In particular, our goal was to explore the potential of LLMs to optimize code using transformations and redesigns that would be difficult to achieve with the abstractions explored in \cref{chap:abstractions} alone.
 
 
-\section{Tutoring LLMs for CUDA optimization}\label{sec:human-directed-code-optimization}
+\section{Tutoring LLMs to optimize CUDA}\label{sec:human-directed-code-optimization}
 
-In our first contribution in this area, we have explored the potential of LLMs under human direction to design efficient code for GPUs using the CUDA programming model. We have presented this work in \contribref{brabec2025tutoring}.
+In \contribref{brabec2025tutoring}, we presented our study exploring the potential of LLMs under human direction to design efficient code for GPUs using the CUDA programming model.
 
 The work was motivated by the then-current ability of LLMs to generate simple code snippets and even GPU code, but their inability to make appropriate design decisions, such as choosing data structures, layouts, and synchronization strategies in parallel contexts.
 
@@ -22,6 +22,25 @@ We then attempted to guide the LLM to generate code matching the performance of 
 
 Our findings have shown that, for certain complexity levels of algorithms, LLMs failed to produce efficient code with general prompts directing the LLM just to optimize the code for the given hardware. However, with increasingly more specific prompts, the generated solutions increasingly matched the expected runtime performance. At the time of the study, this behavior was observable on the histogram computation and Game of Life simulation, but the $k$NN search case was too complex for the LLMs to reliably generate correct and efficient implementations even with the most specific prompts.
 
+\begin{figure}[htbp]
+  \centering
+  \begin{subfigure}{.55\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{img/paper_gol-hopper.graph.pdf}
+    \caption{Histogram computation}%
+    \label{fig:tutoring-histogram}%
+  \end{subfigure}%
+  \hfill%
+  \begin{subfigure}{.45\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{img/paper_histogram-hexdump-hopper.graph.pdf}
+    \caption{Game of Life simulation}%
+    \label{fig:tutoring-game-of-life}%
+  \end{subfigure}%
+  \caption{Results of the tutoring experiments with iteratively more specific prompts for Game of Life simulation and histogram computation; each point represents a different generation, short line segment highlights the mean. The x-axis shows the specificity of the prompts, while the y-axis shows the performance of the generated code. horizontal lines show the performance of the reference implementations. The results for the $k$NN search are not shown due to sparsity of correct results~\cite{brabec2025tutoring}.}%
+  \label{fig:tutoring-results}
+\end{figure}
+
 % We have explored two different prompting approaches~--- one based on providing specific instructions on how to optimize the code in a single prompt (where we studied different prompts of increasing specificity), and another based on an iterative process of generating code, analyzing it, and providing feedback to the LLM using pre-planned scenarios where each milestone corresponded to a single prompt from the first approach. The observed behavior was similar for both approaches in all three cases, including the failure to generate correct and efficient code for the $k$NN search, regardless of the specificity of the prompts.
 
 At the time of presenting the results at the Euro-Par 2025 conference, the aforementioned complexity threshold had already increased for newer LLMs. The newer LLMs showed the discussed behavior when generating $k$NN search implementations. For the simpler algorithms, the newer LLMs no longer required specific prompts, generating very efficient implementations even with general prompts. This threshold has continued to increase with newer LLMs\footnote{The results for the newer LLMs are available at \url{https://github.com/matyas-brabec/2025-europar-llm/tree/GPT-5-high} and newer branches of the repository.}.
@@ -29,30 +48,39 @@ At the time of presenting the results at the Euro-Par 2025 conference, the afore
 
 \section{LLMs and abstractions}\label{sec:llms-and-abstractions}
 
-Following our work on abstractions for user-directed code optimization presented in \cref{chap:abstractions} and our experiments with LLMs for code optimization, we have explored the interoperability of LLMs with various abstractions for user-directed code optimization, including the abstractions we have introduced (\cref{chap:abstractions}). We have presented this work in \contribref{klepl2026effect}.
+Following our work on abstractions for user-directed code optimization and our experiments with LLMs for code optimization, we have explored the interoperability of LLMs with abstractions for user-directed code optimization, including our own (\cref{chap:abstractions}). We have presented this work in \contribref{klepl2026effect}.
 
 The work addresses two main research questions.
 \begin{inparaenum}[(i)]
 \item Do the abstractions optimized for human users that enable expressing various code optimizations, such as data layout and traversal transformations, separately from the algorithmic logic, also benefit LLMs, which have skill sets and characteristics different from human users?
-\item How does the correctness and performance of code generated by LLMs are affected by the choice of abstractions used (or their absence).
+\item How does the correctness and performance of code generated by LLMs get affected by the choice of abstractions used (or their absence)?
 \end{inparaenum}
 We have formalized these two questions into five more specific and measurable research questions presented in the paper.
 
-For our experiments, we have used the PolyBench benchmark suite~\cite{polybench4.2.1}, which was also used by prior work on LLMs for code optimization~\cite{merouani2025agentic}. As a representative LLM, we have used GPT-5.1 Thinking, a then-current state of the art for reasoning models and focused on code generation for a multi-core CPU architecture.
+For our experiments, we have used the PolyBench benchmark suite~\cite{polybench4.2.1}, which was also used by prior work on LLMs for code optimization~\cite{merouani2025agentic}. As a representative LLM, we have used GPT-5.1 Thinking, a then-current state of the models, and focused on code generation for a multi-core CPU architecture.
 % To limit the scope of our experiments to fit our budget constraints, we have focused solely on generic multi-core CPU code generation, as the simplest use case allowing for parallelism.
 
 The methodology of our experiments combined prompts with varying specificity of optimization goals (such as suggesting a focus on parallelism and cache locality) with different abstractions (Halide~\cite{ragan2013halide}, Exo~\cite{ikarashi2022exocompilation}, and Noarr~\cite{klepl2024abstractions}) or no abstraction at all. The considered prompts included a na\"{\i}ve prompt that simply directed the LLM to optimize for a multi-core CPU, as well as a prompt that directed the LLM to consider a set of optimization goals or directed it to choose from such goals itself.
 
 Contrasting our work presented in \cref{sec:human-directed-code-optimization}, more specific prompts suggested optimization strategies generally applicable to a wide variety of algorithms instead of dictating specific design decisions for individual algorithms, shifting from tutoring to more general guidance, which does not require the user to have deep knowledge of the algorithm or the optimization strategies.
 
-We have also studied an alternative approach that splits the optimization process into two steps. First, directing the LLM to formalize the characteristics of the algorithm and the optimization strategy; then, in the second step, using the LLM to generate code according to the provided optimization plan.
+We have also studied an alternative approach that splits the optimization process into two steps. First, directing the LLM to formalize the algorithm and the optimization plan; then, using the LLM to generate code according to the provided optimization plan.
 
 
 \subsection{Results}\label{sec:llms-results}
 
 Our findings have shown that the abstractions optimized for human users generally hindered both the correctness and performance of generated code. More importantly, the results of our study showed that the specificity of the prompts used to guide the LLMs had a greater positive impact on the performance of the generated code compared to the choice of abstractions or the use of the alternative approach of splitting the optimization process into two steps.
 
-These results suggest that, while the contemporary abstractions for user-directed code optimization can be beneficial for human users and formal validation of optimization transformations, they also increase LLMs' error rate and hindering their performance when they attempt to generate efficient implementations for the studied algorithms.
+As shown in \cref{fig:llms-results}, the highest performance and correctness of the generated code was achieved with the most specific prompts (\texttt{AllHints} and \texttt{ChooseHints}) and without any abstraction (C --- visualized by a blue line), regardless of the given budget of generated code variants. Further discussion of the results and their implications is available in the original paper~\cite{klepl2026effect}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{img/best_of_k_budget}
+  \caption{(Upper row) the geometric mean of the speedup of the generated code for different prompt strategies and abstractions on the PolyBench/C suite (EXTRALARGE size) compared to the C baselines and (Lower row) mean probability of having at least one correct implementation given a budget of generated code variants~\cite{klepl2026effect}.}%
+  \label{fig:llms-results}
+\end{figure}
+
+These results suggest that, while the contemporary abstractions for user-directed code optimization can be beneficial for human users and formal validation of optimization transformations, they also increase LLMs' error rate and hindering their performance when they attempt to generate efficient code for the studied algorithms.
 
 
 \section{Summary}\label{sec:llms-summary}

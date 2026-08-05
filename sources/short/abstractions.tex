@@ -1,14 +1,14 @@
 \chapter{Proposed abstractions}\label{chap:abstractions}
 
 In our research towards enabling developers to easily design high-performance algorithms for parallel computing on CPU and GPU architectures, we have introduced the concepts of layout-agnostic and traversal-agnostic design, which had not been extensively studied prior to our work.
-% Yet, many works in the area of high-performance computing have incidentally applied some of the principles, such as \cpp \lstinline{std::mdspan}~\cite{trott2022mdspan}, which serves as the interface for the HPC-focused basic linear algebra algorithms in the \cpptwentysix standard~\cite{hoemmen2023linalg}; \lstinline{Kokkos::View}, used in the Kokkos library~\cite{trott2021kokkos}; and CuTe layouts, used in the CUTLASS library~\cite{thakkar2023cutlass}.
+% Yet, many works in the area of HPC have incidentally applied some of the principles, such as \cpp \lstinline{std::mdspan}~\cite{trott2022mdspan}, which serves as the interface for the HPC-focused basic linear algebra algorithms in the \cpptwentysix standard~\cite{hoemmen2023linalg}; \lstinline{Kokkos::View}, used in the Kokkos library~\cite{trott2021kokkos}; and CuTe layouts, used in the CUTLASS library~\cite{thakkar2023cutlass}.
 Yet, many works in the area of HPC have incidentally applied some of the principles~\cite{trott2022mdspan,trott2021kokkos,thakkar2023cutlass}.
 
 % In this chapter, we describe the main milestones of this line of research, starting with the concept of layout-agnostic design and finishing with the application of these concepts to domain-specific algorithms.
 
 % We consider an algorithm design to be concern-agnostic (e.g., layout-agnostic) if it does not encode specific assumptions about the concern, thus supporting separation of concerns in the given application. For example, a layout-agnostic algorithm does not access a data structure using explicit memory offsets; instead, it relies solely on the logical structure of the data (its index space).
 
-The first two sections introduce these concepts in more detail, and the remaining sections present our consecutive peer-reviewed contributions in the area of native abstractions for this design style in high-performance computing.
+The first two sections introduce these concepts in more detail, and the remaining sections present our consecutive peer-reviewed contributions in the area of native abstractions for this design style in HPC.
 
 
 \section{Layout-agnostic design}\label{sec:layout-agnostic-design}
@@ -105,9 +105,9 @@ Since the first three contributions in this line of research (\cref{sec:astute-a
 
 \subsection{Layout abstractions}\label{sec:astute-approach}
 
-In the first contribution of this line of research, we have proposed abstractions for layout-agnostic data structures as the first milestone towards the goal of exploring design patterns for layout-agnostic and traversal-agnostic algorithms in high-performance computing. We have presented this work in \contribref{smelko2022astute}.
+In the first contribution of this line of research, we have proposed abstractions for layout-agnostic data structures as the first milestone towards the goal of exploring design patterns for layout-agnostic and traversal-agnostic algorithms in HPC. We have presented this work in \contribref{smelko2022astute}.
 
-The main goal of this work was to demonstrate the feasibility of designing composable layouts for layout-agnostic algorithms usable in high-performance computing, which requires that the abstractions do not introduce significant overhead compared to hand-written code. This is a non-trivial requirement that necessitates the use of metaprogramming techniques to achieve zero-overhead abstraction and to allow compile-time constant expressions in the indexing logic of the data structures, so that the compiler can make more aggressive optimizations.
+The main goal of this work was to demonstrate the feasibility of designing composable layouts for layout-agnostic algorithms usable in HPC, which requires that the abstractions do not introduce significant overhead compared to hand-written code. This is a non-trivial requirement that necessitates the use of metaprogramming techniques to achieve zero-overhead abstraction and to allow compile-time constant expressions in the indexing logic of the data structures, so that the compiler can make more aggressive optimizations.
 
 The abstractions comprise of Noarr structures (representing layouts) and proto-structures (representing transformations of layouts). The base Noarr structure is \lstinline{noarr::scalar<T>()}, which represents a single value of type \lstinline{T} with no dimensions. This structure can be extended using proto-structures like \lstinline{noarr::array<__D, __S>()}, which adds a dimension \lstinline{__D} of compile-time size \lstinline{__S} to the layout or using \lstinline{noarr::vector<__D>(__S)}, which adds a dimension \lstinline{__D} of size \lstinline{__S} that is modifiable at runtime. An example of a proto-structure that transforms only the logical structure is \lstinline{noarr::into_blocks<__D, __B>(__S)}\footnote{\lstinline{noarr::into_blocks} was introduced in later versions of the library, but provides a good example for the purpose of this discussion.}, which transforms a dimension \lstinline{__D} into blocks of size \lstinline{__S} enumerated by a new dimension \lstinline{__B}.
 
@@ -186,7 +186,7 @@ auto offset = row_major | noarr::offset(point);
 
 \subsection{Traversal abstractions}\label{sec:pure-cpp-approach}
 
-After demonstrating the feasibility of layout-agnostic design in high-performance computing, we have focused on extending the same separation principle to traversal orders, improving the expressiveness beyond layout optimization to also include traversal optimization and parallelizability, which we have presented in \contribref{klepl2024pure}.
+After demonstrating the feasibility of layout-agnostic design in HPC, we have focused on extending the same separation principle to traversal orders, improving the expressiveness beyond layout optimization to also include traversal optimization and parallelizability, which we have presented in \contribref{klepl2024pure}.
 
 The key concepts we introduced in this work were \emph{traversers} and transformations applicable to layouts and traversers alike. We have observed that both can be achieved by extending the concept of data layout composition, with traversers being a thin abstraction on top of their corresponding data layouts.
 
@@ -352,13 +352,13 @@ The visualization shows two extreme cases --- small matrices (\texttt{MINI}) and
   \label{fig:noarr-mpi}
 \end{figure}
 
-The main added benefit of the proposed approach is that the layouts can be easily changed without modifying the communication logic; this, combined with the previously established benefits of this design style, allows for flexible algorithm design in distributed settings, providing a practical solution for high-performance computing on heterogeneous clusters.
+The main added benefit of the proposed approach is that the layouts can be easily changed without modifying the communication logic; this, combined with the previously established benefits of this design style, allows for flexible algorithm design in distributed settings, providing a practical solution for HPC on heterogeneous clusters.
 % , as the approach is applicable to both CPU and GPU architectures and allows for layout-agnostic communication between the heterogeneous nodes. Furthermore, the traverser concept allows for tuning the datatype construction for better performance in cases where the communication overhead is significant, without necessitating further modifications to any part of the communication logic or algorithms, which is not supported by the prior approaches.
 
 
 \section{Abstractions for stencil computations}\label{sec:stencil-computations}
 
-After demonstrating the feasibility and practicality of these principles in high-performance computing for higher-level algorithm design, we focused on applying them to iterative stencil computations on finite state spaces --- \emph{cellular automata} (CA), which are widely used in scientific computing; for example, when simulating physical and biological processes~\cite{mohebbi2020implementation,babu2021modeling,valentim2023cellular}. We have presented this work in \contribref{brabec2025cellato}.
+After demonstrating the feasibility and practicality of these principles in HPC for higher-level algorithm design, we focused on applying them to iterative stencil computations on finite state spaces --- \emph{cellular automata} (CA), which are widely used in scientific computing; for example, when simulating physical and biological processes~\cite{mohebbi2020implementation,babu2021modeling,valentim2023cellular}. We have presented this work in \contribref{brabec2025cellato}.
 
 % CA operate on multidimensional grids, applying a fixed neighborhood-based computation pattern (the stencil) with a limited state space to each \emph{cell} of the grid. The stencil is typically applied iteratively, where the output of one iteration becomes the input for the next iteration. For this class of algorithms, spatial and temporal locality are crucial for performance, and thus, many approaches already exist for transforming the computation order into blocks, in both space and time, to improve efficiency~\cite{afanasyev2021gridtools,christen2011patus,matsumura2020an5d}. However, CA also allow for stronger representation-level optimizations via \emph{bit-packing} techniques, which store multiple cell states in a single machine word and compute them in a bit-parallel fashion. To our knowledge, no prior works have proposed abstractions that would allow such optimizations to be applied generically, independently of data layout and traversal order.
 
@@ -383,10 +383,10 @@ In our ongoing research\footnote{The follow-up work has been submitted for publi
 
 \section{Summary}\label{sec:abstractions-summary}
 
-We have presented the concept of layout-agnostic and traversal-agnostic design and shown that these design principles can be applied to high-performance computing via abstractions that rely solely on the metaprogramming capabilities of \cpp.
-% This shows that the proposed approach is directly applicable to real-world high-performance computing applications, as the proposed abstractions fit existing \cpp toolchains and do not require any custom compiler or runtime support.
+We have presented the concept of layout-agnostic and traversal-agnostic design and shown that these design principles can be applied to HPC via abstractions that rely solely on the metaprogramming capabilities of \cpp.
+% This shows that the proposed approach is directly applicable to real-world HPC applications, as the proposed abstractions fit existing \cpp toolchains and do not require any custom compiler or runtime support.
 Throughout the series of contributions studying these design principles, we have shown their main benefits on CPU-based and GPU-based parallel computing, distributed computing, and domain-specific applications such as cellular automata (CA).
 
-The novelty of this line of research lies in developing a general-purpose native abstraction for unified layout-agnostic and traversal-agnostic design in high-performance computing, and in the application of these principles to CA with added support for domain-specific optimizations such as bit-packing and bitwise evaluation of the computational logic. Together with the explored autotuning techniques, this allows for automated optimization of the algorithms for a given target architecture, while keeping the complexity of the developed algorithms manageable.
+The novelty of this line of research lies in developing a general-purpose native abstraction for unified layout-agnostic and traversal-agnostic design in HPC, and in the application of these principles to CA with added support for domain-specific optimizations such as bit-packing and bitwise evaluation of the computational logic. Together with the explored autotuning techniques, this allows for automated optimization of the algorithms for a given target architecture, while keeping the complexity of the developed algorithms manageable.
 
 This area still has many open questions and challenges, including its applicability to other specialized domains, support for sparse data structures, and the combination of abstractions for general computational logic with data layout and traversal abstractions, which would open up further optimization opportunities.

@@ -1,6 +1,6 @@
 \chapter{LLMs in algorithm design}\label{chap:llms}
 
-Since Large Language Models (LLMs) have been shown to be increasingly capable of software development, we have investigated some previously underexplored applications of LLMs to algorithm design in HPC\@. In particular, our goal was to explore the potential of LLMs to optimize code using transformations and redesigns that would be difficult to achieve with the abstractions explored in \cref{chap:abstractions} alone.
+Since LLMs have been shown to be increasingly capable of software development, we have investigated some previously underexplored applications of LLMs to algorithm design in HPC\@. In particular, our goal was to explore the potential of LLMs to optimize code using transformations and redesigns that would be difficult to achieve with the abstractions explored in \cref{chap:abstractions} alone.
 
 
 \section{Tutoring LLMs to optimize CUDA}\label{sec:human-directed-code-optimization}
@@ -9,35 +9,35 @@ In \contribref{brabec2025tutoring}, we presented our study exploring the potenti
 
 The work was motivated by the then-current ability of LLMs to generate simple code snippets and even GPU code, but their inability to make appropriate design decisions, such as choosing data structures, layouts, and synchronization strategies in parallel contexts.
 
-We have conducted a case study on three algorithms representing different areas of scientific computing~--- histogram computation representing a reduction problem, Game of Life simulation representing a stencil computation on a finite state space, and $k$-nearest neighbors ($k$NN) search representing a traditional machine learning algorithm. More importantly, the three algorithms represent different levels of complexity of design decisions needed for efficient GPU execution.
+We have conducted a case study on three algorithms representing different areas of scientific computing~--- histogram computation representing a reduction problem, Game of Life simulation representing a stencil computation on a finite state space, and $k$-nearest neighbors ($k$NN) search representing a traditional machine learning algorithm. More importantly, the three algorithms represent different levels of complexity in the design decisions required for efficient GPU execution.
 
 % Histogram computation presented the least complex and most straightforward case, where the main improvement comes from efficient work separation and privatization of the intermediate results (histogram bins). Game of Life simulation presented a more complex case, where the main improvement comes from bit-packing of the grid (each state of a cell can be represented with a single bit) and use of bitwise operations (which operate on many binary digits simultaneously) to compute multiple cells at once. The $k$NN search presented the most complex case, as an efficient GPU implementation for the expected input sizes and dimensions relies on multiple specific design decisions.
 
-In our experiments, we have confirmed that the LLM (represented by OpenAI o3-mini, a state-of-the-art reasoning models at the time of the study) understood the simpler problems and was able to reliably generate correct code for histogram computation and Game of Life when the prompts simply asked it to implement the algorithm for specific hardware (GPU\@) and there were no strict requirements on the performance of the generated code. For the $k$NN search, however, only about half of the unrestricted attempts produced valid results.
+In our experiments, we have confirmed that the LLM (represented by OpenAI o3-mini, a state-of-the-art reasoning model at the time of the study) understood the simpler problems and was able to reliably generate correct code for histogram computation and Game of Life when the prompts simply asked it to implement the algorithm for specific hardware (GPU\@) and there were no strict requirements on the performance of the generated code. For the $k$NN search, however, only about half of the unrestricted attempts produced valid results.
 
 We then attempted to guide the LLM to generate code matching the performance of an expert-written reference by providing increasingly more specific prompts that suggested, or outright dictated, specific design decisions necessary to achieve the expected performance.
 
 
 \subsection{Results and future work}\label{sec:human-directed-code-optimization-results}
 
-Our findings have shown that, for certain complexity levels of algorithms, LLMs failed to produce efficient code with general prompts directing the LLM just to optimize the code for the given hardware. However, with increasingly more specific prompts, the generated solutions increasingly matched the expected runtime performance. At the time of the study, this behavior was observable on the histogram computation and Game of Life simulation, but the $k$NN search case was too complex for the LLMs to reliably generate correct and efficient implementations even with the most specific prompts.
+Our findings have shown that, above a certain level of algorithmic complexity, LLMs failed to produce efficient code with general prompts that simply directed the LLM to optimize the code for the given hardware. However, with increasingly specific prompts, the generated solutions came closer to matching the expected runtime performance. At the time of the study, this behavior was observable on the histogram computation and Game of Life simulation, but the $k$NN search case was too complex for the LLMs to reliably generate correct and efficient implementations even with the most specific prompts.
 
 \begin{figure}[htbp]
   \centering
   \begin{subfigure}{.55\textwidth}
     \centering
     \includegraphics[width=\textwidth]{img/paper_gol-hopper.graph.pdf}
-    \caption{Histogram computation}%
-    \label{fig:tutoring-histogram}%
+    \caption{Game of Life simulation}%
+    \label{fig:tutoring-game-of-life}%
   \end{subfigure}%
   \hfill%
   \begin{subfigure}{.45\textwidth}
     \centering
     \includegraphics[width=\textwidth]{img/paper_histogram-hexdump-hopper.graph.pdf}
-    \caption{Game of Life simulation}%
-    \label{fig:tutoring-game-of-life}%
+    \caption{Histogram computation}%
+    \label{fig:tutoring-histogram}%
   \end{subfigure}%
-  \caption{Results of the tutoring experiments with iteratively more specific prompts for Game of Life simulation and histogram computation; each point represents a different generation, short line segment highlights the mean. The x-axis shows the specificity of the prompts, while the y-axis shows the performance of the generated code. horizontal lines show the performance of the reference implementations. The results for the $k$NN search are not shown due to sparsity of correct results~\cite{brabec2025tutoring}.}%
+  \caption{Results of the tutoring experiments with iteratively more specific prompts for Game of Life simulation and histogram computation; each point represents a different generation, and each short line segment highlights the mean. The x-axis shows the specificity of the prompts, while the y-axis shows the performance of the generated code. Horizontal lines show the performance of the reference implementations. The results for the $k$NN search are not shown due to the sparsity of correct results~\cite{brabec2025tutoring}.}%
   \label{fig:tutoring-results}
 \end{figure}
 
@@ -52,35 +52,35 @@ Following our work on abstractions for user-directed code optimization and our e
 
 The work addresses two main research questions.
 \begin{inparaenum}[(i)]
-\item Do the abstractions optimized for human users that enable expressing various code optimizations, such as data layout and traversal transformations, separately from the algorithmic logic, also benefit LLMs, which have skill sets and characteristics different from human users?
-\item How does the correctness and performance of code generated by LLMs get affected by the choice of abstractions used (or their absence)?
+\item Do the abstractions designed for human users that enable expressing various code optimizations, such as data layout and traversal transformations, separately from the algorithmic logic, also benefit LLMs, which have skill sets and characteristics different from human users?
+\item How are the correctness and performance of code generated by LLMs affected by the choice of abstractions used (or their absence)?
 \end{inparaenum}
-We have formalized these two questions into five more specific and measurable research questions presented in the paper.
+We have formalized these two questions as five more specific and measurable research questions presented in the paper.
 
-For our experiments, we have used the PolyBench benchmark suite~\cite{polybench4.2.1}, which was also used by prior work on LLMs for code optimization~\cite{merouani2025agentic}. As a representative LLM, we have used GPT-5.1 Thinking, a then-current state of the models, and focused on code generation for a multi-core CPU architecture.
+For our experiments, we have used the PolyBench benchmark suite~\cite{polybench4.2.1}, which was also used by prior work on LLMs for code optimization~\cite{merouani2025agentic}. As a representative LLM, we have used GPT-5.1 with high reasoning effort, a then-current state-of-the-art model, and focused on code generation for a multi-core CPU architecture.
 % To limit the scope of our experiments to fit our budget constraints, we have focused solely on generic multi-core CPU code generation, as the simplest use case allowing for parallelism.
 
-The methodology of our experiments combined prompts with varying specificity of optimization goals (such as suggesting a focus on parallelism and cache locality) with different abstractions (Halide~\cite{ragan2013halide}, Exo~\cite{ikarashi2022exocompilation}, and Noarr~\cite{klepl2024abstractions}) or no abstraction at all. The considered prompts included a na\"{\i}ve prompt that simply directed the LLM to optimize for a multi-core CPU, as well as a prompt that directed the LLM to consider a set of optimization goals or directed it to choose from such goals itself.
+The methodology of our experiments combined prompts with varying specificity of optimization goals (such as suggesting a focus on parallelism and cache locality) with different abstractions (Halide~\cite{ragan2013halide}, Exo~\cite{ikarashi2022exocompilation}, and Noarr~\cite{klepl2024abstractions}) or no abstraction at all. The considered prompts included a na\"{\i}ve prompt that simply directed the LLM to optimize for a multi-core CPU, as well as prompts that either directed the LLM to consider a set of optimization goals or allowed it to choose from such goals itself.
 
-Contrasting our work presented in \cref{sec:human-directed-code-optimization}, more specific prompts suggested optimization strategies generally applicable to a wide variety of algorithms instead of dictating specific design decisions for individual algorithms, shifting from tutoring to more general guidance, which does not require the user to have deep knowledge of the algorithm or the optimization strategies.
+In contrast to our work presented in \cref{sec:human-directed-code-optimization}, the more specific prompts suggested optimization strategies generally applicable to a wide variety of algorithms instead of dictating specific design decisions for individual algorithms, shifting from tutoring to more general guidance, which does not require the user to have deep knowledge of the algorithm or the optimization strategies.
 
-We have also studied an alternative approach that splits the optimization process into two steps. First, directing the LLM to formalize the algorithm and the optimization plan; then, using the LLM to generate code according to the provided optimization plan.
+We have also studied an alternative approach that splits the optimization process into two steps. First, the LLM was directed to formalize the algorithm and the optimization plan; then, it was used to generate code according to the provided optimization plan.
 
 
 \subsection{Results}\label{sec:llms-results}
 
-Our findings have shown that the abstractions optimized for human users generally hindered both the correctness and performance of generated code. More importantly, the results of our study showed that the specificity of the prompts used to guide the LLMs had a greater positive impact on the performance of the generated code compared to the choice of abstractions or the use of the alternative approach of splitting the optimization process into two steps.
+Our findings have shown that, the abstractions designed for human users generally hindered both the correctness and performance of generated code. More importantly, the results of our study showed that the specificity of the prompts used to guide the LLMs had a greater positive impact on the performance of the generated code than either the choice of abstraction or the use of the alternative approach of splitting the optimization process into two steps.
 
-As shown in \cref{fig:llms-results}, the highest performance and correctness of the generated code was achieved with the most specific prompts (\texttt{AllHints} and \texttt{ChooseHints}) and without any abstraction (C --- visualized by a blue line), regardless of the given budget of generated code variants. Further discussion of the results and their implications is available in the original paper~\cite{klepl2026effect}.
+As shown in \cref{fig:llms-results}, the highest performance and correctness of the generated code was achieved with the most specific prompts (\texttt{AllHints} and \texttt{ChooseHints}) and without any abstraction (C, visualized by a blue line), regardless of the given budget of generated code variants. Further discussion of the results and their implications is available in the original paper~\cite{klepl2026effect}.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{img/best_of_k_budget}
-  \caption{(Upper row) the geometric mean of the speedup of the generated code for different prompt strategies and abstractions on the PolyBench/C suite (EXTRALARGE size) compared to the C baselines and (Lower row) mean probability of having at least one correct implementation given a budget of generated code variants~\cite{klepl2026effect}.}%
+  \caption{Upper row: geometric mean of the best speedup achieved for different prompting strategies and abstractions on the PolyBench/C suite (\texttt{EXTRALARGE} size), relative to the C baselines. Lower row: mean probability of obtaining at least one valid implementation within a given budget of independent code-generation attempts~\cite{klepl2026effect}.}%
   \label{fig:llms-results}
 \end{figure}
 
-These results suggest that, while the contemporary abstractions for user-directed code optimization can be beneficial for human users and formal validation of optimization transformations, they also increase LLMs' error rate and hindering their performance when they attempt to generate efficient code for the studied algorithms.
+These results suggest that, while contemporary abstractions for user-directed code optimization can benefit human users and formal validation of optimization transformations, they also restricted the design space available to the LLM, increasing its error rate and hindering its performance when generating efficient code for the studied algorithms.
 
 
 \section{Summary}\label{sec:llms-summary}

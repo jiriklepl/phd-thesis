@@ -32,8 +32,8 @@ thesis.
 - `sources/full/` contains the complete dissertation chapters and front matter.
 - `sources/shared/` contains metadata, macros, and bibliography rendering shared
   by document variants.
-- `sources/short/` contains clearly marked placeholders for a future abbreviated
-  dissertation, which can be compiled with `make short`.
+- `sources/short/` contains the abbreviated dissertation, which can be compiled
+  with `make short`.
 - `references/` contains BibLaTeX databases.
 - `archive/` retains superseded source material and ignored legacy outputs.
 - `slides/` is reserved for dissertation presentation material.

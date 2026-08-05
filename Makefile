@@ -5,6 +5,7 @@ archival_papers = $(patsubst papers/%.pdf,papers/pdfa/%.pdf,$(paper_sources))
 full_sources = $(wildcard sources/full/*.tex)
 shared_sources = $(wildcard sources/shared/*.tex)
 short_sources = $(wildcard sources/short/*.tex)
+short_images = $(wildcard img/*.eps img/*.jpeg img/*.jpg img/*.pdf img/*.png)
 reference_sources = $(wildcard references/*.bib)
 thesis_sources = thesis.tex $(full_sources) $(shared_sources)
 abstract_sources = $(shared_sources)
@@ -24,7 +25,9 @@ thesis.pdf: $(thesis_sources) $(reference_sources) $(archival_papers)
 	lualatex $<
 	lualatex $<
 
-thesis-short.pdf: thesis-short.tex $(short_sources) $(shared_sources)
+thesis-short.pdf: thesis-short.tex $(short_sources) $(shared_sources) $(reference_sources) $(short_images)
+	lualatex $<
+	biber thesis-short
 	lualatex $<
 	lualatex $<
 

@@ -9,7 +9,7 @@ There are many factors that affect the performance of an algorithm on modern hig
 % We explore approaches to transforming data layouts and traversal orders that enable separation of these concerns from other aspects of algorithm design directly in the source code, and thus can be applied to a wide variety of algorithms without compromising further optimization opportunities.
 
 % Optimizing data access patterns is important primarily because modern HPC architectures have specialized hardware features that improve the performance of specific access patterns.
-Most often, efficient data access patterns are characterized by good locality of reference, which means that data accesses are organized in such a way that accesses to nearby data points occur within short time intervals. Similarly, certain access patterns allow for better exploitation of parallelism. Thus, carefully choosing data layouts and their corresponding traversal orders is crucial for achieving efficient algorithm execution on modern HPC architectures.
+An important aspect of efficient data access patterns is good locality of reference, which means that data accesses are organized in such a way that accesses to nearby data points occur within short time intervals. Similarly, certain access patterns allow for better exploitation of parallelism. Thus, carefully choosing data layouts and their corresponding traversal orders is crucial for achieving efficient algorithm execution on modern HPC architectures.
 
 Even simple data structures, such as matrices, can be stored in a variety of memory layouts. In a row-major layout, elements of each row of the matrix are stored contiguously; in a column-major layout, elements of each column are stored contiguously. If an algorithm traverses a matrix row by row, it accesses the elements sequentially in the row-major layout, while it tends to access them with a larger stride in the column-major layout, leading to poorer locality of reference.
 
@@ -25,7 +25,7 @@ Our contributions explore two complementary directions:
 \item abstraction design for separating algorithmic logic from data layout and traversal optimizations, and
 \item the potential of large language models (LLMs) to assist with algorithm design and optimization.
 \end{inparaenum}
-Both directions are motivated by the goal of making algorithm optimization more accessible and automated while improving the performance and portability of scientific applications on modern HPC architectures.
+Both directions are motivated by the goal of making algorithm optimization more accessible and automatable while improving the performance and portability of scientific applications on modern HPC architectures.
 
 We introduce \emph{layout-agnostic} and \emph{traversal-agnostic} abstractions that allow users to express algorithmic logic independently of specific data layouts and traversal orders, enabling users to design and optimize these aspects separately.
 Our approach is based on the composition of small, reusable, and semantically intuitive building blocks that can express a wide variety of data layout and traversal transformations. We demonstrate the applicability of this approach to general scientific computing on CPU, GPU, and distributed architectures, and to domain-specific algorithms such as stencil computations.

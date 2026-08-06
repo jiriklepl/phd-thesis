@@ -13,7 +13,7 @@ The first two sections introduce these concepts in more detail, and the remainin
 
 \section{Layout-agnostic design}\label{sec:layout-agnostic-design}
 
-Layout-agnostic design separates the logical structure of the data (the index space defined by the dimension names) from its physical layout in memory (types and offsets of value elements). Consider \cref{lst:non-agnostic-copy} as an example of a non-layout-agnostic copy algorithm for 2D arrays in \cpp.
+Layout-agnostic design separates the logical structure of the data (the index space defined by its dimensions) from its physical layout in memory (types and offsets of value elements). Consider \cref{lst:non-agnostic-copy} as an example of a non-layout-agnostic copy algorithm for 2D arrays in \cpp.
 
 \begin{lstlisting}[style=C++, caption={A non-layout-agnostic copy algorithm in \cpp}, label={lst:non-agnostic-copy}]
 float* source = new float[__M * __N];
@@ -75,7 +75,7 @@ traverser.for_each([&](auto point) {
 
 This algorithm makes no assumptions about either the layout of the data structure or the traversal order of the algorithm --- it simply specifies an assignment for each element in the data structure. The actual traversal order is encoded in the traverser, which may be given as a parameter to the algorithm just like the data structure itself.
 
-A \emph{traverser} is a view of one or more traversed data structures, and its derived index space is equivalent to the Cartesian product of the unique dimensions occurring in the traversed data structures. The generated points are then applicable to all traversed data structures, as they contain all expected dimensions.
+A \emph{traverser} is a view of one or more traversed data structures, and its derived index space is equivalent to the Cartesian product of the unique dimensions occurring in the traversed data structures. The generated points are then applicable to all traversed data structures, as the points contain all expected dimensions.
 
 This approach offers expressiveness and flexibility that allow it to handle many different algorithms and their optimizations.
 % Similarly to the initialization algorithm, we can define a traversal-agnostic copy algorithm that operates on two data structures, as follows.
@@ -109,7 +109,7 @@ In the first contribution in this line of research, we have proposed abstraction
 
 The main goal of this work was to demonstrate the feasibility of designing composable layouts for layout-agnostic algorithms usable in HPC, which requires that the abstractions do not introduce significant overhead compared to hand-written code. This is a non-trivial requirement that necessitates metaprogramming techniques to achieve zero-overhead abstraction and to allow compile-time constant expressions in the indexing logic of the data structures, so the compiler can make more aggressive optimizations.
 
-The abstractions comprise Noarr structures (representing layouts) and proto-structures (representing transformations of layouts). The base Noarr structure is \lstinline{noarr::scalar<T>()}, which represents a single value of type \lstinline{T} with no dimensions. This structure can be extended using proto-structures like \lstinline{noarr::array<__D, __S>()}, which adds a dimension \lstinline{__D} of compile-time size \lstinline{__S} to the layout, or using \lstinline{noarr::vector<__D>(__S)}, which adds a dimension \lstinline{__D} whose size \lstinline{__S} is specified at runtime. An example of a proto-structure that transforms only the logical structure is \lstinline{noarr::into_blocks<__D, __B>(__S)}\footnote{\lstinline{noarr::into_blocks} was introduced in later versions of the library but provides a good example for this discussion.}, which transforms a dimension \lstinline{__D} into blocks of size \lstinline{__S} enumerated by a new dimension \lstinline{__B}.
+The abstractions comprise Noarr structures (representing layouts) and proto-structures (representing transformations of layouts). The base Noarr structure is \lstinline{noarr::scalar<T>()}, which represents a single value of type \lstinline{T} with no indexing dimensions. This structure can be extended using proto-structures like \lstinline{noarr::array<__D, __S>()}, which adds a dimension \lstinline{__D} of compile-time size \lstinline{__S} to the layout, or using \lstinline{noarr::vector<__D>(__S)}, which adds a dimension \lstinline{__D} whose size \lstinline{__S} is specified at runtime. An example of a proto-structure that transforms only the logical structure is \lstinline{noarr::into_blocks<__D, __B>(__S)}\footnote{\lstinline{noarr::into_blocks} was introduced in later versions of the library but provides a good example for this discussion.}, which transforms a dimension \lstinline{__D} into blocks of size \lstinline{__S} enumerated by a new dimension \lstinline{__B}.
 
 \newlength{\MatrixLayoutsSubfigWidth}
 \setlength{\MatrixLayoutsSubfigWidth}{0.25\textwidth}
@@ -141,9 +141,9 @@ The abstractions comprise Noarr structures (representing layouts) and proto-stru
 \end{figure}
 
 \Cref{fig:matrix-layouts} shows three different layouts of a 2D matrix. Thick solid lines connect elements that are contiguous in memory and differ in only one logical dimension, while dashed lines connect contiguous elements whose logical indices differ in more than one dimension.
-\Cref{fig:matrix-row-major} and \cref{fig:matrix-col-major} show the standard row-major and column-major layouts differing in the physical layout (order of the elements in memory), while \cref{fig:matrix-tiled} shows a tiled row-major layout, which differs from the standard row-major layout in the logical structure (has two additional dimensions enumerating the tiles comprising quadrants of the matrix).
+\Cref{fig:matrix-row-major} and \cref{fig:matrix-col-major} show the standard row-major and column-major layouts differing only in the physical layout (order of the elements in memory), while \cref{fig:matrix-tiled} shows a tiled row-major layout, which differs from the standard row-major layout in the logical structure (has two additional dimensions enumerating the tiles comprising quadrants of the matrix).
 
-We can express these layouts using the proposed abstractions, as shown in \cref{lst:matrix-layouts}, composing base structure \lstinline{noarr::scalar<float>()} with proto-structures using the \lstinline{^} operator\footnote{This example uses syntax consistent with later iterations of the library.}.
+We can express these layouts using the proposed abstractions, as shown in \cref{lst:matrix-layouts}, composing base structure \lstinline{noarr::scalar<float>()} with proto-structures using the \lstinline{^} operator\footnote{This example uses syntax developed in later iterations of the library.}.
 
 \begin{lstlisting}[style=C++, caption={Noarr representations of the layouts in \cref{fig:matrix-layouts}}, label={lst:matrix-layouts},float={htbp}]
 // row-major layout:
@@ -160,7 +160,7 @@ auto tiled_row_major = row_major
                      ^ noarr::into_blocks<'N', 'n'>(__N/2);
 \end{lstlisting}
 
-The proposed abstractions allow Noarr structures to be paired with storage using \lstinline{noarr::bag}; the resulting data structures can then be indexed as shown in \cref{lst:layout-agnostic-copy}.
+The proposed abstractions allow Noarr structures to be paired with storage using \lstinline{noarr::bag}; and the resulting data structures can then be indexed as shown in \cref{lst:layout-agnostic-copy}.
 
 The Noarr structures and their derived data structures also allow for querying properties such as the total size of the data structure (in bytes), the length of a given dimension (in elements), or the offset of a particular element in memory, as shown in \cref{lst:layout-agnostic-query}.
 
@@ -195,7 +195,7 @@ This required extending the design of the abstractions to encode the traversal o
 For example, a signature of the traverser in \cref{lst:traversal-agnostic-initialization} could be $\text{\lstinline{'M'}} \to \text{\lstinline{'N'}} \to \text{\lstinline{void}}$, which encodes \lstinline{M} as the outer dimension and \lstinline{N} as the inner dimension of the traversal (forming a loop nest), with \lstinline{void} denoting the end of the hierarchy (replaced with the associated element type in data structure signatures).
 
 % To express traversal transformations and derived views of data structures, we have introduced building blocks that, instead of being just for data layout construction, can be used for defining various sub-layouts (such as submatrices), renaming dimensions, and reordering the logical hierarchies of the dimensions.
-This allows for defining derived views of data structures and traversers, such as submatrices, or traversers with restricted, reordered, or renamed dimensions. The paper artifact documents how these building blocks can be extended by users of the proposed abstractions, allowing them to define their own transformations and views of data structures and traversers, including domain-specific ones.
+This allows for defining derived views of data structures and traversals, such as submatrices, or traversers with restricted, reordered, or renamed dimensions. The paper artifact documents how these building blocks can be extended by users of the proposed abstractions, allowing them to define their own transformations and views of data structures and traversers, including domain-specific ones.
 
 
 % \subsection{Results}\label{sec:traversal-agnostic-results}
@@ -339,7 +339,7 @@ The paper presents a study comparing the proposed approach with prior works that
 
 \subsection{Results}\label{sec:layout-agnostic-results}
 
-The experimental evaluation showed that the proposed approach, combined with the abstractions from the previous contributions, achieves performance comparable to equivalent hand-written code, regardless of the layout of the involved data structures, while selected prior works did not match the performance of hand-written code in many cases.
+The experimental evaluation showed that the proposed approach, combined with the abstractions from the previous contributions, achieves performance comparable to equivalent hand-written MPI code, regardless of the layout of the involved data structures, while selected prior works did not match the performance of hand-written code in many cases.
 
 For the evaluation, we performed a case study on distributed matrix multiplication, with each of the three matrices in row-major or column-major layout. The computation started by scattering inputs corresponding to tiles of the output from a chosen root process to the available worker processes, followed by local computation of the output tiles, and finally gathering the results back to the root process. The results are visualized in \cref{fig:noarr-mpi}.
 
@@ -358,9 +358,9 @@ The main added benefit of the proposed approach is that the layouts can be easil
 
 \section{Abstractions for stencil computations}\label{sec:stencil-computations}
 
-After demonstrating the feasibility and practicality of these principles in HPC for higher-level algorithm design, we focused on applying them to iterative stencil computations on finite state spaces~--- \emph{cellular automata} (CA), which are widely used in scientific computing; for example, when simulating physical and biological processes~\cite{mohebbi2020implementation,babu2021modeling,valentim2023cellular}. We presented this work in \contribref{brabec2025cellato}.
+After demonstrating the feasibility and practicality of layout and traversal-agnostic design in HPC for higher-level algorithm design, we focused on applying it to iterative stencil computations on finite state spaces~--- \emph{cellular automata} (CA), which are widely used in scientific computing; for example, when simulating physical and biological processes~\cite{mohebbi2020implementation,babu2021modeling,valentim2023cellular}. We presented this work in \contribref{brabec2025cellato}.
 
-CA apply fixed neighborhood-based computations (stencils) to each \emph{cell} of a multidimensional grid, where the output of one iteration becomes the input for the next iteration. For this class of algorithms, spatial and temporal locality are crucial for performance, and many approaches improve them by blocking the computation in space and time~\cite{afanasyev2021gridtools,christen2011patus,matsumura2020an5d}. CA also allow for representation-level optimizations via \emph{bit-packing} techniques, which store multiple cell states in a single machine word and compute them in a bit-parallel fashion. The novelty of this work lies in applying layout-agnostic and traversal-agnostic design principles to decouple CA rule definitions from data representations, evaluation strategies, and traversals, enabling, in particular, bit-packed representations and bitwise evaluation without changing the rule definitions.
+CA apply fixed neighborhood-based computations to each \emph{cell} of a multidimensional grid, where the output of one iteration becomes the input for the next iteration. For this class of algorithms, spatial and temporal locality are crucial for performance, and many approaches improve them by blocking the computation in space and time~\cite{afanasyev2021gridtools,christen2011patus,matsumura2020an5d}. CA also allow for representation-level optimizations via \emph{bit-packing} techniques, which store multiple cell states in a single machine word and compute them in a bit-parallel fashion. The novelty of this work lies in applying layout-agnostic and traversal-agnostic design principles to decouple CA rule definitions from data representations, evaluation strategies, and traversals, enabling, in particular, bit-packed representations and bitwise evaluation without changing the rule definitions.
 
 % This work applies the design principles from our earlier contributions at a deeper level, as it directly targets the computational logic of stencil computations.
 In this work, we have proposed a \cpp-embedded domain-specific language (DSL), Cellato, that allows the user to express the computational logic of CA in a way that is independent of both the traversal order of the algorithm and the layout of the data, including the specifics of state encoding. Similarly to previous contributions, this is achieved by using metaprogramming capabilities of \cpp to achieve zero-overhead abstractions that enable

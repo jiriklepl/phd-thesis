@@ -45,7 +45,7 @@ In the following subsections, we discuss the high-level DSLs and annotation-base
 
 \subsection{Domain-specific languages (DSLs)}\label{sec:dsl}
 
-DSLs are specialized programming languages designed for specific computing domains, such as deep learning, stencil computations, or image processing. By providing domain-specific constructs, they can offer more concise and readable syntax compared to general-purpose \cpp code, as well as a high level of expressiveness and optimization potential based on domain-specific knowledge. However, they require a separate compilation pipeline or runtime system to execute the code written in the DSL. They also require users to learn DSL-specific concepts, which may not translate well to other domains.
+DSLs are specialized programming languages designed for specific computing domains, such as deep learning, stencil computations, or image processing. By providing domain-specific constructs, they can offer more concise and readable syntax compared to general-purpose \cpp code, as well as a high level of expressiveness and optimization potential based on domain-specific knowledge. However, they require a separate compilation pipeline or runtime system to execute the code written in the DSL\@. They also require users to learn DSL-specific concepts, which may not translate well to other domains.
 
 There are many DSLs with varying characteristics and design principles that have been developed for optimizing code in various domains of high-performance computing applications. A common theme among the prominent DSLs is the strict separation of the algorithmic logic from the optimization, together with guarantees or checks that the optimization steps do not change the semantics of the original code.
 

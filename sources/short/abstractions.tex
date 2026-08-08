@@ -8,7 +8,7 @@ Yet, many works in the area of HPC have incidentally applied some of the princip
 
 % We consider an algorithm design to be concern-agnostic (e.g., layout-agnostic) if it does not encode specific assumptions about the concern, thus supporting separation of concerns in the given application. For example, a layout-agnostic algorithm does not access a data structure using explicit memory offsets; instead, it relies solely on the logical structure of the data (its index space).
 
-The first two sections introduce these concepts in more detail, and the remaining sections present our consecutive peer-reviewed contributions in the area of native abstractions for this design style in HPC.
+The first two sections introduce these concepts in more detail, and the remaining sections present our consecutive peer-reviewed contributions in the area of native abstractions for this design style in HPC\@.
 
 
 \section{Layout-agnostic design}\label{sec:layout-agnostic-design}
@@ -285,38 +285,26 @@ For algorithm implementations with no layout or traversal optimizations applied,
   \caption{Comparison of code complexity metrics between the baseline C code and the Noarr code (negative difference means that Noarr is better)~\cite{klepl2024abstractions}}%
   \label{tab:code-complexity}
   \scriptsize\centering%
-  \begin{tabular}{|l|c|c|c|}
-    \hline
+  \begin{tabular}{lccc}
+    \toprule
     \textbf{Metric} & \textbf{Baseline C} & \textbf{Noarr} & \textbf{Difference} \\
-    \hline
+    \midrule
     Lines of code & $452$ & $393$ & $-13.1\%$ \\
-    \hline
     Character count & $14424$ & $17558$ & $+21.7\%$ \\
-    \hline
     Code tokens & $6157$ & $6551$ & $+6.4\%$ \\
-    \hline
     Gzipped code size & $6011$ & $7447$ & $+23.9\%$ \\
-    \hline
     Gzipped archive size & $3446$ & $4115$ & $+19.4\%$ \\
-    \hline
-    \hline
+    \midrule
     McCabe complexity & $189$ & $153$ & $-19.0\%$ \\
-    \hline
     Halstead Length & $6127$ & $6521$ & $+6.4\%$ \\
-    \hline
     Halstead Vocabulary & $156$ & $205$ & $+31.4\%$ \\
-    \hline
     Halstead Volume & $44637.7$ & $50077.9$ & $+12.2\%$ \\
-    \hline
     Halstead Difficulty & $308.6$ & $371.6$ & $+20.2\%$ \\
-    \hline
     Halstead Effort & $1.38 \cdot 10^7$ & $1.86 \cdot 10^7$ & $+34.9\%$ \\
-    \hline
-    \hline
+    \midrule
     Indexation complexity & $525$ & $332$ & $-36.8\%$ \\
-    \hline
     Subscript complexity & $1126$ & $332$ & $-70.5\%$ \\
-    \hline
+    \bottomrule
   \end{tabular}
 \end{table}
 

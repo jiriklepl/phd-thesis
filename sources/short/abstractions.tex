@@ -367,7 +367,7 @@ In this work, we have proposed a \cpp-embedded domain-specific language (DSL), C
 %  specialization of the computational logic for different layouts and traversal orders while allowing for aggressive optimization by the compiler.
 efficient evaluation of the computational logic for the given architecture and evaluation strategy.
 
-The abstractions support running the computations expressed in the proposed DSL on both CPU and GPU architectures and allow matching data representations and evaluators, as well as traversal and parallelization strategies, to be selected without modifying the computational logic. These components can be applied to any CA expressible in the proposed DSL\@.
+The abstractions support running the computations expressed in Cellato on both CPU and GPU architectures and allow matching data representations and evaluators, as well as traversal and parallelization strategies, to be selected without modifying the computational logic. These components can be applied to any CA in Cellato\@.
 
 
 \subsection{Results and future work}\label{sec:stencil-computations-results}
@@ -383,7 +383,7 @@ We conducted a case study on four CA with different state spaces and complexitie
 
 Because the layouts, evaluators, and traversers are decoupled from the CA rule definitions, the developer of a high-performance application can experiment with different optimizations to find the best configuration for a specific use case.
 
-In our ongoing follow-up work on bit-plane encoding and bitwise vectorization~\cite{brabec2026improving}, we are investigating strategies that can accelerate CA computations depending on the state space and computational logic. This opens up a new optimization space for CA expressible in Cellato.
+In our ongoing follow-up work on bit-plane encoding and bitwise vectorization~\cite{brabec2026improving}, we are investigating strategies that can accelerate CA computations depending on the state space and computational logic, extending the optimization space available in Cellato.
 
 
 \section{Summary}\label{sec:abstractions-summary}

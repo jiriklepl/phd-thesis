@@ -62,10 +62,20 @@
 %\usepackage{yfonts}
 %\renewcommand{\familydefault}{\frakdefault}
 \usepackage[natbib,style=iso-numeric,sorting=none,sortcites=true,maxcitenames=1]{biblatex}
+% ,maxbibnames=2,giveninits=true,shortnumeration=true
 %\DeclareNameAlias{sortname}{family-given}
 %\DeclareNameAlias{default}{family-given}
 \DeclareDelimFormat{namelabeldelim}{~}
+% \DefineBibliographyStrings{english}{
+%   urlfrom = {{}{}},
+%   urlalso = {{}{}},
+% }
 \renewcommand*{\bibfont}{\scriptsize\hfuzz=2pt\sloppy}
+% \setlength{\bibitemsep}{0pt}
+% \setlength{\bibparsep}{0pt}
+% \setlength{\biblabelsep}{0.5em}
+% \AtEveryBibitem{\clearlist{publisher}\clearlist{organization}}
+
 
 \usepackage{booktabs}
 \usepackage{xcolor}
@@ -95,7 +105,17 @@
 
 \usepackage{titlesec}
 \titlespacing*{\chapter}{0pt}{0ex}{2ex}
+% \titlespacing*{\chapter}{0pt}{0ex}{.25ex}
 \titleformat{\chapter}{\LARGE\bfseries\sloppy}{\thechapter}{1em}{}{}
+
+% \titlespacing*{\section}{0pt}{1ex}{0.25ex}
+% \titleformat{\section}{\Large\bfseries\sloppy}{\thesection}{1em}{}{}
+
+% \titlespacing*{\subsection}{0pt}{1ex}{0.25ex}
+% \titleformat{\subsection}{\large\bfseries\sloppy}{\thesubsection}{1em}{}{}
+
+% \titlespacing*{\subsubsection}{0pt}{1ex}{0.25ex}
+% \titleformat{\subsubsection}{\normalsize\bfseries\sloppy}{\thesubsubsection}{1em}{}{}
 
 \clearcaptionsetup{algorithm}
 \clearcaptionsetup{listing}

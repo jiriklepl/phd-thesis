@@ -109,7 +109,9 @@ In the first contribution in this line of research, we have proposed abstraction
 
 The main goal of this work was to demonstrate the feasibility of designing composable layouts for layout-agnostic algorithms usable in HPC, which requires that the abstractions do not introduce significant overhead compared to hand-written code. This is a non-trivial requirement that necessitates metaprogramming techniques to achieve zero-overhead abstraction and to allow compile-time constant expressions in the indexing logic of the data structures, so the compiler can make more aggressive optimizations.
 
-The abstractions comprise Noarr structures (representing layouts) and proto-structures (representing transformations of layouts). The base Noarr structure is \lstinline{noarr::scalar<T>()}, which represents a single value of type \lstinline{T} with no indexing dimensions. This structure can be extended using proto-structures like \lstinline{noarr::array<__D, __S>()}, which adds a dimension \lstinline{__D} of compile-time size \lstinline{__S} to the layout, or using \lstinline{noarr::vector<__D>(__S)}, which adds a dimension \lstinline{__D} whose size \lstinline{__S} is specified at runtime. An example of a proto-structure that transforms only the logical structure is \lstinline{noarr::into_blocks<__D, __B>(__S)}\footnote{\lstinline{noarr::into_blocks} was introduced in later versions of the library but provides a good example for this discussion.}, which transforms a dimension \lstinline{__D} into blocks of size \lstinline{__S} enumerated by a new dimension \lstinline{__B}.
+The abstractions comprise Noarr structures (representing layouts) and proto-structures (representing transformations of layouts).
+% The base Noarr structure is \lstinline{noarr::scalar<T>()}, which represents a single value of type \lstinline{T} with no indexing dimensions. This structure can be extended using proto-structures like \lstinline{noarr::array<__D, __S>()}, which adds a dimension \lstinline{__D} of compile-time size \lstinline{__S} to the layout, or using \lstinline{noarr::vector<__D>(__S)}, which adds a dimension \lstinline{__D} whose size \lstinline{__S} is specified at runtime. An example of a proto-structure that transforms only the logical structure is \lstinline{noarr::into_blocks<__D, __B>(__S)}\footnote{\lstinline{noarr::into_blocks} was introduced in later versions of the library but provides a good example for this discussion.}, which transforms a dimension \lstinline{__D} into blocks of size \lstinline{__S} enumerated by a new dimension \lstinline{__B}.
+A Noarr structure can describe a single scalar value with no indexing dimensions, or a complex layout with multiple dimensions (e.g., multidimensional arrays and matrices, and their tiled variants, or concatenations of multiple layouts). The construction of a Noarr structure is typically performed by composing a base structure with proto-structures --- each such proto-structure represents a specific transformation of the layout, such as adding a new dimension, splitting a dimension into blocks, or concatenating multiple layouts.
 
 \newlength{\MatrixLayoutsSubfigWidth}
 \setlength{\MatrixLayoutsSubfigWidth}{0.25\textwidth}
@@ -140,10 +142,14 @@ The abstractions comprise Noarr structures (representing layouts) and proto-stru
   \label{fig:matrix-layouts}
 \end{figure}
 
-\Cref{fig:matrix-layouts} shows three different layouts of a 2D matrix. Thick solid lines connect elements that are contiguous in memory and differ in only one logical dimension, while dashed lines connect contiguous elements whose logical indices differ in more than one dimension.
+\Cref{fig:matrix-layouts} shows three different layouts of a 2D matrix.
+% Thick solid lines connect elements that are contiguous in memory and differ in only one logical dimension, while dashed lines connect contiguous elements whose logical indices differ in more than one dimension.
+The line connecting the elements in each layout shows the order in which the elements are stored in memory. Dashed segments represent boundaries between logically contiguous elements (all elements connected by a solid line differ in only one logical dimension --- for example, row index).
 \Cref{fig:matrix-row-major} and \cref{fig:matrix-col-major} show the standard row-major and column-major layouts differing only in the physical layout (order of the elements in memory), while \cref{fig:matrix-tiled} shows a tiled row-major layout, which differs from the standard row-major layout in the logical structure (has two additional dimensions enumerating the tiles comprising quadrants of the matrix).
 
-We can express these layouts using the proposed abstractions, as shown in \cref{lst:matrix-layouts}, composing base structure \lstinline{noarr::scalar<float>()} with proto-structures using the \lstinline{^} operator\footnote{This example uses syntax developed in later iterations of the library.}.
+% We can express these layouts using the proposed abstractions, as shown in \cref{lst:matrix-layouts}, composing base structure \lstinline{noarr::scalar<float>()} with proto-structures using the \lstinline{^} operator\footnote{This example uses syntax developed in later iterations of the library.}.
+
+\Cref{lst:matrix-layouts} shows possible Noarr representations of the layouts in \cref{fig:matrix-layouts}. The three defined layouts are composed from the base structure \lstinline{scalar} and proto-structures, connected using the \lstinline{^} operator; the order of the proto-structures in the composition affects the order of the elements in memory. \lstinline{array} extends the base layout with a new dimension of a given size, while \lstinline{into_blocks} transforms a dimension into blocks of a given size, enumerated by a new dimension.
 
 \begin{lstlisting}[style=C++, caption={Noarr representations of the layouts in \cref{fig:matrix-layouts}}, label={lst:matrix-layouts},float={htbp}]
 // row-major layout:
@@ -160,16 +166,16 @@ auto tiled_row_major = row_major
                      ^ noarr::into_blocks<'N', 'n'>(__N/2);
 \end{lstlisting}
 
-The proposed abstractions allow Noarr structures to be paired with storage using \lstinline{noarr::bag}; and the resulting data structures can then be indexed as shown in \cref{lst:layout-agnostic-copy}.
+The proposed abstractions allow Noarr structures to be paired with a storage; and the resulting data structures can then be indexed as shown in \cref{lst:layout-agnostic-copy}. Automatic management of the storage and non-owning views of externally managed storage are both supported.
 
-The Noarr structures and their derived data structures also allow for querying properties such as the total size of the data structure (in bytes), the length of a given dimension (in elements), or the offset of a particular element in memory, as shown in \cref{lst:layout-agnostic-query}.
+Noarr structures and their derived data structures also allow for querying various properties such as the total size of the data structure (in bytes), the length of a given dimension (in elements), or the offset of a particular element in memory. This allows for implementing algorithms that depend on these properties without relying on explicit passing of the properties as extra parameters, which reduces the risk of inconsistencies in the code --- for example, using size of an unrelated data structure as an upper bound for a loop iterating over a different data structure.
 
-\begin{lstlisting}[style=C++, caption={Querying properties of a data structure}, label={lst:layout-agnostic-query}]
-auto size = row_major | noarr::get_size();
-auto length = row_major | noarr::get_length<'M'>();
-auto point = idx<'M', 'N'>(i, j);
-auto offset = row_major | noarr::offset(point);
-\end{lstlisting}
+% \begin{lstlisting}[style=C++, caption={Querying properties of a data structure}, label={lst:layout-agnostic-query}]
+% auto size = row_major | noarr::get_size();
+% auto length = row_major | noarr::get_length<'M'>();
+% auto point = idx<'M', 'N'>(i, j);
+% auto offset = row_major | noarr::offset(point);
+% \end{lstlisting}
 
 % The \lstinline{|} (pipe) operator is used in favor of the more common \lstinline{.} (dot) operator to allow for easier extension of supported queries and to avoid the need for the \lstinline{template} keyword when using template methods.
 

@@ -363,7 +363,7 @@ The experimental evaluation showed that the proposed approach, combined with the
 
 For the evaluation, we performed a case study on distributed matrix multiplication, with each of the three matrices in row-major or column-major layout. The computation started by scattering inputs corresponding to tiles of the output from a chosen root process to the available worker processes, followed by local computation of the output tiles, and finally gathering the results back to the root process. The results are visualized in \cref{fig:noarr-mpi}.
 
-The visualization shows two extreme cases --- small matrices (\texttt{MINI}) and large matrices (\texttt{EXTRALARGE}). The \texttt{MINI} case highlights how well the different approaches handle communication overhead (MPI datatype construction and the communication itself), while the \texttt{EXTRALARGE} case highlights how well they handle the local computation of the output tiles. In both cases, the Noarr-based implementation achieves performance matching the hand-written MPI implementation.
+The visualization shows two extreme cases --- small matrices (\texttt{MINI}) and large matrices (\texttt{EXTRALARGE}). The \texttt{MINI} case highlights how well the different approaches handle communication overhead (MPI datatype construction and the communication itself), while the \texttt{EXTRALARGE} case highlights how well they handle the local computation of the output tiles. In both cases, the Noarr-based implementation achieves performance matching the hand-written MPI implementation, showing zero-overhead abstraction.
 
 \begin{figure}[htbp]
   \centering
@@ -408,9 +408,11 @@ In our ongoing follow-up work on bit-plane encoding and bitwise vectorization~\c
 \section{Summary}\label{sec:abstractions-summary}
 
 We have presented the concept of layout-agnostic and traversal-agnostic design and shown that these design principles can be applied to HPC via abstractions that rely solely on the metaprogramming capabilities of \cpp.
-% This shows that the proposed approach is directly applicable to real-world HPC applications, as the proposed abstractions fit existing \cpp toolchains and do not require any custom compiler or runtime support.
+
 Throughout the series of contributions studying these design principles, we have shown their main benefits for CPU-based and GPU-based parallel computing, distributed computing, and domain-specific applications such as cellular automata (CA).
 
 The novelty of this line of research lies in developing a general-purpose native abstraction for unified layout-agnostic and traversal-agnostic design in HPC, and in the application of these principles to CA with added support for domain-specific optimizations such as bit-packing and bitwise evaluation of the computational logic. Together with the explored autotuning techniques, this allows for automated optimization of the algorithms for a given target architecture, while keeping the complexity of the developed algorithms manageable.
 
 This area still has many open questions and challenges, including its applicability to other specialized domains, support for sparse data structures, and the combination of abstractions for general computational logic with data layout and traversal abstractions, which would open up further optimization opportunities.
+
+The proposed abstractions enable developers to focus on the computational logic of their algorithms, while the layout and traversal optimizations, including parallelization, can be applied independently, without modifying the core logic of the algorithms or sacrificing performance. Furthermore, the proposed abstractions do not require any additional runtime support, and are easily injectable into existing codebases.

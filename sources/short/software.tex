@@ -31,7 +31,7 @@ Cellato\footnote{Available at \url{https://github.com/ParaCoToUl/cellato} along 
 
 The central concept of the library is the abstract cell computation specification, user-defined via the \emph{Cellato DSL}. It is independent of specific memory layouts and encodings, evaluation strategies, and traversal patterns. The library can then parallelize the computation on a given CPU or GPU backend via the following components.
 
-The \emph{memory layout} component specifies the encoding of the cellular automaton state and the layout of the grid. Most notably, Cellato provides bit-array and bit-plane encodings, which allow for space-efficient storage of the cell states.
+The \emph{memory layout} component specifies the encoding of the cellular automaton state and the layout of the grid. Most notably, Cellato provides bit-array and bit-plane encodings, which enable more space-efficient storage of cell states.
 % , improving memory bandwidth utilization and cache locality.
 
 The \emph{evaluator} component specifies how the Cellato DSL is interpreted, computing the next state of the grid cells based on the current state and the cell computation specification. Its implementation is tightly coupled with the memory layout to exploit the specific encoding of the state. For example, the evaluator for the bit-plane encoding uses bitwise operations to compute many cells together.

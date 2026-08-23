@@ -26,6 +26,9 @@ In addition to that, you can compile `abstracts/abstract-en.tex` and
 English and Czech. The abstract is also submitted in SIS together with the
 thesis.
 
+Run `make publications` to build `list-of-publications.pdf`, a stand-alone
+copy of the publication references from the short thesis.
+
 ## Repository layout
 
 - `abstracts/` contains the stand-alone English and Czech abstracts.

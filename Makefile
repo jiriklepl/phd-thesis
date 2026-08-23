@@ -18,6 +18,8 @@ all: thesis.pdf abstract-en.pdf abstract-cs.pdf
 
 short: thesis-short.pdf
 
+publications: list-of-publications.pdf
+
 # LaTeX must be run multiple times to get references right
 thesis.pdf: $(thesis_sources) $(reference_sources) $(archival_papers)
 	lualatex $<
@@ -28,6 +30,12 @@ thesis.pdf: $(thesis_sources) $(reference_sources) $(archival_papers)
 thesis-short.pdf: thesis-short.tex $(short_sources) $(shared_sources) $(reference_sources) $(short_images)
 	lualatex $<
 	biber thesis-short
+	lualatex $<
+	lualatex $<
+
+list-of-publications.pdf: list-of-publications.tex thesis-short.tex $(shared_sources) $(reference_sources)
+	lualatex $<
+	biber list-of-publications
 	lualatex $<
 	lualatex $<
 
@@ -81,9 +89,10 @@ clean:
 		;
 	rm -f thesis.pdf abstract.pdf abstract-en.pdf abstract-cs.pdf pdfa-thesis.pdf thesis-core.pdf
 	rm -f thesis-short.pdf
+	rm -f list-of-publications.pdf
 	rm -rf papers/pdfa validation
 
 distclean: clean
 	rm -rf .cache/cuni-thesis-validator
 
-.PHONY: all short abstract clean distclean validate validate-short
+.PHONY: all short publications abstract clean distclean validate validate-short

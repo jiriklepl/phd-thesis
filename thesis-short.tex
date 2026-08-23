@@ -1,4 +1,9 @@
 \input sources/shared/metadata.tex
+\ifdefined\PublicationListOnly
+\def\ThesisTitleXMP{List of publications}
+\def\ThesisKeywordsXMP{}
+\def\AbstractXMP{}
+\fi
 \input sources/shared/xmp.tex
 
 \documentclass[10pt,a5paper,oneside]{report}
@@ -127,6 +132,11 @@
 
 %%% Title page and various mandatory informational pages
 \begin{document}
+\ifdefined\PublicationListOnly
+\pagenumbering{gobble}
+\section*{List of publications}
+\input{sources/shared/publication-references}
+\else
 \input{sources/short/title}
 \tableofcontents
 
@@ -148,4 +158,5 @@
 \input{sources/shared/bibliography}
 
 \input{sources/short/publications}
+\fi
 \end{document}

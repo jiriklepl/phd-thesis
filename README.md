@@ -29,12 +29,16 @@ thesis.
 Run `make publications` to build `list-of-publications.pdf`, a stand-alone
 copy of the publication references from the short thesis.
 
+Run `make resume` to build `resume.pdf`. Its content lives in
+`sources/resume/` and reuses the thesis metadata and faculty logo.
+
 ## Repository layout
 
 - `abstracts/` contains the stand-alone English and Czech abstracts.
 - `sources/full/` contains the complete dissertation chapters and front matter.
 - `sources/shared/` contains metadata, macros, and bibliography rendering shared
   by document variants.
+- `sources/resume/` contains the sections of the stand-alone resume.
 - `sources/short/` contains the abbreviated dissertation, which can be compiled
   with `make short`.
 - `references/` contains BibLaTeX databases.

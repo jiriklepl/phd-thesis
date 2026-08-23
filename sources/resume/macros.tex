@@ -1,0 +1,35 @@
+% Compact list and entry helpers used by the resume sections.
+\newcommand{\resumeItem}[1]{\item\small #1}
+
+\newcommand{\resumeSubheading}[4]{%
+  \item
+  \begin{tabular*}{\linewidth}[t]{l@{\extracolsep{\fill}}r}
+    \textbf{#1} & #2 \\
+    \textit{\small #3} & \textit{\small #4} \\
+  \end{tabular*}
+}
+
+\newcommand{\resumeProjectHeading}[2]{%
+  \item
+  \begin{tabular*}{\linewidth}{l@{\extracolsep{\fill}}r}
+    \small #1 & \small #2 \\
+  \end{tabular*}
+}
+
+\newcommand{\resumeSubHeadingListStart}{%
+  \begin{itemize}[leftmargin=0pt,label={},itemsep=0.35em,topsep=0.2em]
+}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{%
+  \begin{itemize}[leftmargin=1.35em,itemsep=0.1em,topsep=0.15em,parsep=0pt]
+}
+\newcommand{\resumeItemListEnd}{\end{itemize}}
+
+\newcommand{\resumePublication}[4]{%
+  \item\small
+  \href{https://doi.org/#4}{\textbf{#2}}.
+  \textit{#3}, #1.
+}
+
+\definecolor{ResumeIcon}{RGB}{0,0,0}
+\newcommand{\seticon}[1]{\textcolor{ResumeIcon}{\csname #1\endcsname}}

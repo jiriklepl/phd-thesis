@@ -1,0 +1,48 @@
+% Shared thesis metadata is the source of truth for the inferrable resume fields.
+\input{sources/shared/metadata.tex}
+
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{fontawesome5}
+\usepackage[a4paper,margin=1.35cm,footskip=0.6cm]{geometry}
+\usepackage{titlesec}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{enumitem}
+\usepackage[
+  unicode,
+  hidelinks,
+  pdftitle={Resume -- \ThesisAuthor},
+  pdfauthor={\ThesisAuthor}
+]{hyperref}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\usepackage{graphicx}
+\usepackage{iftex}
+\usepackage[default]{lato}
+
+\ifpdftex
+\input{glyphtounicode}
+\pdfgentounicode=1
+\fi
+
+\pagestyle{empty}
+\urlstyle{same}
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0pt}
+
+\titleformat{\section}{\bfseries\raggedright\large}{}{0em}{}[\color{black}\titlerule]
+\titlespacing*{\section}{0pt}{0.7em}{0.35em}
+
+\input{sources/resume/macros}
+
+\begin{document}
+
+\input{sources/resume/header}
+\input{sources/resume/education}
+\input{sources/resume/experience}
+\input{sources/resume/projects}
+\input{sources/resume/publications}
+\input{sources/resume/skills}
+
+\end{document}

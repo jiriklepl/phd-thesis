@@ -229,7 +229,9 @@ This work focuses on practical aspects of the proposed abstractions, including t
 
 The main benefit of the proposed abstractions is enabling algorithms to be expressed in a way that allows the developer to easily modify the layouts of data structures and the traversal order without having to modify the algorithms, allowing for optimization by applying different transformations to the layouts and traversal orders.
 
-We have also shown that the proposed abstractions can be easily integrated with established autotuning techniques~\cite{ansel2014opentuner,akiba2019optuna,rasch2018atf} in such a way that the autotuning configuration resides in the same codebase as the algorithm itself.
+We have also shown that the proposed abstractions can be easily integrated with established autotuning techniques~\cite{ansel2014opentuner,akiba2019optuna,rasch2018atf} via a separate autotuning interface in such a way that the autotuning configuration resides in the same codebase as the algorithm itself.
+
+The approach allows for defining the different algorithmic choices (and even compiler flags) independently of the used autotuning backend and then using them in the code directly, both in the same source code.
 
 
 \subsection{Results}\label{sec:abstractions-results}
@@ -332,11 +334,13 @@ The separation of concerns enabled by the proposed abstractions keeps the comple
 
 \subsubsection{Autotuning}\label{sec:abstractions-autotuning}
 
-To evaluate the capability for autotuning, we have implemented integration with the OpenTuner framework~\cite{ansel2014opentuner}, Optuna~\cite{akiba2019optuna}, and ATF~\cite{rasch2018atf}. The approach allows for defining the different algorithmic choices (and even compiler flags) independently of the used autotuning backend and then using them in the code directly, both in the same source code.
+% To evaluate the capability for autotuning, we have implemented integration with the OpenTuner framework~\cite{ansel2014opentuner}, Optuna~\cite{akiba2019optuna}, and ATF~\cite{rasch2018atf}. The approach allows for defining the different algorithmic choices (and even compiler flags) independently of the used autotuning backend and then using them in the code directly, both in the same source code.
+
+To evaluate the autotuning capabilities of the proposed autotuning interface, we have implemented proof-of-concept integration with the OpenTuner framework~\cite{ansel2014opentuner}, Optuna~\cite{akiba2019optuna}, and ATF~\cite{rasch2018atf}. The three backends represent different design philosophies (Optuna uses ad-hoc construction of the search space for the parameters) and programming languages (ATF is implemented in \cpp, while the rest in Python).
 
 The autotuning specification is defined via prepared macros that, for the chosen autotuning backend, prepare a script to tune the performance of the application based on the specified parameters (e.g., choices between different transformations or numeric variables). This simplifies appropriately matching the parameters in the application with their representations in the associated tuning script, avoiding possible errors and redundancy (defining each parameter once in the application code and once in the tuning script).
 
-As shown in~\cref{fig:autotuning}, the \cpp source code with an autotuning specification is, depending on a simple compiler flag compiled into one of two programs: \emph{script generator}, which generates the tuning script, or \emph{tuned executable}, which represents the application with inserted values for the tuned choices that are either passed as compiler macros (static parameters) or given to the application as dynamic parameters, which might be useful for avoiding unnecessary recompilation, as contemporary compilers show increased compilation times for heavily abstracted code.
+As shown in~\cref{fig:autotuning}, the \cpp source code with an autotuning specification is, depending on a simple compiler flag compiled into one of two programs: \emph{script generator}, which generates the tuning script, or \emph{tuned executable}, which represents the application with inserted values for the tuned choices that are either passed as compiler macros (static parameters) or given to the application as dynamic parameters, which might be useful for avoiding unnecessary recompilation, as contemporary compilers show increased compilation times for heavily abstracted code. The ATF backend allows for directly tuning the application instead of generating a separate tuning script, which simplifies the autotuning process, unifying Script generator and Autotuner runtime into a single step.
 
 \begin{figure}[htbp]
   \centering

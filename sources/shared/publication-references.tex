@@ -1,7 +1,16 @@
-\def\showpublication#1{\begin{refsection}\fullcite{#1}\end{refsection}}
+\makeatletter
+\DeclareCiteCommand{\fullcite}[\def\blx@maxcitenames{99}]
+  {\usebibmacro{prenote}}
+  {\usedriver
+     {\DeclareNameAlias{sortname}{default}}
+     {\thefield{entrytype}}}
+  {\multicitedelim}
+  {\usebibmacro{postnote}}
+\makeatother
+\def\showpublication#1{\fullcite{#1}}
 \begingroup
 \footnotesize\sloppy
-\begin{enumerate}[(1),itemsep=0.2ex]
+\begin{enumerate}[(1),itemsep=0ex]
   \item\showpublication{smelko2022astute}\label{pub:smelko2022astute}
   \item\showpublication{klepl2024pure}\label{pub:klepl2024pure}
   \item\showpublication{klepl2024abstractions}\label{pub:klepl2024abstractions}
@@ -13,7 +22,7 @@
 \begin{center}
 \noindent{\footnotesize\textit{The following publications are not included in the thesis.}}
 \end{center}
-\begin{enumerate}[(1),itemsep=0.2ex,resume]
+\begin{enumerate}[(1),itemsep=0ex,resume]
   \item\showpublication{smelko2024gpu}\label{pub:smelko2024gpu}
   \item\showpublication{brabec2025slaying}\label{pub:brabec2025slaying}
   \item\showpublication{hanak2026knn}\label{pub:hanak2026knn}

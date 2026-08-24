@@ -66,15 +66,15 @@
 \counterwithout{table}{chapter}
 %\usepackage{yfonts}
 %\renewcommand{\familydefault}{\frakdefault}
-\usepackage[natbib,style=iso-numeric,sorting=none,sortcites=true,maxcitenames=1]{biblatex}
+\usepackage[natbib,style=iso-numeric,sorting=none,sortcites=true]{biblatex}
 % ,maxbibnames=2,giveninits=true,shortnumeration=true
 %\DeclareNameAlias{sortname}{family-given}
 %\DeclareNameAlias{default}{family-given}
 \DeclareDelimFormat{namelabeldelim}{~}
-% \DefineBibliographyStrings{english}{
-%   urlfrom = {{}{}},
-%   urlalso = {{}{}},
-% }
+\DefineBibliographyStrings{english}{
+  urlfrom = {{}{}},
+  urlalso = {{}{}},
+}
 \renewcommand*{\bibfont}{\scriptsize\hfuzz=2pt\sloppy}
 % \setlength{\bibitemsep}{0pt}
 % \setlength{\bibparsep}{0pt}

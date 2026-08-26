@@ -2,7 +2,8 @@
 \input{sources/shared/metadata.tex}
 
 \documentclass[a4paper,10pt]{article}
-
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 \usepackage{fontawesome5}
 \usepackage[a4paper,margin=1.35cm,footskip=0.6cm]{geometry}
 \usepackage{titlesec}
@@ -11,10 +12,9 @@
 \usepackage[
   unicode,
   hidelinks,
-  pdftitle={Resume -- \ThesisAuthor},
-  pdfauthor={\ThesisAuthor}
+  pdftitle={\ThesisAuthor{} -- Resume},
+  pdfauthor={\ThesisAuthor{}}
 ]{hyperref}
-\usepackage[english]{babel}
 \usepackage{tabularx}
 \usepackage{graphicx}
 \usepackage{iftex}
@@ -36,13 +36,26 @@
 
 \input{sources/resume/macros}
 
-\begin{document}
+% set metadata for the resume
+\newcommand{\ThesisDegree}{Ph.D. in Computer Science}
+\newcommand{\ThesisUniversity}{Charles University, Faculty of Mathematics and Physics}
+\newcommand{\DocumentDate}{\today}
+\newcommand{\DocumentTitle}{\ThesisAuthor{} -- Resume}
 
+% set the metadata for the resume
+\hypersetup{
+  pdftitle={\DocumentTitle{}},
+  pdfauthor={\ThesisAuthor{}},
+  pdfsubject={\ThesisDegree{}, \ThesisUniversity{}},
+}
+
+
+\begin{document}
 \input{sources/resume/header}
-\input{sources/resume/education}
+\input{sources/resume/research-areas}
 \input{sources/resume/publications}
-\input{sources/resume/teaching}
 \input{sources/resume/projects}
-\input{sources/resume/skills}
+\input{sources/resume/teaching}
+\input{sources/resume/education}
 
 \end{document}

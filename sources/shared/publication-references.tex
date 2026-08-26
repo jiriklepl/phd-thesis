@@ -7,7 +7,14 @@
   {\multicitedelim}
   {\usebibmacro{postnote}}
 \makeatother
-\def\showpublication#1{\fullcite{#1}}
+\def\showpublication#1{%
+  \begingroup
+  \renewbibmacro*{in:}{%
+    \bibsentence
+    \mainlangbibstring{in}%
+    \printunit{\intitlepunct}}%
+  \fullcite{#1}%
+  \endgroup}
 \begingroup
 \footnotesize\sloppy
 \begin{enumerate}[(1),itemsep=0ex]

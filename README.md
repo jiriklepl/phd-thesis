@@ -1,135 +1,76 @@
-# A template for typesetting thesis at MFF UK in LaTeX
+# Optimizing Memory Layouts and Traversal Orders in High-Performance Computing
 
-## Overview
+**PhD dissertation · Jiří Klepl · Charles University, Faculty of Mathematics and Physics · 2026**
+Department of Distributed and Dependable Systems · Supervisor: Martin Kruliš
 
-This is a LaTeX template for typesetting of bachelor, master, dissertation
-(Ph.D.), and rigorosum theses at MFF UK.
+This repository contains the sources of my completed and successfully defended dissertation, together with defense materials and the papers included in the thesis.
 
-Requirements on formatting of theses are given by Dean's directives 26/2023
-and 27/2023 and by the Rector's directive 72/2017. Other guidelines can be
-found in [example layout](https://www.mff.cuni.cz/en/students/student-theses-templates).
-This LaTeX template follows the directives; it also tries to emphasize
-important points in comments. Still, we advise you to read the complete rules.
+The dissertation studies how to optimize memory layouts and traversal orders while keeping algorithmic logic independent of those choices. It develops C++ abstractions for parallel and distributed computation, explores autotuning and cellular automata optimization, and investigates LLM-guided optimization and the effects of abstractions and prompting strategies.
 
-## How to use this template
+## Dissertation and defense
 
-First of all, fill in basic information on your thesis in
-`sources/shared/metadata.tex`. From there, it is automatically propagated to
-other places.
+| Material | Links |
+| --- | --- |
+| Full dissertation | [Main LaTeX source](thesis.tex) · [Chapters](sources/full/) |
+| Abbreviated dissertation (autoreferát) | [Main LaTeX source](thesis-short.tex) · [Chapters](sources/short/) |
+| Abstracts | [English](abstracts/abstract-en.tex) · [Czech](abstracts/abstract-cs.tex) |
+| Defense slides | [PDF (PPSplit)](defense/Optimizing%20Memory%20Layouts%20and%20Traversal%20Orders%20in%20High-Performance%20Computing%20%28PPSplit%29.pdf) · [PowerPoint](defense/Optimizing%20Memory%20Layouts%20and%20Traversal%20Orders%20in%20High-Performance%20Computing.pptx) · [PowerPoint (PPSplit)](defense/Optimizing%20Memory%20Layouts%20and%20Traversal%20Orders%20in%20High-Performance%20Computing%20%28PPSplit%29.pptx) |
+| Dissertation reviews | [Review 1](defense/dissertation-review-1.pdf) · [Review 2](defense/dissertation-review-2.pdf) · [Supervisor’s report](defense/dissertation-review-sup.pdf) |
+| Defense invitation | [PDF](defense/pozvanka.pdf) |
 
-The main TeX file is `thesis.tex`. Here you find basic settings of LaTeX
-(packages etc.), but also commands inserting individual parts of the thesis
-which live in other files.
+The compiled dissertation and autoreferát PDFs are generated locally and are not tracked in this repository. See the build instructions below. The [defense directory](defense/) also contains C++ examples and PowerPoint text-extraction helpers.
 
-In addition to that, you can compile `abstracts/abstract-en.tex` and
-`abstracts/abstract-cs.tex` to get a stand-alone abstract of the thesis in
-English and Czech. The abstract is also submitted in SIS together with the
-thesis.
+## Included publications
 
-Run `make publications` to build `list-of-publications.pdf`, a stand-alone
-copy of the publication references from the short thesis.
+The seven papers reproduced in the dissertation are available in [papers/](papers/). Full citations are recorded in [references/bibliography.bib](references/bibliography.bib); the [publication list](sources/full/publications.tex) also covers additional work and individual contributions.
 
-Run `make resume` to build `resume.pdf`. Its content lives in
-`sources/resume/` and reuses the thesis metadata and faculty logo.
+| Paper | Venue / status | Links |
+| --- | --- | --- |
+| Astute Approach to Handling Memory Layouts of Regular Data Structures | ICA3PP 2022 | [PDF](papers/smelko2022astute.pdf) · [DOI](https://doi.org/10.1007/978-3-031-22677-9_27) |
+| Pure C++ Approach to Optimized Parallel Traversal of Regular Data Structures | PMAM @ PPoPP 2024 | [PDF](papers/klepl2024pure.pdf) · [DOI](https://doi.org/10.1145/3649169.3649247) |
+| Abstractions for C++ Code Optimizations in Parallel High-Performance Applications | Parallel Computing, 2024 | [PDF](papers/klepl2024abstractions.pdf) · [DOI](https://doi.org/10.1016/j.parco.2024.103096) |
+| Layout-Agnostic MPI Abstraction for Distributed Computing in Modern C++ | EuroMPI 2025 | [PDF](papers/klepl2025layout.pdf) · [DOI](https://doi.org/10.1007/978-3-032-07194-1_3) |
+| Cellato: A DSL for Cellular Automata Based on C++ Template Meta-Programming | Journal of Object Technology, 2026 | [PDF](papers/brabec2025cellato.pdf) · [DOI](https://doi.org/10.5381/jot.2026.25.1.a13) |
+| Tutoring LLM into a Better CUDA Optimizer | Euro-Par 2025 | [PDF](papers/brabec2025tutoring.pdf) · [DOI](https://doi.org/10.1007/978-3-031-99857-7_18) |
+| Effect of Abstractions and Prompting Strategies on LLM-Guided High-Performance Optimizations | ICA3PP 2026, accepted; preprint | [PDF](papers/klepl2026effect.pdf) · [arXiv](https://arxiv.org/abs/2608.08085) |
 
-## Repository layout
+## Software artifacts
 
-- `abstracts/` contains the stand-alone English and Czech abstracts.
-- `sources/full/` contains the complete dissertation chapters and front matter.
-- `sources/shared/` contains metadata, macros, and bibliography rendering shared
-  by document variants.
-- `sources/resume/` contains the sections of the stand-alone resume.
-- `sources/short/` contains the abbreviated dissertation, which can be compiled
-  with `make short`.
-- `references/` contains BibLaTeX databases.
-- `archive/` retains superseded source material and ignored legacy outputs.
-- `slides/` is reserved for dissertation presentation material.
-- `docs/` contains project-specific PDF/A and copyright notes.
-- `img/` contains figures and faculty branding.
-- `papers/` contains the publications reproduced in the thesis.
-- `tools/` contains build, validation, packaging, and text-processing scripts.
-- `artifacts/` is the ignored destination for generated software packages.
+| Project | Role in the dissertation |
+| --- | --- |
+| [Noarr](https://github.com/ParaCoToUl/noarr-structures) | C++20 abstractions for memory layouts, traversals, and parallel algorithms. |
+| [Noarr-tuning](https://github.com/ParaCoToUl/noarr-tuning) | Autotuning of Noarr layouts and traversals. |
+| [Noarr-MPI](https://github.com/ParaCoToUl/noarr-mpi) | Layout-agnostic MPI datatype construction and distributed communication. |
+| [Cellato](https://github.com/ParaCoToUl/cellato) | C++20 DSL for cellular automata with CPU/CUDA implementations and configurable encodings, evaluation, and traversal. |
 
-If you are not familiar with LaTeX yet, you can find numerous tutorials on
-the Web. We like [the Wikibook on LaTeX](http://en.wikibooks.org/wiki/LaTeX).
+To collect source snapshots of these four repositories:
 
-The [Czech version of the template](https://www.mff.cuni.cz/en/students/student-theses-templates)
-contains example chapters with a description of the recommended layout
-and various hints on typesetting in TeX. It will be hopefully translated
-to English soon.
+```sh
+bash tools/package-artifacts.sh
+```
 
-## Which version of TeX to choose
+This requires Git, ZIP, and network access and creates `artifacts/phd-thesis-artifacts.zip`. It fetches the current default branches and records their commit IDs; it does not reproduce pinned experimental revisions or bundle external dependencies and submodules.
 
-We recommend TeXlive in version 2020 or newer. Older versions of TeXlive
-and all versions of MikTeX are known to be problematic. You also need to
-install the `biber` utility for processing bibliography. We recommend to
-install `latexmk`, too. Both are delivered as a part of TeXlive.
+## Building the documents
 
-The preferred way of compiling the thesis is using `latexmk`.
-On UNIX systems, you can use the attached `Makefile`.
-If your TeX installation lacks LuaTeX, please follow the comment in `.latexmkrc`.
+Use a TeX installation with **LuaLaTeX, Biber, and the packages used by the sources** (including `pdfx` and `biblatex-iso690`), together with **Make, Bash, and Ghostscript**. Run commands from the repository root:
 
-The electronic version of your thesis must be submitted to SIS. It must
-conform to the PDF/A-1a or -2u standard. This template produces PDF/A-2u
-using the [pdfx](https://www.ctan.org/tex-archive/macros/latex/contrib/pdfx)
-LaTeX package. If the version of pdfx in your TeX distribution is too old
-or broken, please download it independently and extract it to `tex/pdfx/`.
+| Command | Output / action |
+| --- | --- |
+| `make` | `thesis.pdf`, `abstract-en.pdf`, and `abstract-cs.pdf` |
+| `make short` | `thesis-short.pdf` |
+| `make publications` | `list-of-publications.pdf` |
+| `make resume` | `resume.pdf` |
+| `make validate` | Build and validate the full dissertation |
+| `make validate-short` | Build and validate the abbreviated dissertation |
+| `make clean` | Remove generated documents, intermediate files, and validation reports |
 
-For this thesis, build and validate the final file with `make validate`. This
-checks both the standard PDF/A-2u profile and the Charles University custom
-profile. See [`docs/PDF_A.md`](docs/PDF_A.md) for the pinned validator setup and the
-handling of included publisher PDFs.
+The full build prepares 300-dpi image facsimiles of the included papers in `papers/pdfa/` for PDF/A assembly; the original PDFs in `papers/` remain searchable. Validation requires Java, curl, unzip, and standard shell utilities, downloads checksum-pinned veraPDF components on first use, and writes reports to `validation/`. See [PDF/A build and validation notes](docs/PDF_A.md).
 
-### Overleaf
+Shared metadata and macros live in [sources/shared/](sources/shared/), figures in [img/](img/), and build helpers in [tools/](tools/).
 
-MFF UK provides a professional license for Overleaf, which is a TeX editor
-running in your web browser. If you consider this appealing, we invite you
-to read the [faculty-wide instructions](https://www.mff.cuni.cz/en/internal-affairs/it-and-services/cloud-services/overleaf-at-cuni-mff).
+## Template attribution and reuse
 
-You can use this template in Overleaf. You only need to change the project
-settings in Overleaf and set the main document to `thesis.tex` and the compiler
-to `LuaLaTeX`.
+The LaTeX foundation is the MFF UK [English thesis template](https://gitlab.mff.cuni.cz/teaching/thesis-templates/thesis-en), authored primarily by **Martin Mareš, Arnošt Komárek, and Michal Kulich**. It also draws on [better-mff-thesis](https://github.com/exaexa/better-mff-thesis), whose credited contributors include Vít Kabele, Mirek Kratochvíl, Jan Joneš, Gabriela Suchopárová, and Evžen Wybitul.
 
-## Authors
-
-Primary authors of the template are:
-
-- [Martin Mareš](https://mj.ucw.cz/) (<mj@ucw.cz>) -- the current maintainer
-- Arnošt Komárek (<komarek@karlin.mff.cuni.cz>)
-- Michal Kulich (<kulich@karlin.mff.cuni.cz>)
-
-We also took inspiration from the alternative template [better-thesis](https://github.com/exaexa/better-mff-thesis),
-whose contributors include:
-
-- Vít Kabele
-- Mirek Kratochvíl
-- Jan Joneš
-- Gabriela Suchopárová
-- Evžen Wybitul
-
-## License
-
-This package can be freely distributed, used, and modified according to
-the [Creative Commons CC-0](https://creativecommons.org/public-domain/cc0/)
-license.
-
-The only exception are the faculty logos in the `img` directory, whose use
-is governed by the Dean's directive 5/2016 and related regulations.
-
-## References
-
-The current version of this template is maintained in the
-[thesis-en](https://gitlab.mff.cuni.cz/teaching/thesis-templates/thesis-en)
-project at MFF GitLab.
-
-If you have any bug reports or suggestions, please tell us.
-The preferred way is to create an issue in the GitLab project.
-
-Further instructions on PDF/A creation can be found in the
-[PDF/A FAQ](https://mj.ucw.cz/vyuka/bc/pdfaq.html),
-which is currently available in Czech only. In case of any trouble,
-please contact Martin Mareš directly or create an issue.
-
-We also maintain [other material](https://mj.ucw.cz/vyuka/bc/)
-on writing of theses and scientific writing in general.
-Again, this still waits for translation to English.
+The original template is distributed under [CC0](https://creativecommons.org/public-domain/cc0/). That attribution does not grant a blanket CC0 licence to the dissertation, included papers, or other third-party material. Faculty logos are subject to the faculty’s rules, identified in the original template as Dean’s Directive 5/2016 and related regulations. For the included papers, consult their individual notices and the repository’s [copyright and reuse notes](docs/COPYRIGHT_REUSE.md). Software artifacts carry their own licences in their respective repositories.

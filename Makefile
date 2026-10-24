@@ -8,7 +8,6 @@ short_sources = $(wildcard sources/short/*.tex)
 short_images = $(wildcard img/*.eps img/*.jpeg img/*.jpg img/*.pdf img/*.png)
 reference_sources = $(wildcard references/*.bib)
 resume_sources = resume.tex $(wildcard sources/resume/*.tex)
-resume_images = img/logo-en.pdf
 thesis_sources = thesis.tex $(full_sources) $(shared_sources)
 abstract_sources = $(shared_sources)
 
@@ -23,6 +22,8 @@ short: thesis-short.pdf
 publications: list-of-publications.pdf
 
 resume: resume.pdf
+
+industry-resume: industry-resume.pdf
 
 # LaTeX must be run multiple times to get references right
 thesis.pdf: $(thesis_sources) $(reference_sources) $(archival_papers)
@@ -43,7 +44,11 @@ list-of-publications.pdf: list-of-publications.tex thesis-short.tex $(shared_sou
 	lualatex $<
 	lualatex $<
 
-resume.pdf: $(resume_sources) sources/shared/metadata.tex $(resume_images)
+resume.pdf: $(resume_sources) sources/shared/metadata.tex
+	lualatex $<
+	lualatex $<
+
+industry-resume.pdf: industry-resume.tex $(resume_sources) sources/shared/metadata.tex
 	lualatex $<
 	lualatex $<
 
@@ -99,9 +104,10 @@ clean:
 	rm -f thesis-short.pdf
 	rm -f list-of-publications.pdf
 	rm -f resume.pdf
+	rm -f industry-resume.pdf
 	rm -rf papers/pdfa validation
 
 distclean: clean
 	rm -rf .cache/cuni-thesis-validator
 
-.PHONY: all short publications resume abstract clean distclean validate validate-short
+.PHONY: all short publications resume industry-resume abstract clean distclean validate validate-short

@@ -1,5 +1,5 @@
 % Shared thesis metadata is the source of truth for the inferrable resume fields.
-\input{sources/shared/metadata.tex}
+\input{sources/shared/metadata}
 
 \documentclass[a4paper,10pt]{article}
 \usepackage[utf8]{inputenc}
@@ -12,7 +12,7 @@
 \usepackage[
   unicode,
   hidelinks,
-  pdftitle={\ThesisAuthor{} -- Resume},
+  pdftitle={\ThesisAuthor{} --- Resume},
   pdfauthor={\ThesisAuthor{}}
 ]{hyperref}
 \usepackage{tabularx}
@@ -40,7 +40,7 @@
 \newcommand{\ThesisDegree}{Ph.D. in Computer Science}
 \newcommand{\ThesisUniversity}{Charles University, Faculty of Mathematics and Physics}
 \newcommand{\DocumentDate}{\today}
-\newcommand{\DocumentTitle}{\ThesisAuthor{} -- Resume}
+\newcommand{\DocumentTitle}{\ThesisAuthor{} --- Resume}
 
 % set the metadata for the resume
 \hypersetup{
@@ -52,10 +52,23 @@
 
 \begin{document}
 \input{sources/resume/header}
-\input{sources/resume/research-areas}
-\input{sources/resume/publications}
+
+\ifdefined \industry
+\else
+  \input{sources/resume/research-areas}
+  \input{sources/resume/publications}
+\fi
+
 \input{sources/resume/projects}
-\input{sources/resume/teaching}
-\input{sources/resume/education}
+
+\ifdefined \industry
+  \input{sources/resume/skills}
+  \input{sources/resume/experience}
+  \input{sources/resume/education}
+  \input{sources/resume/publications}
+\else
+  \input{sources/resume/teaching}
+  \input{sources/resume/education}
+\fi
 
 \end{document}

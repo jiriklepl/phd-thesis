@@ -1,4 +1,19 @@
 %-----------SELECTED PUBLICATIONS-----------%
+\ifdefined \industry
+\def\abstractionsAbstract{Efficient solutions for facilitating code optimizations in parallel high-performance applications.}
+\def\cellatoAbstract{Domain-specific language for speeding up cellular automata simulations (e.g., in biology and materials science).}
+\def\bitplanesAbstract{Fast and memory-efficient bit-planes encoding for cellular automata simulations, significantly improving performance.}
+\def\mpiAbstract{Solutions for decoupling data layouts from communication, simplifying development and optimization of distributed applications.}
+\def\purecppAbstract{Proposes pure C++ abstractions for data structures and algorithms that simplify the development of high-performance applications.}
+\def\astuteAbstract{}
+\else
+\def\abstractionsAbstract{}
+\def\cellatoAbstract{}
+\def\bitplanesAbstract{}
+\def\mpiAbstract{}
+\def\purecppAbstract{}
+\def\astuteAbstract{}
+\fi
 \section{Selected Publications}
 \begin{enumerate}[leftmargin=1.35em,itemsep=0.15em,topsep=0.2em,label={\textbf{[\arabic*]}}]
   \resumePublication
@@ -6,24 +21,35 @@
     {Abstractions for C++ Code Optimizations in Parallel High-Performance Applications}
     {Parallel Computing}
     {10.1016/j.parco.2024.103096}
+    {\abstractionsAbstract{}}
   \resumePublication
     {2026}
     {Cellato: A DSL for Cellular Automata Based on C++ Template Meta-programming}
     {Journal of Object Technology}
     {10.5381/jot.2026.25.1.a13}
+    {\cellatoAbstract{}}
+  \resumePublication
+    {2026}
+    {Improving cellular automata performance with bit-planes encoding and bitwise vectorization}
+    {Parallel Computing}
+    {10.1016/j.parco.2026.103226}
+    {\bitplanesAbstract{}}
   \resumePublication
     {2026}
     {Layout-Agnostic MPI Abstraction for Distributed Computing in Modern C++}
     {European MPI Users' Group Meeting}
     {10.1007/978-3-032-07194-1\_3}
+    {\mpiAbstract{}}
   \resumePublication
     {2024}
     {Pure C++ Approach to Optimized Parallel Traversal of Regular Data Structures}
     {Programming Models and Applications for Multicores and Manycores}
     {10.1145/3649169.3649247}
-  \resumePublication
-    {2023}
-    {Astute Approach to Handling Memory Layouts of Regular Data Structures}
-    {Algorithms and Architectures for Parallel Processing}
-    {10.1007/978-3-031-22677-9\_27}
+    {\purecppAbstract{}}
+  % \resumePublication
+  %   {2023}
+  %   {Astute Approach to Handling Memory Layouts of Regular Data Structures}
+  %   {Algorithms and Architectures for Parallel Processing}
+  %   {10.1007/978-3-031-22677-9\_27}
+  %   {\astuteAbstract{}}
 \end{enumerate}
